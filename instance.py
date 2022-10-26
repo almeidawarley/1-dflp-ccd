@@ -10,6 +10,7 @@ class instance:
 
         # Create random instance
         self.create_random()
+        # self.create_example()
 
         # Validate stored instance
         self.validate_instance()
@@ -51,7 +52,7 @@ class instance:
         # Create betas
         self.betas = {}
         for customer in self.customers:
-            self.betas[customer] = 0.1 # rd.randint(30,50)
+            self.betas[customer] = 5 # rd.randint(30,50)
 
         # Create gammmas
         self.gammas = {}
@@ -76,7 +77,69 @@ class instance:
         # Create start values
         self.starts = {}
         for customer in self.customers:
-            self.starts[customer] = 0 # rd.randint(30,50)
+            self.starts[customer] = rd.randint(0,10)
+
+    def create_example(self):
+        # Create example instance
+
+        self.locations = ['1', '2', '3']
+        self.customers = ['A','B', 'C']
+        self.periods = ['1', '2', '3']
+
+        # Create catalogs
+        considerations = {}
+        considerations ['A'] = ['1', '2']
+        considerations ['B'] = ['1', '3']
+        considerations ['C'] = ['2', '3']
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1 if location in considerations[customer] else 0
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] =  1
+
+        # Create alphas
+        self.alphas = {}
+        for customer in self.customers:
+            self.alphas[customer] = 0
+
+        # Create betas
+        self.betas = {}
+        self.betas['A'] = 5
+        self.betas['B'] = 4
+        self.betas['C'] = 5
+
+        # Create gammmas
+        self.gammas = {}
+        for customer in self.customers:
+            self.gammas[customer] = 1
+
+        # Create deltas
+        self.deltas = {}
+        for customer in self.customers:
+            self.deltas[customer] = 0
+
+        # Create lower bounds
+        self.lowers = {}
+        for customer in self.customers:
+            self.lowers[customer] = -10
+
+        # Create upper bounds
+        self.uppers = {}
+        for customer in self.customers:
+            self.uppers[customer] = 50
+
+        # Create start values
+        self.starts = {}
+        self.starts['A'] = 15.
+        self.starts['B'] = 26.
+        self.starts['C'] = 5.
 
     def validate_instance(self):
         # Validate stored instance
