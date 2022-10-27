@@ -1,8 +1,11 @@
 # Instance files
 instances/*.csv
 
-# Output files
+# Record files
 outputs/*.csv
+
+# Output files
+outputs/*.out
 
 # Script files
 scripts/*.sh

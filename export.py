@@ -1,4 +1,4 @@
-def write_statistics(instance, mip, lpr, optimal, heur_obj, heuristic, folder = 'outputs'):
+def write_statistics(instance, mip, lpr, optimal, heur_obj, heuristic, folder = 'records'):
 
     with open('{}/{}.csv'.format(folder, instance.keyword), 'w') as output:
 

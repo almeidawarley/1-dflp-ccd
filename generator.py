@@ -8,9 +8,9 @@ periods = [7, 14, 30]
 
 preferences = ['high'] # ['low', 'medium', 'high']
 revenues = ['equal', 'different']
-replenishment = ['lineab', 'exponential']
+replenishment = ['linear', 'exponential']
 alphabeta = ['low','high'] #  ['low', 'medium', 'high']
-absorption = ['lineab', 'exponential']
+absorption = ['linear', 'exponential']
 gammadelta = ['low','high'] # ['low', 'medium', 'high']
 starting = ['medium'] # ['low', 'medium', 'high']
 
@@ -45,19 +45,17 @@ with open('database.csv','w') as database:
 
                                                 with open('{}/{}.sh'.format('scripts', keyword), 'w') as output:
 
-                                                    output.write(b'#!/bin/bash\n\n')
+                                                    output.write('#SBATCH --time=6:00:00\n')
+                                                    output.write('#SBATCH --job-name={}.job\n'.format(keyword))
+                                                    output.write('#SBATCH --output={}.out\n'.format(keyword))
+                                                    output.write('#SBATCH --account=def-jenasanj\n')
+                                                    output.write('#SBATCH --mem=24576M\n')
+                                                    output.write('#SBATCH --cpus-per-task=1\n')
+                                                    output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
+                                                    output.write('#SBATCH --mail-type=FAIL\n')
 
-                                                    output.write(b'#SBATCH --time=6:00:00\n')
-                                                    output.write(b'#SBATCH --job-name={}.job\n'.format(keyword))
-                                                    output.write(b'#SBATCH --output={}.out\n'.format(keyword))
-                                                    output.write(b'#SBATCH --account=def-jenasanj\n')
-                                                    output.write(b'#SBATCH --mem=24576M\n')
-                                                    output.write(b'#SBATCH --cpus-per-task=1\n')
-                                                    output.write(b'#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
-                                                    output.write(b'#SBATCH --mail-type=FAIL\n')
-
-                                                    output.write(b'cd ~/projects/def-jenasanj/walm/code-dsflp-dra/\n')
-                                                    output.write(b'python main.py {}\n'.format(keyword))
+                                                    output.write('cd ~/projects/def-jenasanj/walm/code-dsflp-dra/\n')
+                                                    output.write('python main.py {}\n'.format(keyword))
 
                                                 database.write('{},{},{},{},{},{},{},{},{},{},{}\n'.format(keyword, a, b, c, d, e, f, g, h, i, j))
 
