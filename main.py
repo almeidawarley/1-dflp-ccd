@@ -4,6 +4,9 @@ import heuristic as hr
 import export as ex
 import sys
 
+def is_equal(a, b, error = 0.0001):
+    return abs(a - b) < error
+
 keyword = sys.argv[1]
 
 instance = ic.instance(keyword)
@@ -28,4 +31,6 @@ optimal = ex.format_solution(instance, mip, variable)
 
 ex.write_statistics(instance, mip, lpr, optimal, fitness, heuristic)
 
-print('>>> Sanity check: {} = {} ? {}!'.format(mip.objVal, hr.evaluate_solution(instance, optimal), mip.objVal == hr.evaluate_solution(instance, optimal)))
+validated = hr.evaluate_solution(instance, optimal)
+
+print('>>> Sanity check: {} = {} ? {}!'.format(mip.objVal,validated, is_equal(mip.objVal, validated)))

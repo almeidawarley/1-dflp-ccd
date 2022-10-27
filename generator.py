@@ -8,9 +8,9 @@ periods = [7, 14, 30]
 
 preferences = ['high'] # ['low', 'medium', 'high']
 revenues = ['equal', 'different']
-replenishment = ['linear', 'exponential']
+replenishment = ['lineab', 'exponential']
 alphabeta = ['low','high'] #  ['low', 'medium', 'high']
-absorption = ['linear', 'exponential']
+absorption = ['lineab', 'exponential']
 gammadelta = ['low','high'] # ['low', 'medium', 'high']
 starting = ['medium'] # ['low', 'medium', 'high']
 
@@ -25,40 +25,43 @@ with open('database.csv','w') as database:
                                 for h in absorption:
                                     for i in gammadelta:
                                         for j in starting:
-                                            keyword = ui.uuid4().hex[:10]
-                                            with open('{}/{}.csv'.format('instances', keyword), 'w') as output:
-                                                output.write('title,value\n')
+                                            if counter <= 2:
 
-                                                output.write('number of locations,{}\n'.format(a))
-                                                output.write('number of customers,{}\n'.format(b))
-                                                output.write('number of periods,{}\n'.format(c))
-                                                output.write('willingness to patronize,{}\n'.format(d))
-                                                output.write('location revenues,{}\n'.format(e))
-                                                output.write('replenishment type,{}\n'.format(f))
-                                                output.write('replenishment variability,{}\n'.format(g))
-                                                output.write('absorption type,{}\n'.format(h))
-                                                output.write('absorption variability,{}\n'.format(i))
-                                                output.write('starting demand,{}\n'.format(j))
+                                                keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(a, b, c, d, e, f, g, h, i, j)
+                                                with open('{}/{}.csv'.format('instances', keyword), 'w') as output:
+                                                    output.write('title,value\n')
 
-                                            with open('{}/{}.sh'.format('scripts', keyword), 'w') as output:
+                                                    output.write('seed,{}\n'.format(100))
+                                                    output.write('number of locations,{}\n'.format(a))
+                                                    output.write('number of customers,{}\n'.format(b))
+                                                    output.write('number of periods,{}\n'.format(c))
+                                                    output.write('willingness to patronize,{}\n'.format(d))
+                                                    output.write('location revenues,{}\n'.format(e))
+                                                    output.write('replenishment type,{}\n'.format(f))
+                                                    output.write('replenishment variability,{}\n'.format(g))
+                                                    output.write('absorption type,{}\n'.format(h))
+                                                    output.write('absorption variability,{}\n'.format(i))
+                                                    output.write('starting demand,{}\n'.format(j))
 
-                                                output.write('#!/bin/bash\n\n')
+                                                with open('{}/{}.sh'.format('scripts', keyword), 'w') as output:
 
-                                                output.write('#SBATCH --time=14:00:00\n')
-                                                output.write('#SBATCH --job-name={}.job\n'.format(keyword))
-                                                output.write('#SBATCH --output={}.out\n'.format(keyword))
-                                                output.write('#SBATCH --account=def-jenasanj\n')
-                                                output.write('#SBATCH --mem=24576M\n')
-                                                output.write('#SBATCH --cpus-per-task=1\n')
-                                                output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
-                                                output.write('#SBATCH --mail-type=FAIL\n')
+                                                    output.write(b'#!/bin/bash\n\n')
 
-                                                output.write('cd ~/projects/def-jenasanj/walm/code-cflp-kkt/\n')
-                                                output.write('python main.py {}\n'.format(keyword))
+                                                    output.write(b'#SBATCH --time=6:00:00\n')
+                                                    output.write(b'#SBATCH --job-name={}.job\n'.format(keyword))
+                                                    output.write(b'#SBATCH --output={}.out\n'.format(keyword))
+                                                    output.write(b'#SBATCH --account=def-jenasanj\n')
+                                                    output.write(b'#SBATCH --mem=24576M\n')
+                                                    output.write(b'#SBATCH --cpus-per-task=1\n')
+                                                    output.write(b'#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
+                                                    output.write(b'#SBATCH --mail-type=FAIL\n')
 
-                                            database.write('{},{},{},{},{},{},{},{},{},{},{}\n'.format(keyword, a, b, c, d, e, f, g, h, i, j))
+                                                    output.write(b'cd ~/projects/def-jenasanj/walm/code-dsflp-dra/\n')
+                                                    output.write(b'python main.py {}\n'.format(keyword))
 
-                                            print('squeue ../scripts/{}.sh'.format(keyword))
-                                            counter += 1
+                                                database.write('{},{},{},{},{},{},{},{},{},{},{}\n'.format(keyword, a, b, c, d, e, f, g, h, i, j))
+
+                                                print('sbatch ../scripts/{}.sh'.format(keyword))
+                                                counter += 1
 
 print('Generated {} instances'.format(counter))

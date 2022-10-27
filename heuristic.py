@@ -48,7 +48,7 @@ def evaluate_location(instance, cumulative, location):
 
         if instance.catalogs[location][customer]:
 
-            score += min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
+            score += instance.revenues['1'][location] * min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
 
     return score
 

@@ -1,0 +1,11 @@
+title,value
+number of locations,100
+number of customers,100
+number of periods,5
+willingness to patronize,low
+location revenues,equal
+replenishment type,linear
+replenishment variability,low
+absorption type,linear
+absorption variability,low
+starting demand,low

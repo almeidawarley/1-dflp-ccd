@@ -23,10 +23,10 @@ class instance:
     def create_random(self, folder = 'instances'):
         # Create random instance
 
-        rd.seed(100)
-
         # Read specifications from file
         specs = pd.read_csv('{}/{}.csv'.format(folder, instance.keyword), index_col = 0)
+
+        rd.seed(int(specs.loc['seed']['value']))
 
         # Set instance size
         number_locations = int(specs.loc['number of locations']['value'])
@@ -65,7 +65,7 @@ class instance:
                 if specs.loc['location revenues']['value'] == 'equal':
                     self.revenues[period][location] =  1 # rd.randint(30,50)
                 elif specs.loc['location revenues']['value'] == 'different':
-                    self.revenues[period][location] = rd.randint(5,15) / 10.
+                    self.revenues[period][location] = rd.randint(5,15) / 10. if period == '1' else self.revenues[str(int(period) - 1)][location]
                 else:
                     exit('Invalid value for parameter location revenues')
 
