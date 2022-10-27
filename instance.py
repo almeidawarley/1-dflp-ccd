@@ -163,6 +163,10 @@ class instance:
         for customer in self.customers:
             self.deltas[customer] = 2 * self.betas[customer]
         '''
+        '''
+        for customer in self.customers:
+            self.gammas[customer] = self.alphas[customer]
+        '''
 
     def create_example(self):
         # Create example instance
