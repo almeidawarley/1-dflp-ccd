@@ -4,6 +4,9 @@ instances/*.csv
 # Output files
 outputs/*.csv
 
+# Script files
+scripts/*.sh
+
 # Program files
 /*.lp
 

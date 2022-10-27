@@ -1,7 +1,6 @@
 import uuid as ui
 
 counter = 0
-folder = 'instances'
 
 locations = [10, 50, 100]
 customers = [10, 50, 100]
@@ -10,10 +9,10 @@ periods = [7, 14, 30]
 preferences = ['high'] # ['low', 'medium', 'high']
 revenues = ['equal', 'different']
 replenishment = ['linear', 'exponential']
-alphabeta = ['high'] #  ['low', 'medium', 'high']
+alphabeta = ['low','high'] #  ['low', 'medium', 'high']
 absorption = ['linear', 'exponential']
-gammadelta = ['high'] # ['low', 'medium', 'high']
-starting = ['high'] # ['low', 'medium', 'high']
+gammadelta = ['low','high'] # ['low', 'medium', 'high']
+starting = ['medium'] # ['low', 'medium', 'high']
 
 with open('database.csv','w') as database:
     for a in locations:
@@ -27,8 +26,9 @@ with open('database.csv','w') as database:
                                     for i in gammadelta:
                                         for j in starting:
                                             keyword = ui.uuid4().hex[:10]
-                                            with open('{}/{}.csv'.format(folder, keyword), 'w') as output:
+                                            with open('{}/{}.csv'.format('instances', keyword), 'w') as output:
                                                 output.write('title,value\n')
+
                                                 output.write('number of locations,{}\n'.format(a))
                                                 output.write('number of customers,{}\n'.format(b))
                                                 output.write('number of periods,{}\n'.format(c))
@@ -40,7 +40,25 @@ with open('database.csv','w') as database:
                                                 output.write('absorption variability,{}\n'.format(i))
                                                 output.write('starting demand,{}\n'.format(j))
 
+                                            with open('{}/{}.sh'.format('scripts', keyword), 'w') as output:
+
+                                                output.write('#!/bin/bash\n\n')
+
+                                                output.write('#SBATCH --time=14:00:00\n')
+                                                output.write('#SBATCH --job-name={}.job\n'.format(keyword))
+                                                output.write('#SBATCH --output={}.out\n'.format(keyword))
+                                                output.write('#SBATCH --account=def-jenasanj\n')
+                                                output.write('#SBATCH --mem=24576M\n')
+                                                output.write('#SBATCH --cpus-per-task=1\n')
+                                                output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
+                                                output.write('#SBATCH --mail-type=FAIL\n')
+
+                                                output.write('cd ~/projects/def-jenasanj/walm/code-cflp-kkt/\n')
+                                                output.write('python main.py {}\n'.format(keyword))
+
                                             database.write('{},{},{},{},{},{},{},{},{},{},{}\n'.format(keyword, a, b, c, d, e, f, g, h, i, j))
+
+                                            print('squeue ../scripts/{}.sh'.format(keyword))
                                             counter += 1
 
 print('Generated {} instances'.format(counter))
