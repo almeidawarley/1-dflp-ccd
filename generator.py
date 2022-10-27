@@ -25,7 +25,7 @@ with open('database.csv','w') as database:
                                 for h in absorption:
                                     for i in gammadelta:
                                         for j in starting:
-                                            if counter <= 2:
+                                            if counter >= 0:
 
                                                 keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(a, b, c, d, e, f, g, h, i, j)
                                                 with open('{}/{}.csv'.format('instances', keyword), 'w') as output:
@@ -45,6 +45,8 @@ with open('database.csv','w') as database:
 
                                                 with open('{}/{}.sh'.format('scripts', keyword), 'w') as output:
 
+                                                    output.write('#!/bin/bash\n')
+
                                                     output.write('#SBATCH --time=6:00:00\n')
                                                     output.write('#SBATCH --job-name={}.job\n'.format(keyword))
                                                     output.write('#SBATCH --output={}.out\n'.format(keyword))
@@ -59,6 +61,7 @@ with open('database.csv','w') as database:
 
                                                 database.write('{},{},{},{},{},{},{},{},{},{},{}\n'.format(keyword, a, b, c, d, e, f, g, h, i, j))
 
+                                                print('dos2unix ../scripts/{}.sh'.format(keyword))
                                                 print('sbatch ../scripts/{}.sh'.format(keyword))
                                                 counter += 1
 

@@ -1,6 +1,3 @@
-bigM = 1000000
-
-
 def previous(period):
 
     return str(int(period) - 1)
@@ -51,28 +48,28 @@ def create_c5(instance, mip, variable):
 def create_c6(instance, mip, variable):
     # Create constraint 6
 
-    mip.addConstrs((variable['d3'][period, customer] <= instance.lowers[customer] + bigM * (1 - variable['z'][period, customer]) for period in instance.periods for customer in instance.customers), name = 'c6')
+    mip.addConstrs((variable['d3'][period, customer] <= instance.lowers[customer] + instance.uppers[customer] * (1 - variable['z'][period, customer]) for period in instance.periods for customer in instance.customers), name = 'c6')
 
 # ---------------------------------------------------------------------------
 
 def create_c7(instance, mip, variable):
     # Create constraint 7
 
-    mip.addConstrs((variable['d3'][period, customer] <= variable['d2'][period, customer] + bigM * variable['z'][period, customer] for period in instance.periods for customer in instance.customers), name = 'c7')
+    mip.addConstrs((variable['d3'][period, customer] <= variable['d2'][period, customer] + instance.uppers[customer] * variable['z'][period, customer] for period in instance.periods for customer in instance.customers), name = 'c7')
 
 # ---------------------------------------------------------------------------
 
 def create_c8(instance, mip, variable):
     # Create constraint 8
 
-    mip.addConstrs((variable['w'][period, location, customer] <= bigM * instance.catalogs[location][customer] * variable['y'][period, location] for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c8')
+    mip.addConstrs((variable['w'][period, location, customer] <= instance.uppers[customer] * instance.catalogs[location][customer] * variable['y'][period, location] for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c8')
 
 # ---------------------------------------------------------------------------
 
 def create_c9(instance, mip, variable):
     # Create constraint 9
 
-    mip.addConstrs((variable['w'][period, location, customer] <= instance.gammas[customer] * variable['d1'][period, customer] + instance.deltas[customer] + bigM * (1 - instance.catalogs[location][customer] * variable['y'][period, location]) for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c9')
+    mip.addConstrs((variable['w'][period, location, customer] <= instance.gammas[customer] * variable['d1'][period, customer] + instance.deltas[customer] + instance.uppers[customer] * (1 - instance.catalogs[location][customer] * variable['y'][period, location]) for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c9')
 
 
 # ---------------------------------------------------------------------------
@@ -80,11 +77,11 @@ def create_c9(instance, mip, variable):
 def create_c10(instance, mip, variable):
     # Create constraint 10
 
-    mip.addConstrs((variable['w'][period, location, customer] >=  -1 * bigM * instance.catalogs[location][customer] * variable['y'][period, location] for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c10')
+    mip.addConstrs((variable['w'][period, location, customer] >=  -1 * instance.uppers[customer] * instance.catalogs[location][customer] * variable['y'][period, location] for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c10')
 
 # ---------------------------------------------------------------------------
 
 def create_c11(instance, mip, variable):
     # Create constraint 11
 
-    mip.addConstrs((variable['w'][period, location, customer] >= instance.gammas[customer] * variable['d1'][period, customer] + instance.deltas[customer] - 1 * bigM * (1 - instance.catalogs[location][customer] * variable['y'][period, location]) for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c11')
+    mip.addConstrs((variable['w'][period, location, customer] >= instance.gammas[customer] * variable['d1'][period, customer] + instance.deltas[customer] - 1 * instance.uppers[customer] * (1 - instance.catalogs[location][customer] * variable['y'][period, location]) for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c11')

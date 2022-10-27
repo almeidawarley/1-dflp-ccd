@@ -1,6 +1,7 @@
 title,value
-number of locations,100
-number of customers,100
+seed,100
+number of locations,5
+number of customers,5
 number of periods,5
 willingness to patronize,low
 location revenues,equal
