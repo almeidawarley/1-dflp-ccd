@@ -1,17 +1,8 @@
-# Project stuff
-beresnev/*
-models/*
-solutions/*
-scripts/*
-
 # Instance files
-instances/
+instances/*.csv
 
-# Script files
-ideas/
-
-# Note files
-/*.md
+# Output files
+outputs/*.csv
 
 # Program files
 /*.lp
