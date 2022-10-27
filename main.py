@@ -1,53 +1,31 @@
 import instance as ic
 import formulation as fm
+import heuristic as hr
+import export as ex
+import sys
 
+keyword = sys.argv[1]
 
-def print_solution(model, variable, verbose = False):
+instance = ic.instance(keyword)
 
-    print('Facility installation scheme:')
-    for period in instance.periods:
-        for location in instance.locations:
-            value = variable['y'][period, location].x
-            if value > 0.:
-                print('\t| Location {} in time period {}'.format(location, period))
+mip, variable = fm.build_linear(instance)
 
-    if verbose:
-        _ = input('Wait...')
+mip.write('debug.lp')
 
-    for period in instance.periods:
-        print('Captured demand in time period {}'.format(period))
-        for customer in instance.customers:
-            captured = 0.
-            for location in instance.locations:
-                captured += variable['w'][period, location, customer].x
-            if captured > 0.1:
-                print('\t| Got {} units from customer {}'.format(captured, customer, period))
+heuristic, fitness = hr.greedy_heuristic(instance)
 
-    if verbose:
-        _ = input('Wait...')
+# fm.warm_start(instance, mip, variable, heuristic)
 
-    for customer in instance.customers:
-        print('Demand behaviour for customer {}:'.format(customer))
-        print('\t| Start with demand {}'.format(variable['d3']['0', customer].x))
-        for period in instance.periods:
-            d1 = variable['d1'][period, customer].x
-            d2 = variable['d2'][period, customer].x
-            d3 = variable['d3'][period, customer].x
-            print('\t| At time period {}: [{}] -> [{}] -> [{}]'.format(period, d1, d2, d3))
+lpr = mip.relax()
 
-    if verbose:
-        _ = input('Wait...')
+lpr.optimize()
 
-instance = ic.instance()
+mip.optimize()
 
-model, variable = fm.build(instance)
+ex.print_solution(instance, mip, variable)
 
-model.write('debug.lp')
+optimal = ex.format_solution(instance, mip, variable)
 
-relaxed = model.relax()
+ex.write_statistics(instance, mip, lpr, optimal, fitness, heuristic)
 
-relaxed.optimize()
-
-model.optimize()
-
-print_solution(model, variable)
+print('>>> Sanity check: {} = {} ? {}!'.format(mip.objVal, hr.evaluate_solution(instance, optimal), mip.objVal == hr.evaluate_solution(instance, optimal)))

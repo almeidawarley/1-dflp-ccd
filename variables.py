@@ -1,6 +1,6 @@
 import gurobipy as gp
 
-def create_vry(instance, model):
+def create_vry(instance, mip):
     # Create y^{t}_{i} variables
 
     lowers = [0. for _ in instance.periods for _ in instance.locations]
@@ -13,11 +13,11 @@ def create_vry(instance, model):
         for location in instance.locations
     ]
 
-    return model.addVars(instance.periods, instance.locations, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+    return mip.addVars(instance.periods, instance.locations, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
 # ---------------------------------------------------------------------------
 
-def create_vrw(instance, model):
+def create_vrw(instance, mip):
     # Create w^{t}_{ij} variables
 
     lowers = [0 for _ in instance.periods for _ in instance.locations for _ in instance.customers]
@@ -36,11 +36,11 @@ def create_vrw(instance, model):
         for customer in instance.customers
     ]
 
-    return model.addVars(instance.periods, instance.locations, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+    return mip.addVars(instance.periods, instance.locations, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
 # ---------------------------------------------------------------------------
 
-def create_vrd3(instance, model):
+def create_vrd3(instance, mip):
     # Create d3^{t}_{j} variables
 
     lowers = [0. for _ in ['0'] + instance.periods for _ in instance.customers]
@@ -53,11 +53,11 @@ def create_vrd3(instance, model):
         for customer in instance.customers
     ]
 
-    return model.addVars(['0'] + instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+    return mip.addVars(['0'] + instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
 # ---------------------------------------------------------------------------
 
-def create_vrd1(instance, model):
+def create_vrd1(instance, mip):
     # Create d1^{t}_{j} variables
 
     lowers = [0. for _ in instance.periods for _ in instance.customers]
@@ -70,11 +70,11 @@ def create_vrd1(instance, model):
         for customer in instance.customers
     ]
 
-    return model.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+    return mip.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
 # ---------------------------------------------------------------------------
 
-def create_vrd2(instance, model):
+def create_vrd2(instance, mip):
     # Create d2^{t}_{j} variables
 
     lowers = [0. for _ in instance.periods for _ in instance.customers]
@@ -87,11 +87,11 @@ def create_vrd2(instance, model):
         for customer in instance.customers
     ]
 
-    return model.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+    return mip.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
 # ---------------------------------------------------------------------------
 
-def create_vrz(instance, model):
+def create_vrz(instance, mip):
     # Create z^{t}_{j} variables
 
     lowers = [0. for _ in instance.periods for _ in instance.customers]
@@ -104,4 +104,4 @@ def create_vrz(instance, model):
         for customer in instance.customers
     ]
 
-    return model.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+    return mip.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
