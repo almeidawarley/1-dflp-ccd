@@ -28,7 +28,7 @@ with open('commands.sh','w') as commands:
                                             if counter >= 0:
 
                                                 keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(a, b, c, d, e, f, g, h, i, j)
-                                                with open('{}/{}.csv'.format('instances', keyword), 'w') as output:
+                                                with open('server/{}/{}.csv'.format('instances', keyword), 'w') as output:
                                                     output.write('title,value\n')
 
                                                     output.write('seed,{}\n'.format(100))
@@ -43,7 +43,7 @@ with open('commands.sh','w') as commands:
                                                     output.write('absorption variability,{}\n'.format(i))
                                                     output.write('starting demand,{}\n'.format(j))
 
-                                                with open('{}/{}.sh'.format('scripts', keyword), 'w') as output:
+                                                with open('server/{}/{}.sh'.format('scripts', keyword), 'w') as output:
 
                                                     output.write('#!/bin/bash\n')
 

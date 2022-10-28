@@ -11,7 +11,10 @@ outputs/*.out
 scripts/*.sh
 
 # Server files
-server/
+server/instances/*.csv
+server/records/*.csv
+server/scripts/*.sh
+server/outputs/*.out
 
 # Program files
 /*.lp
