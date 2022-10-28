@@ -91,15 +91,66 @@ def create_vrd2(instance, mip):
 
 # ---------------------------------------------------------------------------
 
-def create_vrz(instance, mip):
-    # Create z^{t}_{j} variables
+def create_vrs(instance, mip):
+    # Create s^{t}_{j} variables
 
     lowers = [0. for _ in instance.periods for _ in instance.customers]
     uppers = [1 for _ in instance.periods for _ in instance.customers]
     coefs = [0. for _ in instance.periods for _ in instance.customers]
     types = ['B' for _ in instance.periods for _ in instance.customers]
     names = [
-        'z~{}_{}'.format(period, customer)
+        's~{}_{}'.format(period, customer)
+        for period in instance.periods
+        for customer in instance.customers
+    ]
+
+    return mip.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+
+# ---------------------------------------------------------------------------
+
+def create_vrt(instance, mip):
+    # Create t^{t}_{j} variables
+
+    lowers = [0. for _ in instance.periods for _ in instance.customers]
+    uppers = [1 for _ in instance.periods for _ in instance.customers]
+    coefs = [0. for _ in instance.periods for _ in instance.customers]
+    types = ['B' for _ in instance.periods for _ in instance.customers]
+    names = [
+        't~{}_{}'.format(period, customer)
+        for period in instance.periods
+        for customer in instance.customers
+    ]
+
+    return mip.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+
+# ---------------------------------------------------------------------------
+
+def create_vru(instance, mip):
+    # Create u^{t}_{j} variables
+
+    lowers = [0. for _ in instance.periods for _ in instance.customers]
+    uppers = [1 for _ in instance.periods for _ in instance.customers]
+    coefs = [0. for _ in instance.periods for _ in instance.customers]
+    types = ['B' for _ in instance.periods for _ in instance.customers]
+    names = [
+        'u~{}_{}'.format(period, customer)
+        for period in instance.periods
+        for customer in instance.customers
+    ]
+
+    return mip.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+
+# ---------------------------------------------------------------------------
+
+def create_vrv(instance, mip):
+    # Create v^{t}_{j} variables
+
+    lowers = [0. for _ in instance.periods for _ in instance.customers]
+    uppers = [gp.GRB.INFINITY for _ in instance.periods for _ in instance.customers]
+    coefs = [0. for _ in instance.periods for _ in instance.customers]
+    types = ['C' for _ in instance.periods for _ in instance.customers]
+    names = [
+        'v~{}_{}'.format(period, customer)
         for period in instance.periods
         for customer in instance.customers
     ]

@@ -20,6 +20,12 @@ class instance:
         # Print stored instance
         self.print_instance()
 
+
+        # Set proper big M values
+        self.bigM = {}
+        for customer in self.customers:
+            self.bigM[customer] = self.uppers[customer]
+
     def create_random(self, folder = 'instances'):
         # Create random instance
 
@@ -161,8 +167,12 @@ class instance:
 
         '''
         for customer in self.customers:
-            self.deltas[customer] = 2 * self.betas[customer]
+            self.alphas[customer] = 0
+            self.gammas[customer] = 0
+            self.betas[customer] = 0
+            self.deltas[customer] = 10
         '''
+
         '''
         for customer in self.customers:
             self.gammas[customer] = self.alphas[customer]

@@ -14,7 +14,10 @@ def build_linear(instance):
         'd1': vb.create_vrd1(instance, mip),
         'd2': vb.create_vrd2(instance, mip),
         'd3': vb.create_vrd3(instance, mip),
-        'z': vb.create_vrz(instance, mip)
+        's': vb.create_vrs(instance, mip),
+        't': vb.create_vrt(instance, mip),
+        'u': vb.create_vru(instance, mip),
+        'v': vb.create_vrv(instance, mip)
     }
 
     # Maximize the total revenue
@@ -27,15 +30,23 @@ def build_linear(instance):
     # Create main constraints
     ct.create_c1(instance, mip, variable)
     ct.create_c2(instance, mip, variable)
-    ct.create_c3(instance, mip, variable)
+    ct.create_c3A(instance, mip, variable)
+    ct.create_c3B(instance, mip, variable)
+    ct.create_c3C(instance, mip, variable)
+    ct.create_c3D(instance, mip, variable)
     ct.create_c4(instance, mip, variable)
-    ct.create_c5(instance, mip, variable)
-    ct.create_c6(instance, mip, variable)
-    ct.create_c7(instance, mip, variable)
-    ct.create_c8(instance, mip, variable)
-    ct.create_c9(instance, mip, variable)
-    # ct.create_c10(instance, mip, variable)
-    # ct.create_c11(instance, mip, variable)
+    ct.create_c5A(instance, mip, variable)
+    ct.create_c5B(instance, mip, variable)
+    ct.create_c5C(instance, mip, variable)
+    ct.create_c5D(instance, mip, variable)
+    ct.create_c6A(instance, mip, variable)
+    ct.create_c6B(instance, mip, variable)
+    ct.create_c6C(instance, mip, variable)
+    ct.create_c6D(instance, mip, variable)
+    ct.create_c6E(instance, mip, variable)
+    ct.create_c6F(instance, mip, variable)
+    ct.create_c6G(instance, mip, variable)
+    ct.create_c6H(instance, mip, variable)
 
     return mip, variable
 
