@@ -13,7 +13,7 @@ def write_statistics(instance, mip, lpr, optimal, heur_obj, heuristic, check, fo
             check))
 
 
-def print_solution(instance, mip, variable, verbose = 0):
+def detail_solution(instance, mip, variable, verbose = 0):
 
     print('Facility installation scheme:')
     for period in instance.periods:
@@ -35,8 +35,6 @@ def print_solution(instance, mip, variable, verbose = 0):
                 d2 = variable['d2'][period, customer].x
                 d3 = variable['d3'][period, customer].x
                 print('\t| At time period {}: [{}] -> [{}] -> [{}]'.format(period, d1, d2, d3))
-
-    print('Total revenue over time: {}'.format(mip.objVal))
 
 def format_solution(instance, mip, variable, verbose = 0):
 
