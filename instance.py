@@ -29,8 +29,11 @@ class instance:
     def create_random(self, folder = 'instances'):
         # Create random instance
 
-        # Read specifications from file
-        specs = pd.read_csv('{}/{}.csv'.format(folder, instance.keyword), index_col = 0)
+        try:
+            # Read specifications from file
+            specs = pd.read_csv('{}/{}.csv'.format(folder, instance.keyword), index_col = 0)
+        except:
+            specs = pd.read_csv('server/{}/{}.csv'.format(folder, instance.keyword), index_col = 0)
 
         rd.seed(int(specs.loc['seed']['value']))
 

@@ -10,6 +10,9 @@ outputs/*.out
 # Script files
 scripts/*.sh
 
+# Server files
+server/
+
 # Program files
 /*.lp
 
