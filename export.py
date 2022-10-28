@@ -1,10 +1,16 @@
-def write_statistics(instance, mip, lpr, optimal, heur_obj, heuristic, folder = 'records'):
+def write_statistics(instance, mip, lpr, optimal, heur_obj, heuristic, check, folder = 'records'):
 
     with open('{}/{}.csv'.format(folder, instance.keyword), 'w') as output:
 
-        output.write('keyword,mip_obj,mip_status,mip_time,lpr_obj,lpr_status,lpr_time,mip_solution,heur_obj,heur_solution\n')
+        output.write('keyword,mip_obj,mip_status,mip_time,lpr_obj,lpr_status,lpr_time,mip_solution,heur_obj,heur_solution, sanity\n')
 
-        output.write('{},{},{},{},{},{},{},{},{},{}\n'.format(instance.keyword, mip.objVal, mip.status, mip.runtime, lpr.objVal, lpr.status, lpr.runtime, '-'.join(optimal.values()), heur_obj, '-'.join(heuristic.values())))
+        output.write('{},{},{},{},{},{},{},{},{},{},{}\n'.format(
+            instance.keyword,
+            mip.objVal, mip.status, mip.runtime,
+            lpr.objVal, lpr.status, lpr.runtime,
+            '-'.join(optimal.values()), heur_obj,
+            '-'.join(heuristic.values()),
+            check))
 
 
 def print_solution(instance, mip, variable, verbose = 0):

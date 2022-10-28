@@ -14,7 +14,7 @@ absorption = ['linear', 'exponential']
 gammadelta = ['low','high'] # ['low', 'medium', 'high']
 starting = ['medium'] # ['low', 'medium', 'high']
 
-with open('database.csv','w') as database:
+with open('commands.sh','w') as commands:
     for a in locations:
         for b in customers:
             for c in periods:
@@ -59,10 +59,8 @@ with open('database.csv','w') as database:
                                                     output.write('cd ~/projects/def-jenasanj/walm/code-dsflp-dra/\n')
                                                     output.write('python main.py {}\n'.format(keyword))
 
-                                                database.write('{},{},{},{},{},{},{},{},{},{},{}\n'.format(keyword, a, b, c, d, e, f, g, h, i, j))
-
-                                                print('dos2unix ../scripts/{}.sh'.format(keyword))
-                                                print('sbatch ../scripts/{}.sh'.format(keyword))
+                                                commands.write('dos2unix ../scripts/{}.sh\n'.format(keyword))
+                                                commands.write('sbatch ../scripts/{}.sh\n'.format(keyword))
                                                 counter += 1
 
-print('Generated {} instances'.format(counter))
+print('Done generating {} instances and scripts'.format(counter))

@@ -2,7 +2,7 @@
 instances/*.csv
 
 # Record files
-outputs/*.csv
+records/*.csv
 
 # Output files
 outputs/*.out

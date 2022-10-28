@@ -29,8 +29,10 @@ ex.print_solution(instance, mip, variable)
 
 optimal = ex.format_solution(instance, mip, variable)
 
-ex.write_statistics(instance, mip, lpr, optimal, fitness, heuristic)
-
 validated = hr.evaluate_solution(instance, optimal)
 
-print('>>> Sanity check: {} = {} ? {}!'.format(mip.objVal,validated, is_equal(mip.objVal, validated)))
+check = is_equal(mip.objVal, validated)
+
+print('>>> Sanity check: {} = {} ? {}!'.format(mip.objVal, validated, check))
+
+ex.write_statistics(instance, mip, lpr, optimal, fitness, heuristic, check)
