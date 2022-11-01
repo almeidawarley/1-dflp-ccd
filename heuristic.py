@@ -92,14 +92,20 @@ def evaluate_solution(instance, solution):
 
     for period in instance.periods:
 
-        cumulative = apply_replenishment(instance, cumulative)
+            cumulative = apply_replenishment(instance, cumulative)
 
-        score = evaluate_location(instance, cumulative, solution[period])
+            try:
 
-        fitness += score
+                solution[period]
 
-        cumulative = apply_absorption(instance, cumulative, solution[period])
+                score = evaluate_location(instance, cumulative, solution[period])
 
-        cumulative = apply_consolidation(instance, cumulative)
+                fitness += score
+
+                cumulative = apply_absorption(instance, cumulative, solution[period])
+
+            except:
+
+                cumulative = apply_consolidation(instance, cumulative)
 
     return fitness
