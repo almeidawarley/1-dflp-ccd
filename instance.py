@@ -20,7 +20,6 @@ class instance:
         # Print stored instance
         self.print_instance()
 
-
         # Set proper big M values
         self.bigM = {}
         for customer in self.customers:
@@ -255,6 +254,8 @@ class instance:
 
     def print_instance(self):
         # Print stored instance
+
+        print('Keyword: <{}>'.format(self.keyword))
 
         print('Customers: {}'.format(self.customers))
         for customer in self.customers:

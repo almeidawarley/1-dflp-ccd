@@ -30,7 +30,7 @@ mark_section('Building the DSFLP-SRA for the instance...')
 
 mip, variable = fm.build_linear(instance)
 
-mip.write('debug.lp')
+mip.write('{}/{}.lp'.format('models', instance.keyword))
 
 # fm.warm_start(instance, mip, variable, heuristic)
 
