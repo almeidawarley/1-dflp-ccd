@@ -10,11 +10,16 @@ outputs/*.out
 # Script files
 scripts/*.sh
 
+# Model files
+models/*.lp
+
 # Server files
 server/instances/*.csv
 server/records/*.csv
 server/scripts/*.sh
 server/outputs/*.out
+server/models/*.lp
+server/*.7z
 
 # Program files
 /*.lp
