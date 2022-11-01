@@ -29,7 +29,7 @@ with open('commands.sh','w') as commands:
 
                                                 keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(a, b, c, d, e, f, g, h, i, j)
                                                 with open('experiments/{}/{}.csv'.format('instances', keyword), 'w') as output:
-                                                    output.write('title,value\n')n
+                                                    output.write('title,value\n')
 
                                                     output.write('seed,{}\n'.format(100))
                                                     output.write('number of locations,{}\n'.format(a))
