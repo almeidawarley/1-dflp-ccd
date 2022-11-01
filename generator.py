@@ -2,11 +2,11 @@ import uuid as ui
 
 counter = 0
 
-locations = [10, 50, 100]
-customers = [10, 50, 100]
-periods = [7, 14, 30]
+locations = [10] # [10, 50, 100]
+customers = [10] #, [10, 50, 100]
+periods = [7] # [7, 14, 30]
 
-preferences = ['high'] # ['low', 'medium', 'high']
+preferences = ['medium'] # ['low', 'medium', 'high']
 revenues = ['equal', 'different']
 replenishment = ['linear', 'exponential']
 alphabeta = ['low','high'] #  ['low', 'medium', 'high']
@@ -28,8 +28,8 @@ with open('commands.sh','w') as commands:
                                             if counter >= 0:
 
                                                 keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(a, b, c, d, e, f, g, h, i, j)
-                                                with open('server/{}/{}.csv'.format('instances', keyword), 'w') as output:
-                                                    output.write('title,value\n')
+                                                with open('experiments/{}/{}.csv'.format('instances', keyword), 'w') as output:
+                                                    output.write('title,value\n')n
 
                                                     output.write('seed,{}\n'.format(100))
                                                     output.write('number of locations,{}\n'.format(a))
@@ -43,7 +43,7 @@ with open('commands.sh','w') as commands:
                                                     output.write('absorption variability,{}\n'.format(i))
                                                     output.write('starting demand,{}\n'.format(j))
 
-                                                with open('server/{}/{}.sh'.format('scripts', keyword), 'w') as output:
+                                                with open('experiments/{}/{}.sh'.format('scripts', keyword), 'w') as output:
 
                                                     output.write('#!/bin/bash\n')
 

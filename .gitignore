@@ -14,12 +14,16 @@ scripts/*.sh
 models/*.lp
 
 # Server files
-server/instances/*.csv
-server/records/*.csv
-server/scripts/*.sh
-server/outputs/*.out
-server/models/*.lp
-server/*.7z
+servers/instances/*.csv
+servers/records/*.csv
+servers/scripts/*.sh
+servers/outputs/*.out
+servers/models/*.lp
+servers/*.7z
+
+# Experiment files
+experiments/instances/*.csv
+experiments/scripts/*.sh
 
 # Program files
 /*.lp
