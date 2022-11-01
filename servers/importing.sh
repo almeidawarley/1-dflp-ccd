@@ -1,4 +1,4 @@
-cd /cygdrive/c/Users/almei/Documents/Projects/phd-projects/code-dsflp-dra/server/
+cd /cygdrive/c/Users/almei/Documents/Projects/phd-projects/code-dsflp-dra/servers/
 scp walm@beluga.computecanada.ca:~/projects/def-jenasanj/walm/code-dsflp-dra/instances/* instances/
 scp walm@beluga.computecanada.ca:~/projects/def-jenasanj/walm/code-dsflp-dra/models/* models/
 scp walm@beluga.computecanada.ca:~/projects/def-jenasanj/walm/code-dsflp-dra/outputs/* outputs/

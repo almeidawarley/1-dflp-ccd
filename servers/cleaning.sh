@@ -1,4 +1,4 @@
-cd /cygdrive/c/Users/almei/Documents/Projects/phd-projects/code-dsflp-dra/server/
+cd /cygdrive/c/Users/almei/Documents/Projects/phd-projects/code-dsflp-dra/servers/
 rm instances/*.csv
 rm models/*.lp
 rm outputs/*.out
