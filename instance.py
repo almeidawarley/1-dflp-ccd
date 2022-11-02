@@ -32,7 +32,10 @@ class instance:
             # Read specifications from file
             specs = pd.read_csv('{}/{}.csv'.format(folder, instance.keyword), index_col = 0)
         except:
-            specs = pd.read_csv('server/{}/{}.csv'.format(folder, instance.keyword), index_col = 0)
+            try:
+                specs = pd.read_csv('servers/{}/{}.csv'.format(folder, instance.keyword), index_col = 0)
+            except:
+                specs = pd.read_csv('experiments/{}/{}.csv'.format(folder, instance.keyword), index_col = 0)
 
         rd.seed(int(specs.loc['seed']['value']))
 
@@ -47,113 +50,68 @@ class instance:
 
         # Decide patronization
         subsets = {}
-        for customer in self.customers:
-
-            if specs.loc['willingness to patronize']['value'] == 'low':
-                subsets[customer] = rd.sample(self.locations, rd.randint(1, 3))
-            elif specs.loc['willingness to patronize']['value'] == 'medium':
-                subsets[customer] = rd.sample(self.locations, rd.randint(4, 6))
-            elif specs.loc['willingness to patronize']['value'] == 'high':
-                subsets[customer] = rd.sample(self.locations, rd.randint(7, 9))
+        for location in self.locations:
+            if specs.loc['location relevances']['value'] == 'local':
+                subsets[location] = [location]
+            elif specs.loc['location relevances']['value'] == 'medium':
+                subsets[location] = rd.sample(self.customers, rd.randint(6, 9))
+            elif specs.loc['location relevances']['value'] == 'large':
+                subsets[location] = rd.sample(self.customers, rd.randint(7, 9))
             else:
-                exit('Invalid value for parameter willingness to patronize')
+                exit('Invalid value for parameter location relevances')
 
         # Create catalogs
         self.catalogs = {}
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                self.catalogs[location][customer] = 1. if location in subsets[customer] else 0.
+                self.catalogs[location][customer] = 1. if customer in subsets[location] else 0.
 
         # Create revenues
         self.revenues = {}
         for period in self.periods:
             self.revenues[period] = {}
             for location in self.locations:
-                if specs.loc['location revenues']['value'] == 'equal':
-                    self.revenues[period][location] =  1 # rd.randint(30,50)
+                if specs.loc['location revenues']['value'] == 'same':
+                    self.revenues[period][location] =  10
                 elif specs.loc['location revenues']['value'] == 'different':
-                    self.revenues[period][location] = rd.randint(5,15) / 10. if period == '1' else self.revenues[str(int(period) - 1)][location]
+                    self.revenues[period][location] = rd.randint(5,15) if period == '1' else self.revenues[str(int(period) - 1)][location]
                 else:
                     exit('Invalid value for parameter location revenues')
 
-        # Create alphas
+        # Create alphas and betas
         self.alphas = {}
-        for customer in self.customers:
-            if specs.loc['replenishment type']['value'] == 'linear':
-                self.alphas[customer] = 0
-            elif specs.loc['replenishment type']['value'] == 'exponential':
-                if specs.loc['replenishment variability']['value'] == 'low':
-                    self.alphas[customer] = rd.randint(4,6) / 10.
-                elif specs.loc['replenishment variability']['value'] == 'medium':
-                    self.alphas[customer] = rd.randint(3,7) / 10.
-                elif specs.loc['replenishment variability']['value'] == 'high':
-                    self.alphas[customer] = rd.randint(2,8) / 10.
-                else:
-                    exit('Invalid value for parameter replenishment variability')
-            else:
-                exit('Invalid value for parameter replenishment type')
-
-        # Create betas
         self.betas = {}
         for customer in self.customers:
-            if specs.loc['replenishment type']['value'] == 'exponential':
+            if specs.loc['replenishment type']['value'] == 'doubling':
+                self.alphas[customer] = 1
                 self.betas[customer] = 0
             elif specs.loc['replenishment type']['value'] == 'linear':
-                if specs.loc['replenishment variability']['value'] == 'low':
-                    self.betas[customer] = rd.randint(4,6)
-                elif specs.loc['replenishment variability']['value'] == 'medium':
-                    self.betas[customer] = rd.randint(3,7)
-                elif specs.loc['replenishment variability']['value'] == 'high':
-                    self.betas[customer] = rd.randint(2,8)
-                else:
-                    exit('Invalid value for parameter replenishment variability')
+                self.alphas[customer] = 0
+                self.betas[customer] = rd.randint(3, 7)
             else:
                 exit('Invalid value for parameter replenishment type')
 
-        # Create gammmas
+        # Create gammmas and deltas
         self.gammas = {}
-        for customer in self.customers:
-            if specs.loc['absorption type']['value'] == 'linear':
-                self.gammas[customer] = 0
-            elif specs.loc['absorption type']['value'] == 'exponential':
-                if specs.loc['absorption variability']['value'] == 'low':
-                    self.gammas[customer] = rd.randint(4,6) / 10.
-                elif specs.loc['absorption variability']['value'] == 'medium':
-                    self.gammas[customer] = rd.randint(3,7) / 10.
-                elif specs.loc['absorption variability']['value'] == 'high':
-                    self.gammas[customer] = rd.randint(2,8) / 10.
-                else:
-                    exit('Invalid value for parameter absorption variability')
-            else:
-                exit('Invalid value for parameter absorption type')
-
-        # Create deltas
         self.deltas = {}
         for customer in self.customers:
-            if specs.loc['absorption type']['value'] == 'exponential':
+            if specs.loc['absorption type']['value'] == 'everything':
+                self.gammas[customer] = 1
                 self.deltas[customer] = 0
             elif specs.loc['absorption type']['value'] == 'linear':
-                if specs.loc['absorption variability']['value'] == 'low':
-                    self.deltas[customer] = rd.randint(4,6)
-                elif specs.loc['absorption variability']['value'] == 'medium':
-                    self.deltas[customer] = rd.randint(3,7)
-                elif specs.loc['absorption variability']['value'] == 'high':
-                    self.deltas[customer] = rd.randint(2,8)
-                else:
-                    exit('Invalid value for parameter absorption variability')
+                    self.gammas[customer] = 0
+                    self.deltas[customer] = rd.randint(3, 7)
             else:
                 exit('Invalid value for parameter absorption type')
 
         # Create start values
         self.starts = {}
         for customer in self.customers:
-            if specs.loc['starting demand']['value'] == 'low':
-                self.starts[customer] = rd.randint(4,6)
-            elif specs.loc['starting demand']['value'] == 'medium':
-                self.starts[customer] = rd.randint(3,7)
-            elif specs.loc['starting demand']['value'] == 'high':
-                self.starts[customer] = rd.randint(2,8)
+            if specs.loc['starting demand']['value'] == 'lower':
+                self.starts[customer] = 1
+            elif specs.loc['starting demand']['value'] == 'upper':
+                self.starts[customer] = 10
             else:
                 exit('Invalid value for parameter starting demand')
 
@@ -165,7 +123,12 @@ class instance:
         # Create upper bounds
         self.uppers = {}
         for customer in self.customers:
-            self.uppers[customer] = 10
+            if specs.loc['upper demand']['value'] == '10':
+                self.uppers[customer] = 10
+            elif specs.loc['upper demand']['value'] == 'inf':
+                self.uppers[customer] = 10000
+            else:
+                exit('Invalid value for parameter upper demand')
 
         '''
         for customer in self.customers:
@@ -235,7 +198,7 @@ class instance:
         # Create lower bounds
         self.lowers = {}
         for customer in self.customers:
-            self.lowers[customer] = 0
+            self.lowers[customer] = 1
 
         # Create upper bounds
         self.uppers = {}

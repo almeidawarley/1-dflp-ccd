@@ -2,46 +2,46 @@ import uuid as ui
 
 counter = 0
 
-locations = [10] # [10, 50, 100]
-customers = [10] #, [10, 50, 100]
-periods = [7] # [7, 14, 30]
+seeds = [1,2,3,4,5]
 
-preferences = ['medium'] # ['low', 'medium', 'high']
-revenues = ['equal', 'different']
-replenishment = ['linear', 'exponential']
-alphabeta = ['low','high'] #  ['low', 'medium', 'high']
-absorption = ['linear', 'exponential']
-gammadelta = ['low','high'] # ['low', 'medium', 'high']
-starting = ['medium'] # ['low', 'medium', 'high']
+locations = [10]
+customers = [10]
+periods = [7, 14]
+
+relevances = ['local',  'medium', 'large']
+revenues = ['same', 'different']
+uppers = ['10', 'inf']
+startings = ['lower', 'upper']
+replenishments = ['doubling', 'linear']
+absorptions = ['everything', 'linear']
 
 with open('commands.sh','w') as commands:
-    for a in locations:
-        for b in customers:
-            for c in periods:
-                for d in preferences:
-                    for e in revenues:
-                        for f in replenishment:
-                            for g in alphabeta:
-                                for h in absorption:
-                                    for i in gammadelta:
-                                        for j in starting:
+    for a in seeds:
+        for b in locations:
+            for c in customers:
+                for d in periods:
+                    for e in relevances:
+                        for f in revenues:
+                            for g in uppers:
+                                for h in startings:
+                                    for i in replenishments:
+                                        for j in absorptions:
                                             if counter >= 0:
 
                                                 keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(a, b, c, d, e, f, g, h, i, j)
                                                 with open('experiments/{}/{}.csv'.format('instances', keyword), 'w') as output:
                                                     output.write('title,value\n')
 
-                                                    output.write('seed,{}\n'.format(100))
-                                                    output.write('number of locations,{}\n'.format(a))
-                                                    output.write('number of customers,{}\n'.format(b))
-                                                    output.write('number of periods,{}\n'.format(c))
-                                                    output.write('willingness to patronize,{}\n'.format(d))
-                                                    output.write('location revenues,{}\n'.format(e))
-                                                    output.write('replenishment type,{}\n'.format(f))
-                                                    output.write('replenishment variability,{}\n'.format(g))
-                                                    output.write('absorption type,{}\n'.format(h))
-                                                    output.write('absorption variability,{}\n'.format(i))
-                                                    output.write('starting demand,{}\n'.format(j))
+                                                    output.write('seed,{}\n'.format(a))
+                                                    output.write('number of locations,{}\n'.format(b))
+                                                    output.write('number of customers,{}\n'.format(c))
+                                                    output.write('number of periods,{}\n'.format(d))
+                                                    output.write('location relevances,{}\n'.format(e))
+                                                    output.write('location revenues,{}\n'.format(f))
+                                                    output.write('upper demand,{}\n'.format(g))
+                                                    output.write('starting demand,{}\n'.format(h))
+                                                    output.write('replenishment type,{}\n'.format(i))
+                                                    output.write('absorption type,{}\n'.format(j))
 
                                                 with open('experiments/{}/{}.sh'.format('scripts', keyword), 'w') as output:
 

@@ -3,9 +3,9 @@ seed,100
 number of locations,10
 number of customers,10
 number of periods,7
-location relevances,local
+location relevances,medium
+location revenues,same
 upper demand,inf
-starting demand,none
-location revenues,equal
+starting demand,lower
 replenishment type,linear
-absorption type,linear
+absorption type,everything
