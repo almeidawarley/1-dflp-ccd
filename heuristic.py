@@ -94,9 +94,7 @@ def evaluate_solution(instance, solution):
 
             cumulative = apply_replenishment(instance, cumulative)
 
-            try:
-
-                solution[period]
+            if solution[period] != '0':
 
                 score = evaluate_location(instance, cumulative, solution[period])
 
@@ -104,8 +102,6 @@ def evaluate_solution(instance, solution):
 
                 cumulative = apply_absorption(instance, cumulative, solution[period])
 
-            except:
-
-                cumulative = apply_consolidation(instance, cumulative)
+            cumulative = apply_consolidation(instance, cumulative)
 
     return fitness

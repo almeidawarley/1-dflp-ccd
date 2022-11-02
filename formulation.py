@@ -26,6 +26,8 @@ def build_linear(instance):
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
     # mip.setParam('NumericFocus', 3)
+    mip.setParam('Threads', 1)
+    mip.setParam('TimeLimit', 60 * 60 * 6)
 
     # Create main constraints
     ct.create_c1(instance, mip, variable)

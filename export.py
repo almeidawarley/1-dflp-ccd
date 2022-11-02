@@ -41,6 +41,9 @@ def format_solution(instance, mip, variable, verbose = 0):
     solution = {}
 
     for period in instance.periods:
+        solution[period] = '0'
+
+    for period in instance.periods:
         for location in instance.locations:
             value = variable['y'][period, location].x
             if value > 0.:
