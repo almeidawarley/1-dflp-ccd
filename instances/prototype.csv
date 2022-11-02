@@ -1,12 +1,11 @@
 title,value
 seed,100
-number of locations,5
-number of customers,5
-number of periods,5
-willingness to patronize,low
+number of locations,10
+number of customers,10
+number of periods,7
+location relevances,local
+upper demand,inf
+starting demand,none
 location revenues,equal
 replenishment type,linear
-replenishment variability,low
 absorption type,linear
-absorption variability,low
-starting demand,low

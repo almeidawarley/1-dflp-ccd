@@ -18,6 +18,7 @@ servers/instances/*.csv
 servers/records/*.csv
 servers/scripts/*.sh
 servers/outputs/*.out
+servers/outputs/*.sh
 servers/models/*.lp
 servers/*.7z
 
