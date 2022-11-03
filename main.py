@@ -28,7 +28,7 @@ print('Total revenue over time: {}'.format(fitness))
 
 mark_section('Building the DSFLP-SRA for the instance...')
 
-mip, variable = fm.build_linear(instance)
+mip, variable = fm.build_fancy(instance)
 
 mip.write('{}/{}.lp'.format('models', instance.keyword))
 

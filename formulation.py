@@ -1,11 +1,51 @@
 import gurobipy as gp
 import variables as vb
 import constraints as ct
+import validation as vd
 
-def build_linear(instance):
-    # Build linear DSFLP-DRA
+def build_simple(instance, method):
+    # Build the 1-DFLP
 
-    mip = gp.Model('DSFLP-DRA')
+    mip = gp.Model('1-DFLP')
+
+    # Create decision variables
+    variable = {
+        'y': vb.create_vry(instance, mip)
+    }
+
+    # Maximize the total revenue
+    mip.setAttr('ModelSense', -1)
+
+    # Turn off GUROBI logs
+    # mip.setParam('OutputFlag', 0)
+    # mip.setParam('NumericFocus', 3)
+    mip.setParam('Threads', 1)
+    mip.setParam('TimeLimit', 60 * 60 * 6)
+
+    # Create main constraints
+    ct.create_c1(instance, mip, variable)
+
+    # Create cumulative demands
+    cumulative = {}
+    for customer in instance.customers:
+        cumulative[customer] = instance.starts[customer]
+
+    # Compute capturable demands
+    for period in instance.periods:
+        for location in instance.locations:
+            if method in ['RO', 'CA']:
+                cumulative = vd.apply_replenishment(instance, cumulative)
+            coefficient = vd.evaluate_location(instance, cumulative, location)
+            if method in ['CA']:
+                cumulative = vd.apply_absorption(instance, cumulative, location, -1)
+            variable['y'][period, location].obj = coefficient
+
+    return mip, variable
+
+def build_fancy(instance):
+    # Build the 1-DFLP-DRA
+
+    mip = gp.Model('1-DFLP-DRA')
 
     # Create decision variables
     variable = {
