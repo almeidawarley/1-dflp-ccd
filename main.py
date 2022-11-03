@@ -17,6 +17,7 @@ mark_section('Generating instance information based on the parameters...')
 instance = ic.instance(keyword)
 
 solutions = {}
+times = {}
 
 mark_section('Applying the greedy heuristic to the instance...')
 
@@ -70,11 +71,13 @@ for method in ['1', '2', '3']:
 
     solutions['APR{}'.format(method)] = apr_solution
 
+    times['APR{}'.format(method)] = apr.runtime
+
     print('Approximate solution #{}: [{}] {}'.format(method, apr_objective, apr_solution))
 
 mark_section('Writing execution records to an output file...')
 
-ex.write_statistics(instance, mip, lpr, solutions)
+ex.write_statistics(instance, mip, lpr, solutions, times)
 
 mark_section('Validating the solution of the 1-DFLP-DRA analytically...')
 
