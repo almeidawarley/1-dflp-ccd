@@ -1,3 +1,7 @@
+# Analysis files
+commands.sh
+all-records.csv
+
 # Instance files
 instances/*.csv
 
@@ -28,15 +32,6 @@ experiments/scripts/*.sh
 
 # Program files
 /*.lp
-
-# Log files
-/*.out
-
-# Table files
-/*.csv
-
-# Debug files
-/*.txt
 
 # -------------------------------------------
 
