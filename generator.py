@@ -47,7 +47,7 @@ with open('commands.sh','w') as commands:
 
                                                     output.write('#!/bin/bash\n')
 
-                                                    output.write('#SBATCH --time=6:00:00\n')
+                                                    output.write('#SBATCH --time=12:00:00\n')
                                                     output.write('#SBATCH --job-name={}.job\n'.format(keyword))
                                                     output.write('#SBATCH --output={}.out\n'.format(keyword))
                                                     output.write('#SBATCH --account=def-jenasanj\n')

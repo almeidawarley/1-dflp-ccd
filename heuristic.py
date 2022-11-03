@@ -42,4 +42,4 @@ def greedy_heuristic(instance):
 
         cumulative = vd.apply_consolidation(instance, cumulative)
 
-    return solution, fitness
+    return solution, round(fitness, 2)

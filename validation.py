@@ -1,3 +1,6 @@
+def is_equal(a, b, error = 0.0001):
+    return abs(a - b) < error
+
 def apply_replenishment(instance, cumulative):
 
     for customer in instance.customers:
@@ -6,7 +9,7 @@ def apply_replenishment(instance, cumulative):
 
     return cumulative
 
-def apply_absorption(instance, cumulative, location, flag):
+def apply_absorption(instance, cumulative, location, flag = 0):
 
     for customer in instance.customers:
 
@@ -60,4 +63,4 @@ def evaluate_solution(instance, solution):
 
             cumulative = apply_consolidation(instance, cumulative)
 
-    return fitness
+    return round(fitness, 2)
