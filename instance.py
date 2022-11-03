@@ -118,7 +118,7 @@ class instance:
         # Create lower bounds
         self.lowers = {}
         for customer in self.customers:
-            self.lowers[customer] = 0
+            self.lowers[customer] = 1
 
         # Create upper bounds
         self.uppers = {}
