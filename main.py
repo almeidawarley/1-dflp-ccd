@@ -33,8 +33,6 @@ mip, variable = fm.build_fancy(instance)
 
 mip.write('{}/{}.lp'.format('models', instance.keyword))
 
-# fm.warm_start(instance, mip, variable, hrs_solution)
-
 mark_section('Solving the LPR of the 1-DFLP-DRA model...')
 
 lpr = mip.relax()
@@ -44,6 +42,8 @@ lpr.optimize()
 print('Optimal LPR solution: [{}] no interpretable solution'.format(round(lpr.objVal, 2)))
 
 mark_section('Solving the MIP of the 1-DFLP-DRA model...')
+
+# fm.warm_start(instance, variable, hrs_solution)
 
 mip.optimize()
 

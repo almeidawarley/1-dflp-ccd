@@ -32,13 +32,14 @@ def build_simple(instance, method):
 
     # Compute capturable demands
     for period in instance.periods:
+        if method in ['2', '3']:
+            cumulative = vd.apply_replenishment(instance, cumulative)
         for location in instance.locations:
-            if method in ['RO', 'CA']:
-                cumulative = vd.apply_replenishment(instance, cumulative)
             coefficient = vd.evaluate_location(instance, cumulative, location)
-            if method in ['CA']:
-                cumulative = vd.apply_absorption(instance, cumulative, location, -1)
             variable['y'][period, location].obj = coefficient
+        if method in ['3']:
+            cumulative = vd.apply_absorption(instance, cumulative, location, -1)
+            cumulative = vd.apply_consolidation(instance, cumulative)
 
     return mip, variable
 
@@ -92,7 +93,7 @@ def build_fancy(instance):
 
     return mip, variable
 
-def warm_start(instance, mip, variable, solution):
+def warm_start(instance, variable, solution):
     # Warm start with a feasible solution
 
     for period in instance.periods:

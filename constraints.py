@@ -28,14 +28,14 @@ def create_c2(instance, mip, variable):
 def create_c3A(instance, mip, variable):
     # Create constraint 3, part A
 
-    mip.addConstrs((variable['d1'][period, customer] <= (1 + instance.alphas[customer]) * variable['d3'][previous(period), customer] + instance.betas[customer] for period in instance.periods for customer in instance.customers), name = 'c3A')
+    mip.addConstrs((variable['d1'][period, customer] <= instance.uppers[customer] for period in instance.periods for customer in instance.customers), name = 'c3B')
 
 # ---------------------------------------------------------------------------
 
 def create_c3B(instance, mip, variable):
     # Create constraint 3, part B
 
-    mip.addConstrs((variable['d1'][period, customer] <= instance.uppers[customer] for period in instance.periods for customer in instance.customers), name = 'c3B')
+    mip.addConstrs((variable['d1'][period, customer] <= (1 + instance.alphas[customer]) * variable['d3'][previous(period), customer] + instance.betas[customer] for period in instance.periods for customer in instance.customers), name = 'c3A')
 
 # ---------------------------------------------------------------------------
 
