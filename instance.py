@@ -23,7 +23,7 @@ class instance:
         # Set proper big M values
         self.bigM = {}
         for customer in self.customers:
-            self.bigM[customer] = self.uppers[customer]
+            self.bigM[customer] = self.uppers[customer] + self.alphas[customer] * self.uppers[customer] + self.betas[customer] + self.gammas[customer] * self.uppers[customer] + self.deltas[customer]
 
     def create_random(self, folder = 'instances'):
         # Create random instance
@@ -54,9 +54,9 @@ class instance:
             if specs.loc['location relevances']['value'] == 'local':
                 subsets[location] = [location]
             elif specs.loc['location relevances']['value'] == 'medium':
-                subsets[location] = rd.sample(self.customers, rd.randint(6, 9))
+                subsets[location] = rd.sample(self.customers, rd.randint(2, 4))
             elif specs.loc['location relevances']['value'] == 'large':
-                subsets[location] = rd.sample(self.customers, rd.randint(7, 9))
+                subsets[location] = rd.sample(self.customers, rd.randint(5, 7))
             else:
                 exit('Invalid value for parameter location relevances')
 
@@ -88,7 +88,7 @@ class instance:
                 self.betas[customer] = 0
             elif specs.loc['replenishment type']['value'] == 'linear':
                 self.alphas[customer] = 0
-                self.betas[customer] = rd.randint(3, 7)
+                self.betas[customer] = rd.randint(1, 5)
             else:
                 exit('Invalid value for parameter replenishment type')
 
@@ -101,7 +101,7 @@ class instance:
                 self.deltas[customer] = 0
             elif specs.loc['absorption type']['value'] == 'linear':
                     self.gammas[customer] = 0
-                    self.deltas[customer] = rd.randint(3, 7)
+                    self.deltas[customer] = rd.randint(1, 5)
             else:
                 exit('Invalid value for parameter absorption type')
 
@@ -126,16 +126,16 @@ class instance:
             if specs.loc['upper demand']['value'] == '10':
                 self.uppers[customer] = 10
             elif specs.loc['upper demand']['value'] == 'inf':
-                self.uppers[customer] = 10000
+                self.uppers[customer] = 10 * 2 ** number_periods
             else:
                 exit('Invalid value for parameter upper demand')
 
         '''
         for customer in self.customers:
-            self.alphas[customer] = 0
-            self.gammas[customer] = 0
-            self.betas[customer] = 0
-            self.deltas[customer] = 10
+            self.alphas[customer] = 100
+            self.gammas[customer] = 100
+            self.deltas[customer] = 100 # self.deltas[customer] / 2
+            self.betas[customer] = 1 # 2 * self.deltas[customer]
         '''
 
         '''
