@@ -1,17 +1,24 @@
 import random as rd
 import pandas as pd
+import matplotlib.pyplot as pt
 
 class instance:
 
     def __init__(self, keyword):
         # Initiate instance class
 
+        # Store instance keyword
         instance.keyword = keyword
 
+        # Decide instance type
         if keyword == 'example':
-            # Create random instance
+            # Create example instance
             self.create_example()
+        elif keyword == 'spp':
+            # Create SPP instance
+            self.create_spp()
         else:
+            # Create random instance
             self.create_random()
 
         # Validate stored instance
@@ -24,6 +31,45 @@ class instance:
         self.bigM = {}
         for customer in self.customers:
             self.bigM[customer] = self.uppers[customer] + self.alphas[customer] * self.uppers[customer] + self.betas[customer] + self.gammas[customer] * self.uppers[customer] + self.deltas[customer]
+
+    def create_spp(self, K = 2):
+        # Create SPP instances
+
+        elements = ['1', '2', '3', '4', '5']
+        collections = [['1', '2', '3'], ['1', '4', '5'], ['1', '5']]
+
+        self.locations = [str(i + 1) for i in range(0, len(collections))]
+        self.customers = [e for e in elements]
+        self.periods = [str(i + 1) for i in range(0, K)]
+
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1. if customer in collections[int(location)-1] else 0.
+
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] =  1/len(collections[int(location)-1])
+
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.deltas = {}
+        self.starts = {}
+        self.uppers = {}
+        self.lowers = {}
+        for customer in self.customers:
+            self.alphas[customer] = 0
+            self.betas[customer] = 0
+            self.gammas[customer] = 0
+            self.deltas[customer] = 1
+            self.starts[customer] = 1
+            self.lowers[customer] = 0
+            self.uppers[customer] = 1000000
+
 
     def create_random(self, folder = 'instances'):
         # Create random instance
@@ -47,6 +93,26 @@ class instance:
         self.locations = [str(i+1) for i in range(number_locations)]
         self.customers = [str(i+1) for i in range(number_customers)]
         self.periods = [str(i+1) for i in range(number_periods)]
+
+        '''
+        # Create map points
+        self.points = {}
+        X = []
+        Y = []
+        for location in self.locations:
+            self.points['i{}'.format(location)] = (rd.randint(-5, 5), rd.randint(-5, 5))
+            X.append(self.points['i{}'.format(location)][0])
+            Y.append(self.points['i{}'.format(location)][1])
+        pt.scatter(X, Y, marker = 'x')
+        X = []
+        Y = []
+        for customer in self.customers:
+            self.points['j{}'.format(customer)] = (rd.randint(-5, 5), rd.randint(-5, 5))
+            X.append(self.points['j{}'.format(customer)][0])
+            Y.append(self.points['j{}'.format(customer)][1])
+        pt.scatter(X, Y, marker = 'o')
+        pt.show()
+        '''
 
         # Decide patronization
         subsets = {}
