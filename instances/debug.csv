@@ -1,0 +1,11 @@
+title,value
+seed,10
+number of locations,10
+number of customers,10
+number of periods,7
+location relevances,local
+location revenues,same
+upper demand,inf
+starting demand,lower
+replenishment type,doubling
+absorption type,linear
