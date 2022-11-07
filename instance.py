@@ -21,8 +21,8 @@ class instance:
             # Create random instance
             self.create_random()
 
-        # Validate stored instance
-        self.validate_instance()
+        # Fix created instance
+        self.fix_instance()
 
         # Print stored instance
         self.print_instance()
@@ -271,14 +271,15 @@ class instance:
         for customer in self.customers:
             self.uppers[customer] = 50
 
-    def validate_instance(self):
-        # Validate stored instance
+    def fix_instance(self):
+        # Fix created instance
 
         # Check if customers have at least one location in the catalog
         for customer in self.customers:
             if sum([self.catalogs[location][customer] for location in self.locations]) == 0:
-                raise Exception('Customer {} has no location in the catalog'.format(customer))
-        pass
+                location = rd.sample(self.locations, 1)[0]
+                self.catalogs[location][customer]  = 1.
+                print('Fix: customer {} had no location in the catalog, assigned it to location {}'.format(customer, location))
 
 
     def print_instance(self):
