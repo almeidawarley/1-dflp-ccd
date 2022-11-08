@@ -1,4 +1,4 @@
-cd ~/shortcut/models/*
+cd ../
 rm instances/*.csv
 rm models/*.lp
 rm outputs/*.out

@@ -1,4 +1,4 @@
-cd /cygdrive/c/Users/almei/Documents/Projects/phd-projects/1-dflp-ra/servers/
+cd ../servers/
 scp walm@beluga.computecanada.ca:~/shortcut/instances/* instances/
 scp walm@beluga.computecanada.ca:~/shortcut/models/* models/
 scp walm@beluga.computecanada.ca:~/shortcut/outputs/* outputs/
