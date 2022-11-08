@@ -24,28 +24,34 @@ def write_statistics(instance, mip, lpr, solutions, times, folder = 'records'):
             check))
 
 
-def detail_solution(instance, mip, variable, verbose = 0):
+def detail_solution(instance, variable):
 
-    print('Facility installation scheme:')
-    for period in instance.periods:
-        for location in instance.locations:
-            value = variable['y'][period, location].x
-            if value > 0.:
-                print('\t| At time period {} location {}'.format(period, location))
-                for customer in instance.customers:
-                    captured = variable['w'][period, location, customer].x
-                    if captured > 0.:
-                        print('\t\t| Got {} units from customer {}'.format(captured, customer, period))
+    solution = {}
 
-    if verbose > 1:
+    with open('detailed.csv', 'w') as output:
+
+        for period in instance.periods:
+            solution[period] = '0'
+
+        d1 = {}
+        d2 = {}
+        d3 = {}
         for customer in instance.customers:
-            print('Demand behaviour for customer {}:'.format(customer))
-            print('\t| Start with demand {}'.format(variable['d3']['0', customer].x))
-            for period in instance.periods:
-                d1 = variable['d1'][period, customer].x
-                d2 = variable['d2'][period, customer].x
-                d3 = variable['d3'][period, customer].x
-                print('\t| At time period {}: [{}] -> [{}] -> [{}]'.format(period, d1, d2, d3))
+            d3[customer] = variable['d3']['0', customer].x
+        output.write('{},{},{}\n'.format('0','0',','.join([str(d3[customer]) for customer in instance.customers])))
+
+        for period in instance.periods:
+            for location in instance.locations:
+                value = variable['y'][period, location].x
+                if value > 0.:
+                    solution[period] = location
+            for customer in instance.customers:
+                d1[customer] = variable['d1'][period, customer].x
+                d2[customer] = variable['d2'][period, customer].x
+                d3[customer] = variable['d3'][period, customer].x
+            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d1[customer]) for customer in instance.customers])))
+            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d2[customer]) for customer in instance.customers])))
+            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d3[customer]) for customer in instance.customers])))
 
 def format_solution(instance, mip, variable, verbose = 0):
 

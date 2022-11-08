@@ -47,7 +47,7 @@ mark_section('Solving the MIP of the 1-DFLP-DRA model...')
 
 mip.optimize()
 
-# ex.detail_solution(instance, mip, variable)
+ex.detail_solution(instance, variable)
 
 mip_solution = ex.format_solution(instance, mip, variable)
 

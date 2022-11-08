@@ -49,9 +49,15 @@ def evaluate_solution(instance, solution):
 
     fitness = 0.
 
-    for period in instance.periods:
+    with open('evaluated.csv', 'w') as output:
+
+        output.write('{},{},{}\n'.format('0', '0', ','.join([str(cumulative[customer]) for customer in instance.customers])))
+
+        for period in instance.periods:
 
             cumulative = apply_replenishment(instance, cumulative)
+
+            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(cumulative[customer]) for customer in instance.customers])))
 
             if solution[period] != '0':
 
@@ -61,6 +67,10 @@ def evaluate_solution(instance, solution):
 
                 cumulative = apply_absorption(instance, cumulative, solution[period])
 
+            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(cumulative[customer]) for customer in instance.customers])))
+
             cumulative = apply_consolidation(instance, cumulative)
+
+            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(cumulative[customer]) for customer in instance.customers])))
 
     return round(fitness, 2)
