@@ -56,7 +56,7 @@ with open('commands.sh','w') as commands:
                                                     output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
                                                     output.write('#SBATCH --mail-type=FAIL\n')
 
-                                                    output.write('cd ~/projects/def-jenasanj/walm/code-dsflp-dra/\n')
+                                                    output.write('cd ~/shortcut/\n')
                                                     output.write('python main.py {}\n'.format(keyword))
 
                                                 commands.write('dos2unix ../scripts/{}.sh\n'.format(keyword))

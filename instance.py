@@ -198,6 +198,13 @@ class instance:
 
         '''
         for customer in self.customers:
+            self.alphas[customer] = 0
+            self.gammas[customer] = 0
+            self.deltas[customer] = 2
+            self.betas[customer] = 0
+        '''
+        '''
+        for customer in self.customers:
             self.alphas[customer] = 100
             self.gammas[customer] = 100
             self.deltas[customer] = 100 # self.deltas[customer] / 2
@@ -301,9 +308,7 @@ class instance:
 
         print('Locations: {}'.format(self.locations))
         for location in self.locations:
-            print('\t| {}: {}'.format(location, self.capturable_from(location)))
-
-        pass
+            print('\t| {} ({}) : {}'.format(location, self.revenues['1'][location], self.capturable_from(location)))
 
     def capturable_from(self, location):
         # Retrieve capturable customers from some location
