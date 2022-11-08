@@ -49,7 +49,33 @@ def evaluate_solution(instance, solution):
 
     fitness = 0.
 
-    with open('evaluated.csv', 'w') as output:
+    for period in instance.periods:
+
+        cumulative = apply_replenishment(instance, cumulative)
+
+        if solution[period] != '0':
+
+            score = evaluate_location(instance, cumulative, solution[period])
+
+            fitness += score
+
+            cumulative = apply_absorption(instance, cumulative, solution[period])
+
+        cumulative = apply_consolidation(instance, cumulative)
+
+    return round(fitness, 2)
+
+def detail_solution(instance, solution, filename = 'detailed_evaluation.csv'):
+
+    cumulative = {}
+
+    for customer in instance.customers:
+
+        cumulative[customer] = instance.starts[customer]
+
+    fitness = 0.
+
+    with open(filename, 'w') as output:
 
         output.write('{},{},{}\n'.format('0', '0', ','.join([str(cumulative[customer]) for customer in instance.customers])))
 
@@ -72,5 +98,3 @@ def evaluate_solution(instance, solution):
             cumulative = apply_consolidation(instance, cumulative)
 
             output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(cumulative[customer]) for customer in instance.customers])))
-
-    return round(fitness, 2)

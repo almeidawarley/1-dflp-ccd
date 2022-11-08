@@ -24,11 +24,11 @@ def write_statistics(instance, mip, lpr, solutions, times, folder = 'records'):
             check))
 
 
-def detail_solution(instance, variable):
+def detail_solution(instance, variable, filename = 'detailed_export.csv'):
 
     solution = {}
 
-    with open('detailed.csv', 'w') as output:
+    with open(filename, 'w') as output:
 
         for period in instance.periods:
             solution[period] = '0'
@@ -43,7 +43,7 @@ def detail_solution(instance, variable):
         for period in instance.periods:
             for location in instance.locations:
                 value = variable['y'][period, location].x
-                if value > 0.:
+                if vd.is_equal(value, 1.):
                     solution[period] = location
             for customer in instance.customers:
                 d1[customer] = variable['d1'][period, customer].x
@@ -63,7 +63,7 @@ def format_solution(instance, mip, variable, verbose = 0):
     for period in instance.periods:
         for location in instance.locations:
             value = variable['y'][period, location].x
-            if value > 0.:
+            if vd.is_equal(value, 1.):
                 solution[period] = location
 
     return solution
