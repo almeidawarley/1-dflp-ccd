@@ -2,7 +2,7 @@ import validation as vd
 
 def write_statistics(instance, mip, lpr, solutions, times, folder = 'records'):
 
-    check = vd.is_equal(mip.objVal, vd.evaluate_solution(instance, solutions['MIP']))
+    check = vd.is_equal(round(mip.objVal, 2), vd.evaluate_solution(instance, solutions['MIP']))
     mip_objective = vd.evaluate_solution(instance, solutions['MIP'])
     hrs_objective = vd.evaluate_solution(instance, solutions['HRS'])
     apr1_objective = vd.evaluate_solution(instance, solutions['APR1'])
