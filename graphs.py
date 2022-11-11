@@ -2,6 +2,12 @@ import matplotlib.pyplot as plt
 import math as mt
 import numpy as np
 
+
+'''
+    Firt sequence of graphs: beta = 0.25, delta = 0.50, demand_ref = 1, demand_ref = 2.5
+    Second sequence of graphs: alpha = 0.25, gamma = 0.50, demand_ref = 1, demand_ref = 2.5
+'''
+
 def apply_replenishment(demand, alpha, beta):
 
     return (1 + alpha) * demand + beta
@@ -10,20 +16,20 @@ def apply_absorption(demand, gamma, delta):
 
     return (1 - gamma) * demand - delta
 
-time_periods = [i for i in range(0, 6)]
+time_periods = [i for i in range(0, 10)]
 
 computed_demands = []
 predicted_demands = []
 
 # Replenishment
-alpha = 0
-beta  = 1
+alpha = 0.25
+beta  = 0
 
 # Absorption
-gamma = 0
-delta = 2
+gamma = 0.5
+delta = 0
 
-demand_ref = 6
+demand_ref = 3
 
 # ------------------------------------------------------------------------
 # Compute actual demands based on how the problem works
@@ -40,13 +46,18 @@ for t in time_periods:
     # demand_next = apply_replenishment(demand_previous, alpha, beta)
     demand_next = apply_replenishment(demand_previous, alpha, beta)
 
-    if t == 2:
+    if t == 4:
         d = 0
     else:
         d = delta
 
+    if t == 4:
+        g = 0
+    else:
+        g = gamma
+
     # The absorption step happens if captured
-    demand_next = apply_absorption(demand_next, gamma, d)
+    demand_next = apply_absorption(demand_next, g, d)
     # dn = absorption(dp, gamma * 10* (len(ts) - t), delta)
 
     demand_previous = demand_next
@@ -80,7 +91,7 @@ plt.plot(time_periods, computed_demands)
 for t in time_periods:
 
     print('\draw ({},0) node[anchor=north east] {}$t_{}${};'.format(t + 1.25, '{', t, '}'))
-    print('\draw (-0.25,{}) node[anchor=north east] {}$d^{}t_{}{}_{}${};'.format(computed_demands[t] + 0.25, '{', '{', t, '}', '{j}','}'))
+    # print('\draw (-0.25,{}) node[anchor=north east] {}$d^{}t_{}{}_{}${};'.format(computed_demands[t] + 0.25, '{', '{', t, '}', '{j}','}'))
     print('\draw (-0.15,{}) -- (0.15, {});'.format(computed_demands[t], computed_demands[t]))
 
     xl = t + 1 - 0.1

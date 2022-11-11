@@ -196,26 +196,6 @@ class instance:
             else:
                 exit('Invalid value for parameter upper demand')
 
-        '''
-        for customer in self.customers:
-            self.alphas[customer] = 0
-            self.gammas[customer] = 0
-            self.deltas[customer] = 2
-            self.betas[customer] = 0
-        '''
-        '''
-        for customer in self.customers:
-            self.alphas[customer] = 100
-            self.gammas[customer] = 100
-            self.deltas[customer] = 100 # self.deltas[customer] / 2
-            self.betas[customer] = 1 # 2 * self.deltas[customer]
-        '''
-
-        '''
-        for customer in self.customers:
-            self.gammas[customer] = self.alphas[customer]
-        '''
-
     def create_example(self):
         # Create example instance
 
