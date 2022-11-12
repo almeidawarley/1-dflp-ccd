@@ -10,11 +10,14 @@ def mark_section(title):
     print(title)
     print('\n-----------------------------------------------------------------------------------\n')
 
+def compute_gap(major, minor):
+    return round((major - minor) / major, 4)
+
 def main():
 
     parser = ap.ArgumentParser(description = 'Run 1-DFLP-RA for some instance')
     parser.add_argument('keyword', type = str, help = 'Instance keyword following established patterns')
-    parser.add_argument('-p', '--project', type = str, help = 'Project name on Weights & Biases for storing results')
+    parser.add_argument('-p', default = '1-dflp-ra', type = str, help = 'Project name on Weights & Biases for storing results')
     args = parser.parse_args()
 
     mark_section('Generating instance information based on the parameters...')
@@ -66,7 +69,9 @@ def main():
         'mip_solution': '-'.join(mip_solution.values()),
         'mip_runtime': mip_runtime,
         'mip_status': mip.status,
-        'mip_optgap': mip.MIPGap
+        'mip_optgap': mip.MIPGap,
+        'mip_intgap': compute_gap(lpr_objective, mip_objective),
+        'hrs_objgap': compute_gap(mip_objective, hrs_objective)
     })
 
     mark_section('Validating the solution of the 1-DFLP-RA analytically...')
@@ -93,7 +98,8 @@ def main():
             'ap{}_objective'.format(method): apr_objective,
             'ap{}_solution'.format(method): '-'.join(apr_solution.values()),
             'ap{}_runtime'.format(method): apr_runtime,
-            'ap{}_status'.format(method): apr.status
+            'ap{}_status'.format(method): apr.status,
+            'ap{}_optgap'.format(method): compute_gap(mip_objective, apr_objective)
         })
 
     mark_section('Wrapping up the execution with sanity check {}!'.format(validation))
