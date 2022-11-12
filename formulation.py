@@ -99,3 +99,49 @@ def warm_start(instance, variable, solution):
     for period in instance.periods:
         for location in instance.locations:
             variable['y'][period, location].start  = 1. if location == solution[period] else 0.
+
+def format_solution(instance, mip, variable, verbose = 0):
+    # Format model solution as dictionary
+
+    solution = {}
+
+    for period in instance.periods:
+        solution[period] = '0'
+
+    for period in instance.periods:
+        for location in instance.locations:
+            value = variable['y'][period, location].x
+            if vd.is_equal(value, 1.):
+                solution[period] = location
+
+    return solution
+
+def detail_solution(instance, variable, filename = 'detailed_mip.csv'):
+    # Detail cumulative demand over time
+
+    solution = {}
+
+    with open(filename, 'w') as output:
+
+        for period in instance.periods:
+            solution[period] = '0'
+
+        d1 = {}
+        d2 = {}
+        d3 = {}
+        for customer in instance.customers:
+            d3[customer] = variable['d3']['0', customer].x
+        output.write('{},{},{}\n'.format('0','0',','.join([str(d3[customer]) for customer in instance.customers])))
+
+        for period in instance.periods:
+            for location in instance.locations:
+                value = variable['y'][period, location].x
+                if vd.is_equal(value, 1.):
+                    solution[period] = location
+            for customer in instance.customers:
+                d1[customer] = variable['d1'][period, customer].x
+                d2[customer] = variable['d2'][period, customer].x
+                d3[customer] = variable['d3'][period, customer].x
+            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d1[customer]) for customer in instance.customers])))
+            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d2[customer]) for customer in instance.customers])))
+            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d3[customer]) for customer in instance.customers])))

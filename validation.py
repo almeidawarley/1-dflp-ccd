@@ -65,7 +65,7 @@ def evaluate_solution(instance, solution):
 
     return round(fitness, 2)
 
-def detail_solution(instance, solution, filename = 'detailed_evaluation.csv'):
+def detail_solution(instance, solution, filename = 'detailed_hrs.csv'):
 
     cumulative = {}
 

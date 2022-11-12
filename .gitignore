@@ -1,6 +1,8 @@
+# Wandb stuff
+wandb/
+
 # Analysis files
 commands.sh
-all-records.csv
 
 # Instance files
 instances/*.csv

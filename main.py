@@ -3,12 +3,15 @@ import formulation as fm
 import heuristic as hr
 import validation as vd
 import export as ex
+# import wandb as wb
 import sys
 
 def mark_section(title):
     print('\n-----------------------------------------------------------------------------------\n')
     print(title)
     print('\n-----------------------------------------------------------------------------------\n')
+
+# wb.init(project='my-test-project')
 
 keyword = sys.argv[1]
 
@@ -47,9 +50,7 @@ mark_section('Solving the MIP of the 1-DFLP-DRA model...')
 
 mip.optimize()
 
-ex.detail_solution(instance, variable)
-
-mip_solution = ex.format_solution(instance, mip, variable)
+mip_solution = fm.format_solution(instance, mip, variable)
 
 mip_objective = round(mip.objVal, 2)
 
@@ -65,7 +66,7 @@ for method in ['1', '2', '3']:
 
     apr.optimize()
 
-    apr_solution = ex.format_solution(instance, apr, variable)
+    apr_solution = fm.format_solution(instance, apr, variable)
 
     apr_objective = vd.evaluate_solution(instance, apr_solution)
 
@@ -86,3 +87,5 @@ validated = vd.evaluate_solution(instance, mip_solution)
 check = vd.is_equal(mip_objective, validated)
 
 print('>>> Sanity check: {} = {} ? {}!'.format(mip_objective, validated, check))
+
+# wb.log({'keyword': keyword, 'mip_objective': mip_objective, 'hrs_objective': hrs_objective})
