@@ -1,5 +1,5 @@
 import random as rd
-import pandas as pd
+import json as js
 import matplotlib.pyplot as pt
 
 class instance:
@@ -76,19 +76,18 @@ class instance:
 
         try:
             # Read specifications from file
-            specs = pd.read_csv('{}/{}.csv'.format(folder, instance.keyword), index_col = 0)
+            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
+                self.parameters = js.load(content)
         except:
-            try:
-                specs = pd.read_csv('servers/{}/{}.csv'.format(folder, instance.keyword), index_col = 0)
-            except:
-                specs = pd.read_csv('experiments/{}/{}.csv'.format(folder, instance.keyword), index_col = 0)
+            with open ('experiments/{}/{}.json'.format(folder, self.keyword), 'r') as content:
+                self.parameters = js.load(content)
 
-        rd.seed(int(specs.loc['seed']['value']))
+        rd.seed(int(self.parameters['seed']))
 
         # Set instance size
-        number_locations = int(specs.loc['number of locations']['value'])
-        number_customers = int(specs.loc['number of customers']['value'])
-        number_periods = int(specs.loc['number of periods']['value'])
+        number_locations = int(self.parameters['number of locations'])
+        number_customers = int(self.parameters['number of customers'])
+        number_periods = int(self.parameters['number of periods'])
 
         self.locations = [str(i+1) for i in range(number_locations)]
         self.customers = [str(i+1) for i in range(number_customers)]
@@ -117,11 +116,11 @@ class instance:
         # Decide patronization
         subsets = {}
         for location in self.locations:
-            if specs.loc['location relevances']['value'] == 'local':
+            if self.parameters['location relevances'] == 'local':
                 subsets[location] = [location]
-            elif specs.loc['location relevances']['value'] == 'medium':
+            elif self.parameters['location relevances'] == 'medium':
                 subsets[location] = rd.sample(self.customers, rd.randint(2, 4))
-            elif specs.loc['location relevances']['value'] == 'large':
+            elif self.parameters['location relevances'] == 'large':
                 subsets[location] = rd.sample(self.customers, rd.randint(5, 7))
             else:
                 exit('Invalid value for parameter location relevances')
@@ -138,9 +137,9 @@ class instance:
         for period in self.periods:
             self.revenues[period] = {}
             for location in self.locations:
-                if specs.loc['location revenues']['value'] == 'same':
+                if self.parameters['location revenues'] == 'same':
                     self.revenues[period][location] =  10
-                elif specs.loc['location revenues']['value'] == 'different':
+                elif self.parameters['location revenues'] == 'different':
                     self.revenues[period][location] = rd.randint(5,15) if period == '1' else self.revenues[str(int(period) - 1)][location]
                 else:
                     exit('Invalid value for parameter location revenues')
@@ -149,10 +148,10 @@ class instance:
         self.alphas = {}
         self.betas = {}
         for customer in self.customers:
-            if specs.loc['replenishment type']['value'] == 'doubling':
+            if self.parameters['replenishment type'] == 'doubling':
                 self.alphas[customer] = 1
                 self.betas[customer] = 0
-            elif specs.loc['replenishment type']['value'] == 'linear':
+            elif self.parameters['replenishment type'] == 'linear':
                 self.alphas[customer] = 0
                 self.betas[customer] = rd.randint(1, 5)
             else:
@@ -162,10 +161,10 @@ class instance:
         self.gammas = {}
         self.deltas = {}
         for customer in self.customers:
-            if specs.loc['absorption type']['value'] == 'everything':
+            if self.parameters['absorption type'] == 'everything':
                 self.gammas[customer] = 1
                 self.deltas[customer] = 0
-            elif specs.loc['absorption type']['value'] == 'linear':
+            elif self.parameters['absorption type'] == 'linear':
                     self.gammas[customer] = 0
                     self.deltas[customer] = rd.randint(1, 5)
             else:
@@ -174,9 +173,9 @@ class instance:
         # Create start values
         self.starts = {}
         for customer in self.customers:
-            if specs.loc['starting demand']['value'] == 'lower':
+            if self.parameters['starting demand'] == 'lower':
                 self.starts[customer] = 1
-            elif specs.loc['starting demand']['value'] == 'upper':
+            elif self.parameters['starting demand'] == 'upper':
                 self.starts[customer] = 10
             else:
                 exit('Invalid value for parameter starting demand')
@@ -189,9 +188,9 @@ class instance:
         # Create upper bounds
         self.uppers = {}
         for customer in self.customers:
-            if specs.loc['upper demand']['value'] == '10':
+            if self.parameters['upper demand'] == '10':
                 self.uppers[customer] = 10
-            elif specs.loc['upper demand']['value'] == 'inf':
+            elif self.parameters['upper demand'] == 'inf':
                 self.uppers[customer] = 10 * 2 ** number_periods
             else:
                 exit('Invalid value for parameter upper demand')

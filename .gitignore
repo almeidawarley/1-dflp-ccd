@@ -1,8 +1,10 @@
+# -------------------------------------------
+
 # Wandb stuff
 wandb/
 
 # Temporary files
-temporary/
+archives/
 
 # Instance files
 instances/*.json
