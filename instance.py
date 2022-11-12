@@ -1,6 +1,7 @@
-import random as rd
-import json as js
 import matplotlib.pyplot as pt
+import random as rd
+import math as mt
+import json as js
 
 class instance:
 
@@ -25,7 +26,7 @@ class instance:
         self.fix_instance()
 
         # Print stored instance
-        self.print_instance()
+        # self.print_instance()
 
         # Set proper big M values
         self.bigM = {}
@@ -97,27 +98,32 @@ class instance:
         self.lowers = {}
         self.uppers = {}
         for customer in self.customers:
-            random = rd.randint(5 - self.parameters['zeta'], 5 + self.parameters['zeta'])
+            lower = 100 - self.parameters['zeta']
+            upper = 100 + self.parameters['zeta']
+            random_s = rd.randint(lower, upper) / 100.
+            lower = 100 - self.parameters['eta']
+            upper = 100 + self.parameters['eta']
+            random_t = rd.randint(lower, upper) / 100.
             if self.parameters['replenishment'] == 'linear':
                 self.alphas[customer] = 0
-                self.betas[customer] = random
+                self.betas[customer] = round(random_s * 10, 2)
                 self.lowers[customer] = 0
             elif self.parameters['replenishment'] == 'exponential':
-                self.alphas[customer] = random/10.
+                self.alphas[customer] = round(random_s * 0.5, 2)
                 self.betas[customer] = 0
-                self.lowers[customer] = 10./random
+                self.lowers[customer] = round(1 / (1 + self.alphas[customer]), 2)
             else:
                 exit('Invalid value for parameter replenishment type')
             if self.parameters['absorption'] == 'linear':
-                    self.gammas[customer] = 0
-                    self.deltas[customer] = 2 * random
+                self.gammas[customer] = 0
+                self.deltas[customer] = round(random_s * random_t * 10, 2)
             elif self.parameters['absorption'] == 'exponential':
-                self.gammas[customer] = 2 * random/10.
+                self.gammas[customer] = round(random_s * random_t * 0.5, 2)
                 self.deltas[customer] = 0
             else:
                 exit('Invalid value for parameter absorption type')
-            self.starts[customer] = self.lowers[customer]
-            self.uppers[customer] = rd.sample([10,20,30,40,50], 1)[0]
+            self.starts[customer] = rd.sample([0,10,20], 1)[0]
+            self.uppers[customer] = 100
 
     def create_spp(self, K = 2):
         # Create SPP instances

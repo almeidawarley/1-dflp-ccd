@@ -17,16 +17,20 @@ def main():
 
     parser = ap.ArgumentParser(description = 'Run 1-DFLP-RA for some instance')
     parser.add_argument('keyword', type = str, help = 'Instance keyword following established patterns')
-    parser.add_argument('-p', default = '1-dflp-ra', type = str, help = 'Project name on Weights & Biases for storing results')
+    parser.add_argument('-p', '--project', default = '1-dflp-ra', type = str, help = 'Project name on Weights & Biases for storing results')
     args = parser.parse_args()
-
-    mark_section('Generating instance information based on the parameters...')
     instance = ic.instance(args.keyword)
 
     mark_section('Initiating a job for storing results at Weights & Biases ...')
     wb.init(project = args.project, config = instance.parameters)
     wb.save('instances/{}.json'.format(instance.keyword))
     wb.save('scripts/{}.sh'.format(instance.keyword))
+
+    mark_section('Generating instance information based on the parameters...')
+    instance.print_instance()
+    wb.log({
+        'keyword': instance.keyword
+    })
 
     mark_section('Applying the greedy heuristic to the instance...')
     hrs_solution, hrs_objective = hr.greedy_heuristic(instance)
