@@ -1,39 +1,14 @@
 # Wandb stuff
 wandb/
 
-# Analysis files
-commands.sh
+# Temporary files
+temporary/
 
 # Instance files
-instances/*.csv
-
-# Record files
-records/*.csv
-
-# Output files
-outputs/*.out
+instances/*.json
 
 # Script files
 scripts/*.sh
-
-# Model files
-models/*.lp
-
-# Server files
-servers/instances/*.csv
-servers/records/*.csv
-servers/scripts/*.sh
-servers/outputs/*.out
-servers/outputs/*.sh
-servers/models/*.lp
-servers/*.7z
-
-# Experiment files
-experiments/instances/*.csv
-experiments/scripts/*.sh
-
-# Program files
-/*.lp
 
 # -------------------------------------------
 

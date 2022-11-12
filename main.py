@@ -3,7 +3,7 @@ import formulation as fm
 import heuristic as hr
 import validation as vd
 import export as ex
-# import wandb as wb
+import wandb as wb
 import sys
 
 def mark_section(title):
@@ -11,7 +11,7 @@ def mark_section(title):
     print(title)
     print('\n-----------------------------------------------------------------------------------\n')
 
-# wb.init(project='my-test-project')
+wb.init(project='my-test-project')
 
 keyword = sys.argv[1]
 
@@ -88,4 +88,4 @@ check = vd.is_equal(mip_objective, validated)
 
 print('>>> Sanity check: {} = {} ? {}!'.format(mip_objective, validated, check))
 
-# wb.log({'keyword': keyword, 'mip_objective': mip_objective, 'hrs_objective': hrs_objective})
+wb.log({'keyword': keyword, 'mip_objective': mip_objective, 'hrs_objective': hrs_objective})
