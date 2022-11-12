@@ -1,5 +1,8 @@
 # -------------------------------------------
 
+commands*.sh
+preliminary.7z
+
 # Wandb stuff
 wandb/
 
