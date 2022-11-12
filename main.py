@@ -35,11 +35,11 @@ def main():
 
     mark_section('Building the 1-DFLP-RA for the instance...')
     mip, variable = fm.build_fancy(instance)
+    mip.write('archives/{}.lp'.format(instance.keyword))
+    wb.save('archives/{}.lp'.format(instance.keyword))
 
     mark_section('Solving the LPR of the 1-DFLP-RA model...')
     lpr = mip.relax()
-    lpr.write('archives/lpr-{}.lp'.format(instance.keyword))
-    wb.save('archives/lpr-{}.lp'.format(instance.keyword))
     lpr.optimize()
     lpr.write('archives/lpr-{}.sol'.format(instance.keyword))
     wb.save('archives/lpr-{}.sol'.format(instance.keyword))
@@ -53,9 +53,7 @@ def main():
     })
 
     mark_section('Solving the MIP of the 1-DFLP-RA model...')
-    # fm.warm_start(instance, variable, hrs_solution)
-    mip.write('archives/mip-{}.lp'.format(instance.keyword))
-    wb.save('archives/mip-{}.lp'.format(instance.keyword))
+    fm.warm_start(instance, variable, hrs_solution)
     mip.optimize()
     mip.write('archives/mip-{}.sol'.format(instance.keyword))
     wb.save('archives/mip-{}.sol'.format(instance.keyword))

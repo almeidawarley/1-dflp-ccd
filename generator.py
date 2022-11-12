@@ -1,66 +1,57 @@
-import uuid as ui
+import json as js
 
 counter = 0
 
-seeds = [1,2,3,4,5]
+S = [0,1,2,3,4,5,6,7,8,9]
 
-locations = [10]
-customers = [10]
-periods = [7, 14]
+I = [10, 20]
+T = [7, 14]
 
-relevances = ['local',  'medium', 'large']
-revenues = ['same', 'different']
-uppers = ['10', 'inf']
-startings = ['lower', 'upper']
-replenishments = ['doubling', 'linear']
-absorptions = ['everything', 'linear']
+zeta = [1, 2, 3, 4]
+
+replenishment = ['linear', 'exponential']
+absorption = ['linear', 'exponential']
 
 with open('commands.sh','w') as commands:
-    for a in seeds:
-        for b in locations:
-            for c in customers:
-                for d in periods:
-                    for e in relevances:
-                        for f in revenues:
-                            for g in uppers:
-                                for h in startings:
-                                    for i in replenishments:
-                                        for j in absorptions:
-                                            if counter >= 0:
+    for s in S:
+        for i in I:
+            # for j in J:
+            for t in T:
+                for r in replenishment:
+                    for a in absorption:
+                        for z in zeta:
+                            if counter >= 0:
 
-                                                keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(a, b, c, d, e, f, g, h, i, j)
-                                                with open('experiments/{}/{}.csv'.format('instances', keyword), 'w') as output:
-                                                    output.write('title,value\n')
+                                keyword = '{}-{}-{}-{}-{}-{}-{}-{}'.format('A', s, i, i, t, r, a, z)
+                                instance = {}
+                                instance['S'] = s
+                                instance['I'] = i
+                                instance['J'] = i
+                                instance['T'] = t
+                                instance['replenishment'] = r
+                                instance['absorption'] = a
+                                instance['zeta'] = z
 
-                                                    output.write('seed,{}\n'.format(a))
-                                                    output.write('number of locations,{}\n'.format(b))
-                                                    output.write('number of customers,{}\n'.format(c))
-                                                    output.write('number of periods,{}\n'.format(d))
-                                                    output.write('location relevances,{}\n'.format(e))
-                                                    output.write('location revenues,{}\n'.format(f))
-                                                    output.write('upper demand,{}\n'.format(g))
-                                                    output.write('starting demand,{}\n'.format(h))
-                                                    output.write('replenishment type,{}\n'.format(i))
-                                                    output.write('absorption type,{}\n'.format(j))
+                                with open('{}/{}.json'.format('instances', keyword), 'w') as output:
+                                    js.dump(instance, output)
 
-                                                with open('experiments/{}/{}.sh'.format('scripts', keyword), 'w') as output:
+                                with open('{}/{}.sh'.format('scripts', keyword), 'w') as output:
 
-                                                    output.write('#!/bin/bash\n')
+                                    output.write('#!/bin/bash\n')
 
-                                                    output.write('#SBATCH --time=12:00:00\n')
-                                                    output.write('#SBATCH --job-name={}.job\n'.format(keyword))
-                                                    output.write('#SBATCH --output={}.out\n'.format(keyword))
-                                                    output.write('#SBATCH --account=def-jenasanj\n')
-                                                    output.write('#SBATCH --mem=24576M\n')
-                                                    output.write('#SBATCH --cpus-per-task=1\n')
-                                                    output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
-                                                    output.write('#SBATCH --mail-type=FAIL\n')
+                                    output.write('#SBATCH --time=12:00:00\n')
+                                    output.write('#SBATCH --job-name={}.job\n'.format(keyword))
+                                    output.write('#SBATCH --account=def-jenasanj\n')
+                                    output.write('#SBATCH --mem=24576M\n')
+                                    output.write('#SBATCH --cpus-per-task=1\n')
+                                    output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
+                                    output.write('#SBATCH --mail-type=FAIL\n')
 
-                                                    output.write('cd ~/shortcut/\n')
-                                                    output.write('python main.py {}\n'.format(keyword))
+                                    output.write('cd ~/shortcut/\n')
+                                    output.write('python main.py {}\n'.format(keyword))
 
-                                                commands.write('dos2unix ../scripts/{}.sh\n'.format(keyword))
-                                                commands.write('sbatch ../scripts/{}.sh\n'.format(keyword))
-                                                counter += 1
+                                commands.write('dos2unix ../scripts/{}.sh\n'.format(keyword))
+                                commands.write('sbatch ../scripts/{}.sh\n'.format(keyword))
+                                counter += 1
 
 print('Done generating {} instances and scripts'.format(counter))
