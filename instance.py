@@ -20,7 +20,7 @@ class instance:
             self.create_spp()
         else:
             # Create random instance
-            self.create_setA()
+            self.create_setB()
 
         # Fix created instance
         self.fix_instance()
@@ -54,26 +54,6 @@ class instance:
         self.locations = [str(i + 1) for i in range(number_locations)]
         self.customers = [str(i + 1) for i in range(number_customers)]
         self.periods = [str(i + 1) for i in range(number_periods)]
-
-        '''
-        # Create map points
-        self.points = {}
-        X = []
-        Y = []
-        for location in self.locations:
-            self.points['i{}'.format(location)] = (rd.randint(-5, 5), rd.randint(-5, 5))
-            X.append(self.points['i{}'.format(location)][0])
-            Y.append(self.points['i{}'.format(location)][1])
-        pt.scatter(X, Y, marker = 'x')
-        X = []
-        Y = []
-        for customer in self.customers:
-            self.points['j{}'.format(customer)] = (rd.randint(-5, 5), rd.randint(-5, 5))
-            X.append(self.points['j{}'.format(customer)][0])
-            Y.append(self.points['j{}'.format(customer)][1])
-        pt.scatter(X, Y, marker = 'o')
-        pt.show()
-        '''
 
         # Create catalogs
         self.catalogs = {}
@@ -119,6 +99,99 @@ class instance:
                 self.deltas[customer] = round(random_s * random_t * 10, 2)
             elif self.parameters['absorption'] == 'exponential':
                 self.gammas[customer] = round(random_s * random_t * 0.5, 2)
+                self.deltas[customer] = 0
+            else:
+                exit('Invalid value for parameter absorption type')
+            self.starts[customer] = rd.sample([0,10,20], 1)[0]
+            self.uppers[customer] = 100
+
+    def create_setB(self, folder = 'instances'):
+        # Create instance set B
+
+        try:
+            # Read specifications from file
+            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
+                self.parameters = js.load(content)
+        except:
+            with open ('experiments/{}/{}.json'.format(folder, self.keyword), 'r') as content:
+                self.parameters = js.load(content)
+
+        rd.seed(int(self.parameters['S']))
+
+        # Set instance size
+        number_locations = int(self.parameters['I'])
+        number_customers = int(self.parameters['J'])
+        number_periods = int(self.parameters['T'])
+
+        self.locations = [str(i + 1) for i in range(number_locations)]
+        self.customers = [str(i + 1) for i in range(number_customers)]
+        self.periods = [str(i + 1) for i in range(number_periods)]
+
+        # Create map points
+        self.points = {}
+        for location in self.locations:
+            self.points['i{}'.format(location)] = [rd.randint(-10, 10), rd.randint(-10, 10)]
+        for customer in self.customers:
+            self.points['j{}'.format(customer)] = [rd.randint(-10, 10), rd.randint(-10, 10)]
+        X = [self.points['i{}'.format(location)][0] for location in self.locations]
+        Y = [self.points['i{}'.format(location)][1] for location in self.locations]
+        pt.scatter(X, Y, marker = 'o')
+        for location in self.locations:
+            pt.annotate(location, (X[int(location) - 1], Y[int(location) - 1]))
+        X = [self.points['j{}'.format(customer)][0] for customer in self.customers]
+        Y = [self.points['j{}'.format(customer)][1] for customer in self.customers]
+        pt.scatter(X, Y, marker = 'x')
+        for customer in self.customers:
+            pt.annotate(customer, (X[int(customer) - 1], Y[int(customer) - 1]))
+        pt.savefig('archives/map-{}.png'.format(self.keyword))
+
+        self.threshold = {}
+        radius_index = mt.floor((self.parameters['theta'] / 100) * number_locations) - 1
+        for customer in self.customers:
+            distances = []
+            for location in self.locations:
+                distances.append(mt.dist(self.points['i{}'.format(location)], self.points['j{}'.format(customer)]))
+            distances.sort()
+            self.threshold[customer] = distances[radius_index]
+
+        # Create catalogs
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1. if mt.dist(self.points['i{}'.format(location)], self.points['j{}'.format(customer)]) <= self.threshold[customer] else 0.
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] =  10
+
+        # Handle customers
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.deltas = {}
+        self.starts = {}
+        self.lowers = {}
+        self.uppers = {}
+        for customer in self.customers:
+            if self.parameters['replenishment'] == 'linear':
+                self.alphas[customer] = 0
+                self.betas[customer] = round((self.parameters['zeta'] / 100) * 10, 2)
+                self.lowers[customer] = 0
+            elif self.parameters['replenishment'] == 'exponential':
+                self.alphas[customer] = round((self.parameters['zeta'] / 100) * 0.5, 2)
+                self.betas[customer] = 0
+                self.lowers[customer] = round(1 / (1 + self.alphas[customer]), 2)
+            else:
+                exit('Invalid value for parameter replenishment type')
+            if self.parameters['absorption'] == 'linear':
+                self.gammas[customer] = 0
+                self.deltas[customer] = round((self.parameters['zeta'] / 100) * (1 + self.parameters['eta'] / 100) * 10, 2)
+            elif self.parameters['absorption'] == 'exponential':
+                self.gammas[customer] = round((self.parameters['zeta'] / 100) * (1 + self.parameters['eta'] / 100) * 0.5, 2)
                 self.deltas[customer] = 0
             else:
                 exit('Invalid value for parameter absorption type')

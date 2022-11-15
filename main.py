@@ -28,9 +28,7 @@ def main():
 
     mark_section('Generating instance information based on the parameters...')
     instance.print_instance()
-    wb.log({
-        'keyword': instance.keyword
-    })
+    wb.config['keyword'] = instance.keyword
 
     mark_section('Applying the greedy heuristic to the instance...')
     hrs_solution, hrs_objective = hr.greedy_heuristic(instance)
@@ -80,10 +78,11 @@ def main():
 
     mark_section('Validating the solution of the 1-DFLP-RA analytically...')
     analytical = vd.evaluate_solution(instance, mip_solution)
-    validation = vd.is_equal(mip_objective, analytical)
+    validation = vd.is_equal(mip_objective, analytical, 0.1)
     wb.log({
         'sanity_check': validation
     })
+    print('>>> Sanity check: {} = {}? {} <<<'.format(mip_objective, analytical, validation))
 
     for method in ['1', '2', '3']:
 
