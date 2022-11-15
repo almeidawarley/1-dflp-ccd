@@ -8,6 +8,7 @@ wandb/
 
 # Temporary files
 archives/
+outputs/
 
 # Instance files
 instances/*.json

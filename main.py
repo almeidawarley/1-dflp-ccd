@@ -29,6 +29,7 @@ def main():
     mark_section('Generating instance information based on the parameters...')
     instance.print_instance()
     wb.config['keyword'] = instance.keyword
+    wb.save('archives/map-{}.png'.format(instance.keyword))
 
     mark_section('Applying the greedy heuristic to the instance...')
     hrs_solution, hrs_objective = hr.greedy_heuristic(instance)
