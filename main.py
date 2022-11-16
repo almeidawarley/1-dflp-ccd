@@ -59,7 +59,7 @@ def main():
     })
 
     mark_section('Solving the MIP of the 1-DFLP-RA model...')
-    # fm.warm_start(instance, variable, hrs_solution)
+    fm.warm_start(instance, variable, hrs_solution)
     mip.optimize()
     mip.write('archives/mip-{}.sol'.format(instance.keyword))
     wb.save('archives/mip-{}.sol'.format(instance.keyword))
