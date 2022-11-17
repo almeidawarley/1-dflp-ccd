@@ -20,7 +20,14 @@ class instance:
             self.create_spp()
         else:
             # Create random instance
-            self.create_setB()
+            if 'A-' in keyword:
+                self.create_setA()
+            elif 'B-' in keyword:
+                self.create_setB()
+            elif 'C-' in keyword:
+                self.create_setC()
+            else:
+                exit('Invalid instance keyword')
 
         # Fix created instance
         self.fix_instance()
