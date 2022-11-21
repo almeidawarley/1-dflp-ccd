@@ -3,12 +3,12 @@
 command*.sh
 preliminary.7z
 
-# Wandb stuff
-wandb/
-
-# Temporary files
-archives/
-outputs/
+# Experimental files
+archives/*.lp
+archives/*.sol
+archives/*.png
+outputs/*.out
+records/*.csv
 
 # Instance files
 instances/*.json
