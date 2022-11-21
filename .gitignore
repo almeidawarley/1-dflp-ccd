@@ -1,6 +1,6 @@
 # -------------------------------------------
 
-commands*.sh
+command*.sh
 preliminary.7z
 
 # Wandb stuff
