@@ -1,7 +1,7 @@
 import sys
 
 filename = sys.argv[1]
-lines = sys.argv[2]
+lines = int(sys.argv[2])
 
 keyword = filename.replace('.sh', '')
 
