@@ -17,7 +17,7 @@ eta = [25,50,75,100]
 replenishment = ['linear', 'exponential']
 absorption = ['linear', 'exponential']
 
-with open('commands.sh','w') as commands:
+with open('commandsC.sh','w') as commands:
     for i in I:
         for s in S:
             for j in J:
@@ -29,7 +29,7 @@ with open('commands.sh','w') as commands:
 
                                     if counter >= 0:
 
-                                        keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format('B', s, i, j, t, r, z, a, e)
+                                        keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}'.format('C', s, i, j, t, r, z, a, e)
                                         instance = {}
                                         instance['S'] = s
                                         instance['I'] = i

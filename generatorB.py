@@ -18,7 +18,7 @@ theta = [25, 50, 75]
 replenishment = ['linear', 'exponential']
 absorption = ['linear', 'exponential']
 
-with open('commands.sh','w') as commands:
+with open('commandsB.sh','w') as commands:
     for i in I:
         for s in S:
             for j in J:

@@ -16,7 +16,7 @@ eta = [25, 50, 75, 100]
 replenishment = ['linear', 'exponential']
 absorption = ['linear', 'exponential']
 
-with open('commands.sh','w') as commands:
+with open('commandsA.sh','w') as commands:
     for s in S:
         for i in I:
             # for j in J:
