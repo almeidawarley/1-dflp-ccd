@@ -1,12 +1,16 @@
 from datetime import datetime
+import git
 
 def create_record(project, instance):
 
     record = {}
 
+    repo = git.Repo(search_parent_directories = True)
+
     record['project'] = project
     record['keyword'] = instance.keyword
     record['created'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    record['commit'] = repo.head.object.hexsha
 
     for key, value in instance.parameters.items():
         record[key] = value
