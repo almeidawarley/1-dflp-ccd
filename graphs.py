@@ -92,7 +92,7 @@ for t in time_periods:
 
     print('\draw ({},0) node[anchor=north east] {}$t_{}${};'.format(t + 1.25, '{', t, '}'))
     # print('\draw (-0.25,{}) node[anchor=north east] {}$d^{}t_{}{}_{}${};'.format(computed_demands[t] + 0.25, '{', '{', t, '}', '{j}','}'))
-    print('\draw (-0.15,{}) -- (0.15, {});'.format(computed_demands[t], computed_demands[t]))
+    print('\draw (-0.2,{}) -- (0.2, {});'.format(computed_demands[t], computed_demands[t]))
 
     xl = t + 1 - 0.1
     xr = t + 1 + 0.1

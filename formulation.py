@@ -93,6 +93,10 @@ def build_fancy(instance):
 
     return mip, variable
 
+def fix_solution(mip, variable, solution):
+
+    mip.addConstrs((variable['y'][period, solution[period]] == 1 if solution[period] != '0' else variable['y'].sum(period, '*') == 0 for period in solution.keys()), name = 'fix')
+
 def warm_start(instance, variable, solution):
     # Warm start with a feasible solution
 
@@ -145,3 +149,34 @@ def detail_solution(instance, variable, filename = 'detailed_mip.csv'):
             output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d1[customer]) for customer in instance.customers])))
             output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d2[customer]) for customer in instance.customers])))
             output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d3[customer]) for customer in instance.customers])))
+
+def export_graph(instance, variable, filename = 'detailed_grp.csv', customer = 'A'):
+    # Export info to generate graph
+
+    solution = {}
+
+    with open(filename, 'w') as output:
+
+        for period in instance.periods:
+            solution[period] = '0'
+
+        output.write('location,period,replenished,absorbable\n')
+
+        d3 = variable['d3']['0', customer].x
+        output.write('{},{},{},{}\n'.format('0','0', d3, '0'))
+
+        for period in instance.periods:
+            for location in instance.locations:
+                value = variable['y'][period, location].x
+                if vd.is_equal(value, 1.):
+                    solution[period] = location
+            d1 = variable['d1'][period, customer].x
+            a = min(instance.gammas[customer] * d1 + instance.deltas[customer], d1)
+            output.write('{},{},{},{}\n'.format(solution[period], period, d1, a))
+
+            xl = int(period) - 0.1
+            xr = int(period) + 0.1
+
+            print('\draw[fill=gray!25] ({},0) -- ({},0) -- ({},{}) -- ({},{}) -- ({},0);'.format(xl, xr, xr, d1, xl, d1, xl))
+            print('\draw[fill=gray!50] ({},0) -- ({},0) -- ({},{}) -- ({},{}) -- ({},0);'.format(xl, xr, xr, d1 - a, xl, d1 - a, xl))
+            print('\draw ({},0) node[anchor=north east] {}${}${};'.format(int(period) + 0.25, '{', int(period), '}'))

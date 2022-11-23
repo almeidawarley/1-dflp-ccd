@@ -69,6 +69,22 @@ def main():
         'mip_intgap': compute_gap(lpr_objective, mip_objective),
         'hrs_optgap': compute_gap(mip_objective, hrs_objective)
     })
+    '''
+    fm.fix_solution(mip, variable, {
+        '1': '0',
+        '2': '0',
+        '3': '0',
+        '4': '0',
+        '5': '1',
+        '6': '1',
+        '7': '1',
+        '8': '1',
+        '9': '1'
+    })
+    mip.optimize()
+    fm.export_graph(instance, variable)
+    _ = input('wait...')
+    '''
 
     mark_section('Validating the solution of the 1-DFLP-RA analytically...')
     analytical = vd.evaluate_solution(instance, mip_solution)

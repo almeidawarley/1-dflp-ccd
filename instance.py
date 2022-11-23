@@ -15,6 +15,9 @@ class instance:
         if keyword == 'example':
             # Create example instance
             self.create_example()
+        elif keyword == 'graph':
+            self.create_graph()
+            # Create graph instance
         elif keyword == 'spp':
             # Create SPP instance
             self.create_spp()
@@ -404,6 +407,46 @@ class instance:
         self.uppers = {}
         for customer in self.customers:
             self.uppers[customer] = 50
+
+    def create_graph(self):
+        # Create graph instance
+
+        self.locations = ['1']
+        self.customers = ['A']
+        self.periods = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+        # Create catalogs
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] =  1
+
+        # Handle customers
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.deltas = {}
+        self.starts = {}
+        self.lowers = {}
+        self.uppers = {}
+        for customer in self.customers:
+            self.alphas[customer] = 0.25
+            self.betas[customer] = 0
+            self.gammas[customer] = 0.25
+            self.deltas[customer] = 0
+            self.starts[customer] = 10
+            self.lowers[customer] = 0
+            self.uppers[customer] = 10
+
+        self.parameters = {}
 
     def fix_instance(self):
         # Fix created instance
