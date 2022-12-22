@@ -46,8 +46,8 @@ class instance:
     def create_setA(self, folder = 'instances'):
         # Create instance set A
 
+        # Read specifications from file
         try:
-            # Read specifications from file
             with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
                 self.parameters = js.load(content)
         except:
@@ -77,7 +77,19 @@ class instance:
         for period in self.periods:
             self.revenues[period] = {}
             for location in self.locations:
-                self.revenues[period][location] =  10
+                self.revenues[period][location] = 10
+
+        # Absorption varieties
+        # Gamma values
+        G = {
+            'rel': [0.1, 0.2, 0.3],
+            'abs': [0.2, 0.4, 0.6]
+        }
+        # Delta values
+        D = {
+            'rel': [1.0, 1.5, 2.0],
+            'abs': [2.0, 3.0, 4.0]
+        }
 
         # Handle customers
         self.alphas = {}
@@ -88,32 +100,40 @@ class instance:
         self.lowers = {}
         self.uppers = {}
         for customer in self.customers:
-            lower = 100 - self.parameters['zeta']
-            upper = 100 + self.parameters['zeta']
-            random_s = rd.randint(lower, upper) / 100.
-            lower = 100 - self.parameters['eta']
-            upper = 100 + self.parameters['eta']
-            random_t = rd.randint(lower, upper) / 100.
-            if self.parameters['replenishment'] == 'linear':
-                self.alphas[customer] = 0
-                self.betas[customer] = round(random_s * 10, 2)
-                self.lowers[customer] = 0
-            elif self.parameters['replenishment'] == 'exponential':
-                self.alphas[customer] = round(random_s * 0.5, 2)
-                self.betas[customer] = 0
-                self.lowers[customer] = round(1 / (1 + self.alphas[customer]), 2)
+            # Demand replenishment assignments
+            if self.parameters['R'] == 'rel':
+                self.alphas[customer] = 0.1
+                self.betas[customer] = 0.0
+            elif self.parameters['R'] == 'abs':
+                self.alphas[customer] = 0.0
+                self.betas[customer] = 1.0
             else:
-                exit('Invalid value for parameter replenishment type')
-            if self.parameters['absorption'] == 'linear':
-                self.gammas[customer] = 0
-                self.deltas[customer] = round(random_s * random_t * 10, 2)
-            elif self.parameters['absorption'] == 'exponential':
-                self.gammas[customer] = round(random_s * random_t * 0.5, 2)
-                self.deltas[customer] = 0
+                exit('Wrong replenishment parameter')
+
+            # Demand absorption assignments
+            if self.parameters['A'] == 'rel':
+                self.deltas[customer] = 0.0
+                if self.parameters['C'] == 'hom':
+                    self.gammas[customer] = G[self.parameters['R']][self.parameters['O']]
+                elif self.parameters['C'] == 'het':
+                    self.gammas[customer] = rd.sample(G[self.parameters['R']], 1)[0]
+                else:
+                    exit('Wrong (relative) customer parameter')
+            elif self.parameters['A'] == 'abs':
+                self.gammas[customer] = 0.0
+                if self.parameters['C'] == 'hom':
+                    self.deltas[customer] = D[self.parameters['R']][self.parameters['O']]
+                elif self.parameters['C'] == 'het':
+                    self.deltas[customer] = rd.sample(D[self.parameters['R']], 1)[0]
+                else:
+                    exit('Wrong (absorption) customer parameter')
             else:
-                exit('Invalid value for parameter absorption type')
-            self.starts[customer] = rd.sample([0,10,20], 1)[0]
-            self.uppers[customer] = 100
+                exit('Wrong absorption parameter')
+
+            # Fixed customer parameters
+            self.lowers[customer] = 1
+            self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
+            self.uppers[customer] = self.parameters['U']
 
     def create_setB(self, folder = 'instances'):
         # Create instance set B

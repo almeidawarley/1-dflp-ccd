@@ -65,7 +65,7 @@ def build_fancy(instance):
     mip.setAttr('ModelSense', -1)
 
     # Turn off GUROBI logs
-    mip.setParam('OutputFlag', 0)
+    # mip.setParam('OutputFlag', 0)
     # mip.setParam('NumericFocus', 3)
     mip.setParam('Threads', 1)
     mip.setParam('TimeLimit', 60 * 60 * 6)

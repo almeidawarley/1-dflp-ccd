@@ -1,66 +1,89 @@
+import argparse as ap
 import json as js
-import sys
 
-experiment = sys.argv[1]
+parser = ap.ArgumentParser(description = 'Generate experimental 1-DFLP-RA instances')
+parser.add_argument('project', type = str, help = 'Project name to identify experimental procedure')
+parser.add_argument('--letter', type = str, default = 'A', help = 'Letter identifying the instance set')
+parser.add_argument('--simulate', action = 'store_true', help = 'Simulate creation without writing files')
+args = parser.parse_args()
 
 counter = 0
 
+# Seeds for random number generation
 S = [0,1,2,3,4,5,6,7,8,9]
-
+# Number of locations
 I = [10, 20]
-T = [7, 14]
+# Number of time periods
+T = [10, 30, 50]
+# Customer profiles
+C = ['hom', 'het']
+# Replenishment profiles
+R = ['abs', 'rel']
+# Absorption profiles
+A = ['abs', 'rel']
+# Number of options
+O = [0, 1, 2]
+# Upper bounds
+U = [10, 99]
 
-zeta = [25, 50, 75, 100]
-eta = [25, 50, 75, 100]
-
-replenishment = ['linear', 'exponential']
-absorption = ['linear', 'exponential']
-
-with open('commandsA.sh','w') as commands:
+with open('commands{}.sh'.format(args.letter),'w') as commands:
     for s in S:
         for i in I:
             # for j in J:
             for t in T:
-                for r in replenishment:
-                    for a in absorption:
-                        for z in zeta:
-                            for e in eta:
+                for c in C:
+                    for r in R:
+                        for a in A:
+                            for o in O:
+                                for u in U:
 
-                                if counter >= 0:
+                                    j = i
 
-                                    keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}'.format('A', s, i, i, t, r, z, a, e)
-                                    instance = {}
-                                    instance['S'] = s
-                                    instance['I'] = i
-                                    instance['J'] = i
-                                    instance['T'] = t
-                                    instance['replenishment'] = r
-                                    instance['zeta'] = z
-                                    instance['absorption'] = a
-                                    instance['eta'] = e
+                                    if counter >= 0:
 
-                                    with open('{}/{}.json'.format('instances', keyword), 'w') as output:
-                                        js.dump(instance, output)
+                                        instance = {}
 
-                                    with open('{}/{}.sh'.format('scripts', keyword), 'w') as output:
+                                        instance['S'] = s
+                                        instance['I'] = i
+                                        instance['J'] = j
+                                        instance['T'] = t
 
-                                        output.write('#!/bin/bash\n')
+                                        instance['C'] = c
+                                        instance['R'] = r
+                                        instance['A'] = a
+                                        instance['O'] = o
+                                        instance['U'] = u
 
-                                        output.write('#SBATCH --time=12:00:00\n')
-                                        output.write('#SBATCH --job-name={}.job\n'.format(keyword))
-                                        output.write('#SBATCH --output={}.out\n'.format(keyword))
-                                        output.write('#SBATCH --account=def-jenasanj\n')
-                                        output.write('#SBATCH --mem=24576M\n')
-                                        output.write('#SBATCH --cpus-per-task=1\n')
-                                        output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
-                                        output.write('#SBATCH --mail-type=FAIL\n')
+                                        keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(args.letter, s, i, j, t, c, r, a, o, u)
 
-                                        output.write('cd ~/shortcut/\n')
-                                        # output.write('wandb offline\n')
-                                        output.write('python main.py -p {} {}\n'.format(experiment, keyword))
+                                        if not args.simulate:
 
-                                    commands.write('dos2unix ../scripts/{}.sh\n'.format(keyword))
-                                    commands.write('sbatch ../scripts/{}.sh\n'.format(keyword))
-                                    counter += 1
+                                            with open('{}/{}.json'.format('instances', keyword), 'w') as output:
+                                                js.dump(instance, output)
+
+                                            with open('{}/{}.sh'.format('scripts', keyword), 'w') as output:
+
+                                                output.write('#!/bin/bash\n')
+
+                                                output.write('#SBATCH --time=12:00:00\n')
+                                                output.write('#SBATCH --job-name={}.job\n'.format(keyword))
+                                                output.write('#SBATCH --output={}.out\n'.format(keyword))
+                                                output.write('#SBATCH --account=def-jenasanj\n')
+                                                output.write('#SBATCH --mem=24576M\n')
+                                                output.write('#SBATCH --cpus-per-task=1\n')
+                                                output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
+                                                output.write('#SBATCH --mail-type=FAIL\n')
+
+                                                output.write('cd ~/shortcut/\n')
+                                                output.write('python main.py -p {} {}\n'.format(args.project, keyword))
+
+                                            commands.write('dos2unix ../scripts/{}.sh\n'.format(keyword))
+                                            commands.write('sbatch ../scripts/{}.sh\n'.format(keyword))
+
+                                        else:
+
+                                            print(keyword)
+
+                                        counter += 1
 
 print('Done generating {} instances and scripts'.format(counter))
