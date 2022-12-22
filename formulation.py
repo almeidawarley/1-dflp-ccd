@@ -65,7 +65,7 @@ def build_fancy(instance):
     mip.setAttr('ModelSense', -1)
 
     # Turn off GUROBI logs
-    # mip.setParam('OutputFlag', 0)
+    mip.setParam('OutputFlag', 0)
     # mip.setParam('NumericFocus', 3)
     mip.setParam('Threads', 1)
     mip.setParam('TimeLimit', 60 * 60 * 6)
@@ -150,33 +150,74 @@ def detail_solution(instance, variable, filename = 'detailed_mip.csv'):
             output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d2[customer]) for customer in instance.customers])))
             output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d3[customer]) for customer in instance.customers])))
 
-def export_graph(instance, variable, filename = 'detailed_grp.csv', customer = 'A'):
-    # Export info to generate graph
+def write_bar(instance, variable, customer = 'A'):
+    # Export latex code to plot the bar graph
 
     solution = {}
 
-    with open(filename, 'w') as output:
+    for period in instance.periods:
+        solution[period] = '0'
 
-        for period in instance.periods:
-            solution[period] = '0'
+    for period in instance.periods:
+        for location in instance.locations:
+            value = variable['y'][period, location].x
+            if vd.is_equal(value, 1.):
+                solution[period] = location
+        d1 = variable['d1'][period, customer].x
+        a = min(instance.gammas[customer] * d1 + instance.deltas[customer], d1)
 
-        output.write('location,period,replenished,absorbable\n')
+        xl = int(period) - 0.1
+        xr = int(period) + 0.1
 
-        d3 = variable['d3']['0', customer].x
-        output.write('{},{},{},{}\n'.format('0','0', d3, '0'))
-
-        for period in instance.periods:
-            for location in instance.locations:
-                value = variable['y'][period, location].x
-                if vd.is_equal(value, 1.):
-                    solution[period] = location
-            d1 = variable['d1'][period, customer].x
-            a = min(instance.gammas[customer] * d1 + instance.deltas[customer], d1)
-            output.write('{},{},{},{}\n'.format(solution[period], period, d1, a))
-
-            xl = int(period) - 0.1
-            xr = int(period) + 0.1
-
+        if solution[period] != '0':
+            print('\draw[fill=gray!25, dashed] ({},0) -- ({},0) -- ({},{}) -- ({},{}) -- ({},0);'.format(xl, xr, xr, d1, xl, d1, xl))
+        else:
             print('\draw[fill=gray!25] ({},0) -- ({},0) -- ({},{}) -- ({},{}) -- ({},0);'.format(xl, xr, xr, d1, xl, d1, xl))
-            print('\draw[fill=gray!50] ({},0) -- ({},0) -- ({},{}) -- ({},{}) -- ({},0);'.format(xl, xr, xr, d1 - a, xl, d1 - a, xl))
-            print('\draw ({},0) node[anchor=north east] {}${}${};'.format(int(period) + 0.25, '{', int(period), '}'))
+        print('\draw[fill=gray!50] ({},0) -- ({},0) -- ({},{}) -- ({},{}) -- ({},0);'.format(xl, xr, xr, d1 - a, xl, d1 - a, xl))
+        print('\draw ({},0) node[anchor=north] {}${}${};'.format(int(period), '{', int(period), '}'))
+
+
+    print('----------------------------------------------------------------')
+
+    for period in instance.periods:
+        for location in instance.locations:
+            value = variable['y'][period, location].x
+            if vd.is_equal(value, 1.):
+                solution[period] = location
+        d1 = variable['d1'][period, customer].x
+        a = min(instance.gammas[customer] * d1 + instance.deltas[customer], d1)
+
+        xl = int(period) - 0.1
+        xr = int(period) + 0.1
+
+        print('\draw[fill=gray!25] ({},0) -- ({},0) -- ({},{}) -- ({},{}) -- ({},0);'.format(xl, xr, xr, a, xl, a, xl))
+        print('\draw ({},0) node[anchor=north] {}${}${};'.format(int(period), '{', int(period), '}'))
+
+def write_scatter(instance, variable, color, customer = 'A'):
+    # Export latex code to plot the bar graph
+
+    solution = {}
+
+    for period in instance.periods:
+        solution[period] = '0'
+
+    yprev = -1
+
+    for period in instance.periods:
+        for location in instance.locations:
+            value = variable['y'][period, location].x
+            if vd.is_equal(value, 1.):
+                solution[period] = location
+
+        ycurr = variable['d1'][period, customer].x
+
+        xcurr = int(period)
+        xprev = xcurr - 1
+
+        print('\draw ({},{}) node[anchor=mid, color={}] {}x{};'.format(xcurr, ycurr, color, '{', '}'))
+        # print('\draw ({},0) node[anchor=north] {}${}${};'.format(int(period), '{', int(period), '}'))
+
+        if xcurr > 1:
+            print('\draw[color={}] ({},{}) -- ({}, {});'.format(color, xprev, yprev, xcurr, ycurr))
+
+        yprev = ycurr
