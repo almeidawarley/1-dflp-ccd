@@ -116,6 +116,7 @@ class instance:
                 if self.parameters['C'] == 'hom':
                     self.gammas[customer] = G[self.parameters['R']][self.parameters['O']]
                 elif self.parameters['C'] == 'het':
+                    rd.seed(int(self.parameters['O']))
                     self.gammas[customer] = rd.sample(G[self.parameters['R']], 1)[0]
                 else:
                     exit('Wrong (relative) customer parameter')
@@ -124,6 +125,7 @@ class instance:
                 if self.parameters['C'] == 'hom':
                     self.deltas[customer] = D[self.parameters['R']][self.parameters['O']]
                 elif self.parameters['C'] == 'het':
+                    rd.seed(int(self.parameters['O']))
                     self.deltas[customer] = rd.sample(D[self.parameters['R']], 1)[0]
                 else:
                     exit('Wrong (absorption) customer parameter')
