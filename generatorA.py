@@ -10,11 +10,11 @@ args = parser.parse_args()
 counter = 0
 
 # Seeds for random number generation
-S = [0,1,2,3,4,5,6,7,8,9]
+S = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 # Number of locations
 I = [10, 20]
 # Number of time periods
-T = [5,10,15,20,30]
+T = [5, 10, 15, 20]
 # Customer profiles
 C = ['hom', 'het']
 # Replenishment profiles
@@ -26,7 +26,18 @@ O = [0, 1, 2]
 # Upper bounds
 U = [10, 99]
 
-with open('commands{}.sh'.format(args.letter),'w') as commands:
+with open('details-{}.txt'.format(args.project),'w') as details:
+    details.write('S : {}\n'.format(S))
+    details.write('I : {}\n'.format(I))
+    details.write('J : {}\n'.format(I))
+    details.write('T : {}\n'.format(T))
+    details.write('C : {}\n'.format(C))
+    details.write('R : {}\n'.format(R))
+    details.write('A : {}\n'.format(A))
+    details.write('O : {}\n'.format(O))
+    details.write('U : {}\n'.format(U))
+
+with open('commands-{}.sh'.format(args.project),'w') as commands:
     for s in S:
         for i in I:
             # for j in J:

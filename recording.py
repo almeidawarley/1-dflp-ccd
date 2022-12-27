@@ -11,6 +11,7 @@ def create_record(project, instance):
     record['keyword'] = instance.keyword
     record['created'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     record['commit'] = repo.head.object.hexsha
+    record['branch'] = repo.active_branch.name
 
     for key, value in instance.parameters.items():
         record[key] = value
