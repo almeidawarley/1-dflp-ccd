@@ -14,7 +14,7 @@ S = [0,1,2,3,4,5,6,7,8,9]
 # Number of locations
 I = [10, 20]
 # Number of time periods
-T = [10, 30, 50]
+T = [5,10,15,20,30]
 # Customer profiles
 C = ['hom', 'het']
 # Replenishment profiles
@@ -54,7 +54,7 @@ with open('commands{}.sh'.format(args.letter),'w') as commands:
                                         instance['O'] = o
                                         instance['U'] = u
 
-                                        keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(args.letter, s, i, j, t, c, r, a, o, u)
+                                        keyword = '{}-{}-{}-{}-{}-{}-{}-{}-{}-{}'.format(args.letter, s, i, j, str(t).zfill(2), c, r, a, o, u)
 
                                         if not args.simulate:
 
