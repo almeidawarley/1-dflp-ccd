@@ -54,7 +54,7 @@ class instance:
             with open ('experiments/{}/{}.json'.format(folder, self.keyword), 'r') as content:
                 self.parameters = js.load(content)
 
-        rd.seed(int(self.parameters['S']))
+        rd.seed(self.parameters['O'] * 10 + self.parameters['S'])
 
         # Set instance size
         number_locations = int(self.parameters['I'])
@@ -99,7 +99,15 @@ class instance:
         self.starts = {}
         self.lowers = {}
         self.uppers = {}
+
         for customer in self.customers:
+            # Upper, lower and initial demand
+            self.lowers[customer] = 1
+            self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
+            self.uppers[customer] = self.parameters['U']
+
+        for customer in self.customers:
+
             # Demand replenishment assignments
             if self.parameters['R'] == 'rel':
                 self.alphas[customer] = 0.1
@@ -116,8 +124,9 @@ class instance:
                 if self.parameters['C'] == 'hom':
                     self.gammas[customer] = G[self.parameters['R']][self.parameters['O']]
                 elif self.parameters['C'] == 'het':
-                    rd.seed(int(self.parameters['O']))
-                    self.gammas[customer] = rd.sample(G[self.parameters['R']], 1)[0]
+                    scale = rd.sample([i for i in range(0,100)], 1)[0] / 100.
+                    self.gammas[customer] = G[self.parameters['R']][0] + scale * (G[self.parameters['R']][2] - G[self.parameters['R']][0])
+                    self.gammas[customer] = round(self.gammas[customer], 2)
                 else:
                     exit('Wrong (relative) customer parameter')
             elif self.parameters['A'] == 'abs':
@@ -125,17 +134,13 @@ class instance:
                 if self.parameters['C'] == 'hom':
                     self.deltas[customer] = D[self.parameters['R']][self.parameters['O']]
                 elif self.parameters['C'] == 'het':
-                    rd.seed(int(self.parameters['O']))
-                    self.deltas[customer] = rd.sample(D[self.parameters['R']], 1)[0]
+                    scale = rd.sample([i for i in range(0,100)], 1)[0] / 100.
+                    self.deltas[customer] = D[self.parameters['R']][0] + scale * (D[self.parameters['R']][2] - D[self.parameters['R']][0])
+                    self.deltas[customer] = round(self.deltas[customer], 2)
                 else:
                     exit('Wrong (absorption) customer parameter')
             else:
                 exit('Wrong absorption parameter')
-
-            # Fixed customer parameters
-            self.lowers[customer] = 1
-            self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
-            self.uppers[customer] = self.parameters['U']
 
     def create_setB(self, folder = 'instances'):
         # Create instance set B
