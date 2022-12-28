@@ -80,7 +80,7 @@ with open('commands-{}.sh'.format(args.project),'w') as commands:
                                                 output.write('#SBATCH --job-name={}.job\n'.format(keyword))
                                                 output.write('#SBATCH --output={}.out\n'.format(keyword))
                                                 output.write('#SBATCH --account=def-jenasanj\n')
-                                                output.write('#SBATCH --mem=24576M\n')
+                                                output.write('#SBATCH --mem=30GB\n')
                                                 output.write('#SBATCH --cpus-per-task=1\n')
                                                 output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
                                                 output.write('#SBATCH --mail-type=FAIL\n')

@@ -68,7 +68,7 @@ def build_fancy(instance):
     # mip.setParam('OutputFlag', 0)
     # mip.setParam('NumericFocus', 3)
     mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', 60 * 60 * 6)
+    mip.setParam('TimeLimit', 10 * 60 * 60)
 
     # Create main constraints
     ct.create_c1(instance, mip, variable)
