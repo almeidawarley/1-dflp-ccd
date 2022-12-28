@@ -238,15 +238,15 @@ class instance:
     def create_setC(self, folder = 'instances'):
         # Create instance set C
 
+        # Read specifications from file
         try:
-            # Read specifications from file
             with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
                 self.parameters = js.load(content)
         except:
             with open ('experiments/{}/{}.json'.format(folder, self.keyword), 'r') as content:
                 self.parameters = js.load(content)
 
-        rd.seed(int(self.parameters['S']))
+        rd.seed(self.parameters['O'] * 10 + self.parameters['S'])
 
         # Set instance size
         number_locations = int(self.parameters['I'])
@@ -257,47 +257,31 @@ class instance:
         self.customers = [str(i + 1) for i in range(number_customers)]
         self.periods = [str(i + 1) for i in range(number_periods)]
 
-        # Create map points
-        self.points = {}
-        for location in self.locations:
-            self.points['i{}'.format(location)] = [rd.randint(-50, 50), rd.randint(-50, 50)]
-        for customer in self.customers:
-            self.points['j{}'.format(customer)] = [rd.randint(-50, 50), rd.randint(-50, 50)]
-        X = [self.points['i{}'.format(location)][0] for location in self.locations]
-        Y = [self.points['i{}'.format(location)][1] for location in self.locations]
-        pt.scatter(X, Y, marker = 'o')
-        for location in self.locations:
-            pt.annotate(location, (X[int(location) - 1], Y[int(location) - 1]))
-        X = [self.points['j{}'.format(customer)][0] for customer in self.customers]
-        Y = [self.points['j{}'.format(customer)][1] for customer in self.customers]
-        pt.scatter(X, Y, marker = 'x')
-        for customer in self.customers:
-            pt.annotate(customer, (X[int(customer) - 1], Y[int(customer) - 1]))
-        pt.savefig('archives/map-{}.png'.format(self.keyword))
-
-        self.threshold = {}
-        for customer in self.customers:
-            theta = rd.sample([25,50,75], 1)[0]
-            radius_index = mt.floor((theta / 100) * number_locations) - 1
-            distances = []
-            for location in self.locations:
-                distances.append(mt.dist(self.points['i{}'.format(location)], self.points['j{}'.format(customer)]))
-            distances.sort()
-            self.threshold[customer] = distances[radius_index]
-
         # Create catalogs
         self.catalogs = {}
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                self.catalogs[location][customer] = 1. if mt.dist(self.points['i{}'.format(location)], self.points['j{}'.format(customer)]) <= self.threshold[customer] else 0.
+                self.catalogs[location][customer] = 1. if location == customer else rd.sample([0.,1.], 1)[0]
 
         # Create revenues
         self.revenues = {}
         for period in self.periods:
             self.revenues[period] = {}
             for location in self.locations:
-                self.revenues[period][location] =  10
+                self.revenues[period][location] = 10
+
+        # Absorption varieties
+        # Gamma values
+        G = {
+            'rel': [0.1, 0.2, 0.3],
+            'abs': [0.2, 0.4, 0.6]
+        }
+        # Delta values
+        D = {
+            'rel': [1.0, 1.5, 2.0],
+            'abs': [2.0, 3.0, 4.0]
+        }
 
         # Handle customers
         self.alphas = {}
@@ -307,33 +291,48 @@ class instance:
         self.starts = {}
         self.lowers = {}
         self.uppers = {}
+
         for customer in self.customers:
-            lower = 100 - self.parameters['zeta']
-            upper = 100 + self.parameters['zeta']
-            random_s = rd.randint(lower, upper) / 100.
-            lower = 100 - self.parameters['eta']
-            upper = 100 + self.parameters['eta']
-            random_t = rd.randint(lower, upper) / 100.
-            if self.parameters['replenishment'] == 'linear':
-                self.alphas[customer] = 0
-                self.betas[customer] = round(random_s * 10, 2)
-                self.lowers[customer] = 0
-            elif self.parameters['replenishment'] == 'exponential':
-                self.alphas[customer] = round(random_s * 0.5, 2)
-                self.betas[customer] = 0
-                self.lowers[customer] = round(1 / (1 + self.alphas[customer]), 2)
+            # Upper, lower and initial demand
+            self.lowers[customer] = 1
+            self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
+            self.uppers[customer] = self.parameters['U']
+
+        for customer in self.customers:
+
+            # Demand replenishment assignments
+            if self.parameters['R'] == 'rel':
+                self.alphas[customer] = 0.1
+                self.betas[customer] = 0.0
+            elif self.parameters['R'] == 'abs':
+                self.alphas[customer] = 0.0
+                self.betas[customer] = 1.0
             else:
-                exit('Invalid value for parameter replenishment type')
-            if self.parameters['absorption'] == 'linear':
-                self.gammas[customer] = 0
-                self.deltas[customer] = round(random_s * random_t * 10, 2)
-            elif self.parameters['absorption'] == 'exponential':
-                self.gammas[customer] = round(random_s * random_t * 0.5, 2)
-                self.deltas[customer] = 0
+                exit('Wrong replenishment parameter')
+
+            # Demand absorption assignments
+            if self.parameters['A'] == 'rel':
+                self.deltas[customer] = 0.0
+                if self.parameters['C'] == 'hom':
+                    self.gammas[customer] = G[self.parameters['R']][self.parameters['O']]
+                elif self.parameters['C'] == 'het':
+                    scale = rd.sample([i for i in range(0,100)], 1)[0] / 100.
+                    self.gammas[customer] = G[self.parameters['R']][0] + scale * (G[self.parameters['R']][2] - G[self.parameters['R']][0])
+                    self.gammas[customer] = round(self.gammas[customer], 2)
+                else:
+                    exit('Wrong (relative) customer parameter')
+            elif self.parameters['A'] == 'abs':
+                self.gammas[customer] = 0.0
+                if self.parameters['C'] == 'hom':
+                    self.deltas[customer] = D[self.parameters['R']][self.parameters['O']]
+                elif self.parameters['C'] == 'het':
+                    scale = rd.sample([i for i in range(0,100)], 1)[0] / 100.
+                    self.deltas[customer] = D[self.parameters['R']][0] + scale * (D[self.parameters['R']][2] - D[self.parameters['R']][0])
+                    self.deltas[customer] = round(self.deltas[customer], 2)
+                else:
+                    exit('Wrong (absorption) customer parameter')
             else:
-                exit('Invalid value for parameter absorption type')
-            self.starts[customer] = rd.sample([0,10,20], 1)[0]
-            self.uppers[customer] = 100
+                exit('Wrong absorption parameter')
 
     def create_spp(self, K = 2):
         # Create SPP instances

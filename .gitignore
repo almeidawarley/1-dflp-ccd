@@ -1,6 +1,4 @@
 # -------------------------------------------
-
-command*.sh
 preliminary.7z
 
 # Experimental files
@@ -9,6 +7,7 @@ archives/*.sol
 archives/*.png
 experiments/*.sh
 experiments/*.zip
+experiments/*
 outputs/*.out
 records/*.csv
 
