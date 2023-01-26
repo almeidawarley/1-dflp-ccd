@@ -1,17 +1,17 @@
 import pandas as pd
 
-content = pd.read_csv('experiments/e1/report-e1sC.csv')
+content = pd.read_csv('experiments/e1/report-e1sB.csv')
 
-content = content[(content['C'] == 'hom') & (content['R'] == 'abs') & (content['A'] == 'abs')]
+content = content[(content['C'] == 'het')]
 
 characteristics = {
-    'I' : [10, 20],
-    'T': [5,10,15,20],
+    'J' : [50, 100],
     'R': ['abs', 'rel'],
     'A': ['abs', 'rel'],
     'C': ['hom', 'het'],
     'U': [10, 99],
-    'O': [0, 1, 2]
+    'O': [0, 1, 2],
+    'B': [5,10,15]
 }
 
 for characteristic, values in characteristics.items():

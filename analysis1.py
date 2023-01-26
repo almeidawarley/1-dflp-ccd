@@ -1,6 +1,6 @@
 import pandas as pd
 
-content = pd.read_csv('experiments/e1/report-e1sC.csv')
+content = pd.read_csv('experiments/e1/report-e1sB.csv')
 
 c = 'hom'
 
@@ -8,15 +8,18 @@ content = content[content['C'] == c]
 
 for r in ['abs', 'rel']:
     for a in ['abs', 'rel']:
+        # for j in [50, 100]:
         for o in [0,1,2]:
         # for i in [10, 20]:
             # for t in [5, 10, 15, 20]:
 
-            # j = i
+            # i = 10
+            # t = 10
 
             # filter = (content['I'] == i) & (content['T'] == t) & (content['R'] == r) & (content['A']  == a)
             # filter = (content['U'] == u)
             filter = (content['O'] == o) & (content['R'] == r) & (content['A']  == a)
+            # filter = (content['J'] == j) & (content['R'] == r) & (content['A']  == a)
 
             avg_intgap = round(content[filter]['mip_intgap'].mean() * 100, 2)
             avg_hrsgap = round(content[filter]['hrs_optgap'].mean() * 100, 2)
