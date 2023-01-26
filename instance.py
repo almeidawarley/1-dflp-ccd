@@ -21,6 +21,9 @@ class instance:
         elif keyword == 'spp':
             # Create SPP instance
             self.create_spp()
+        elif keyword == 'gap':
+            # Create SPP instance
+            self.create_gap()
         else:
             # Create random instance
             if 'A-' in keyword:
@@ -31,6 +34,8 @@ class instance:
                 self.create_setC()
             elif 'D-' in keyword:
                 self.create_setD()
+            elif 'E-' in keyword:
+                self.create_setE()
             else:
                 exit('Invalid instance keyword')
 
@@ -483,7 +488,7 @@ class instance:
         # Create SPP instances
 
         elements = ['1', '2', '3', '4', '5']
-        collections = [['1', '2', '3'], ['1', '4', '5'], ['1', '5']]
+        collections = [['1', '2', '3', '4', '5'], ['1'], ['2'], ['3'], ['4', '5']]
 
         self.locations = [str(i + 1) for i in range(0, len(collections))]
         self.customers = [e for e in elements]
@@ -500,6 +505,9 @@ class instance:
             self.revenues[period] = {}
             for location in self.locations:
                 self.revenues[period][location] =  1/len(collections[int(location)-1])
+                if location == '1':
+                    # Avoid ambiguity for heuristic
+                    self.revenues[period][location] = 0.21
 
         self.alphas = {}
         self.betas = {}
@@ -509,13 +517,63 @@ class instance:
         self.uppers = {}
         self.lowers = {}
         for customer in self.customers:
-            self.alphas[customer] = 0
+            self.alphas[customer] = 0.5
             self.betas[customer] = 0
-            self.gammas[customer] = 0
-            self.deltas[customer] = 1
+            self.gammas[customer] = 0.5
+            self.deltas[customer] = 0
             self.starts[customer] = 1
             self.lowers[customer] = 0
-            self.uppers[customer] = 1000000
+            self.uppers[customer] = 10
+
+        self.parameters = {}
+
+    def create_gap(self):
+        # Create bad gap instance
+
+        self.locations = ['1', '2', '3']
+        self.customers = ['1', '2', '3']
+        self.periods = [str(i) for i in range(1, 10**3 + 1)]
+
+        # Create catalogs
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1 if location == customer else 0
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] = 1
+
+        # Create alphas
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.lowers = {}
+        self.uppers = {}
+        for customer in self.customers:
+            self.alphas[customer] = 0
+            self.betas[customer] = 1
+            self.gammas[customer] = 0
+            self.lowers[customer] = 1
+            self.uppers[customer] = 10**3
+
+        # Create deltas
+        self.deltas = {}
+        self.deltas['1'] = 10**3
+        self.deltas['2'] = 3
+        self.deltas['3'] = 3
+
+        # Create start values
+        self.starts = {}
+        self.starts['1'] = 1.1
+        self.starts['2'] = 3.0
+        self.starts['3'] = 1.0
+
+        self.parameters = {}
 
     def create_example(self):
         # Create example instance
