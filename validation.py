@@ -27,7 +27,7 @@ def apply_consolidation(instance, cumulative):
 
     return cumulative
 
-def evaluate_location(instance, cumulative, location):
+def evaluate_location(instance, cumulative, period, location):
 
     score = 0.
 
@@ -35,7 +35,7 @@ def evaluate_location(instance, cumulative, location):
 
         if instance.catalogs[location][customer]:
 
-            score += instance.revenues['1'][location] * min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
+            score += instance.revenues[period][location] * min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
 
     return score
 
@@ -55,7 +55,7 @@ def evaluate_solution(instance, solution):
 
         if solution[period] != '0':
 
-            score = evaluate_location(instance, cumulative, solution[period])
+            score = evaluate_location(instance, cumulative, period, solution[period])
 
             fitness += score
 
@@ -87,7 +87,7 @@ def detail_solution(instance, solution, filename = 'detailed_hrs.csv'):
 
             if solution[period] != '0':
 
-                score = evaluate_location(instance, cumulative, solution[period])
+                score = evaluate_location(instance, cumulative, period, solution[period])
 
                 fitness += score
 
