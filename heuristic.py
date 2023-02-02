@@ -1,6 +1,6 @@
 import validation as vd
 
-def choose_location(instance, cumulative):
+def choose_location(instance, cumulative, period):
 
     best = -1
 
@@ -8,7 +8,7 @@ def choose_location(instance, cumulative):
 
     for location in instance.locations:
 
-        scores[location] = vd.evaluate_location(instance, cumulative, location)
+        scores[location] = vd.evaluate_location(instance, cumulative, period, location)
 
         if best == -1 or scores[location] > scores[best]:
 
@@ -32,7 +32,7 @@ def greedy_heuristic(instance):
 
         cumulative = vd.apply_replenishment(instance, cumulative)
 
-        location, score = choose_location(instance, cumulative)
+        location, score = choose_location(instance, cumulative, period)
 
         solution[period] = location
 
