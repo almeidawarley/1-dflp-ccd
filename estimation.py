@@ -2,6 +2,7 @@ import gurobipy as gp
 import variables as vb
 import formulation as fm
 import instance as ic
+import validation as vd
 
 def previous(period):
 
@@ -76,7 +77,8 @@ def create_c1(instance, mip, variable):
     # Create constraint 1
 
     mip.addConstrs((variable['d3']['0', customer] - variable['d0'][customer] == 0 for customer in instance.customers), name = 'c1')
-    # mip.addConstrs((variable['d3']['0', customer] == 0 for customer in instance.customers), name = 'c1')
+    mip.addConstrs((variable['d3']['0', customer] == 0 for customer in instance.customers), name = 'c1A')
+    mip.addConstrs((variable['d0'][customer] == 0 for customer in instance.customers), name = 'c1B')
 
 # ---------------------------------------------------------------------------
 
@@ -158,11 +160,30 @@ def build_estimation(instance, training):
 
 # Read instance from file
 instance = ic.instance('D-toy')
+modified = ic.instance('D-toy')
+
+# Reset lower and upper bounds
+# Modify betas to make it harder to estimate
+for customer in instance.customers:
+
+    # instance.starts[customer] = 0
+    instance.lowers[customer] = 0
+    instance.uppers[customer] = 99
+
+    instance.betas[customer] = instance.deltas[customer] / 2
+    modified.betas[customer] = modified.deltas[customer] / 2
+
+    # modified.starts[customer] = 0
+    modified.lowers[customer] = 0
+    modified.uppers[customer] = 99
+
+instance.print_instance()
 
 # Build 1-DFLP-RA model
 mip, variable = fm.build_fancy(instance)
 # Find optimal solution
 mip.optimize()
+org_solution = fm.format_solution(instance, mip, variable)
 
 # Prepare training data
 training = {}
@@ -194,3 +215,20 @@ for customer in instance.customers:
     print('| D^0: {}'.format(variable['d0'][customer].x))
     print('| Beta: {}'.format(variable['b'][customer].x))
     print('| Delta: {}'.format(variable['d'][customer].x))
+
+# Set estimated parameters
+for customer in instance.customers:
+    modified.starts[customer] = variable['d0'][customer].x
+    modified.alphas[customer] = 0.
+    modified.betas[customer] = variable['b'][customer].x
+    modified.gammas[customer] = 0.
+    modified.deltas[customer] = variable['d'][customer].x
+
+# Build 1-DFLP-RA model
+mip, variable = fm.build_fancy(modified)
+# Find optimal solution
+mip.optimize()
+est_solution = fm.format_solution(modified, mip, variable)
+
+print('Optimal to original instance [{}]: {}'.format(vd.evaluate_solution(instance, org_solution), org_solution))
+print('Original to estimated instance [{}]: {}'.format(vd.evaluate_solution(instance, est_solution), est_solution))
