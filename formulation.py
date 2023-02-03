@@ -43,7 +43,7 @@ def build_simple(instance, method):
 
     return mip, variable
 
-def build_fancy(instance, absorb = False):
+def build_fancy(instance):
     # Build the 1-DFLP-DRA
 
     mip = gp.Model('1-DFLP-DRA')
@@ -90,9 +90,6 @@ def build_fancy(instance, absorb = False):
     ct.create_c6F(instance, mip, variable)
     ct.create_c6G(instance, mip, variable)
     ct.create_c6H(instance, mip, variable)
-
-    if absorb:
-        mip.setObjective(sum([-1 * variable['d3'][str(len(instance.periods)), customer] for customer in instance.customers]))
 
     return mip, variable
 
