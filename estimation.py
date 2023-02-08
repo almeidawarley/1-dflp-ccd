@@ -77,8 +77,8 @@ def create_c1(instance, mip, variable):
     # Create constraint 1
 
     mip.addConstrs((variable['d3']['0', customer] - variable['d0'][customer] == 0 for customer in instance.customers), name = 'c1')
-    mip.addConstrs((variable['d3']['0', customer] == 0 for customer in instance.customers), name = 'c1A')
-    mip.addConstrs((variable['d0'][customer] == 0 for customer in instance.customers), name = 'c1B')
+    # mip.addConstrs((variable['d3']['0', customer] == 0 for customer in instance.customers), name = 'c1A')
+    # mip.addConstrs((variable['d0'][customer] == 0 for customer in instance.customers), name = 'c1B')
 
 # ---------------------------------------------------------------------------
 
@@ -170,17 +170,31 @@ for customer in instance.customers:
     instance.lowers[customer] = 0
     instance.uppers[customer] = 99
 
-    instance.betas[customer] = instance.deltas[customer] / 2
-    modified.betas[customer] = modified.deltas[customer] / 2
+    # instance.betas[customer] = instance.deltas[customer] / 2
+    # modified.betas[customer] = modified.deltas[customer] / 2
 
     # modified.starts[customer] = 0
     modified.lowers[customer] = 0
     modified.uppers[customer] = 99
 
+# If D^0_j == 0 for the original instance, it takes less periods to estimate beta! (how many? characterize it!)
+# If D^0_j != 0 for the original instance, jt takes more periods to estimate beta! (how many? characterize it!)
+
 instance.print_instance()
 
 # Build 1-DFLP-RA model
 mip, variable = fm.build_fancy(instance)
+'''
+try:
+    mip.addConstr(variable['y']['1', '1'] == 1)
+    mip.addConstr(variable['y']['2', '2'] == 1)
+    mip.addConstr(variable['y']['3', '3'] == 1)
+    mip.addConstr(variable['y']['4', '4'] == 1)
+    mip.addConstr(variable['y']['5', '5'] == 1)
+except Exception as e:
+    print('Not able to add one of the constraints')
+    print('Error message: {}'.format(e))
+'''
 # Find optimal solution
 mip.optimize()
 org_solution = fm.format_solution(instance, mip, variable)
@@ -204,6 +218,8 @@ for period in instance.periods:
 
 # Build EST-1-DFL-RA model
 est, variable = build_estimation(instance, training)
+for customer in instance.customers:
+    est.addConstr(variable['d0'][customer] == instance.starts[customer])
 # Find optimal parameters
 est.optimize()
 
