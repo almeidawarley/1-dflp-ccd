@@ -21,9 +21,15 @@ class instance:
         elif keyword == 'spp':
             # Create SPP instance
             self.create_spp()
-        elif keyword == 'gap':
-            # Create SPP instance
-            self.create_gap()
+        elif keyword == 'gap1':
+            # Create GAP1 instance
+            self.create_gap1()
+        elif keyword == 'gap2':
+            # Create GAP2 instance
+            self.create_gap2()
+        elif keyword == 'gap3':
+            # Create GAP3 instance
+            self.create_gap3()
         else:
             # Create random instance
             if 'A-' in keyword:
@@ -484,6 +490,184 @@ class instance:
             else:
                 exit('Wrong absorption parameter')
 
+        '''
+        for customer in self.customers:
+
+            self.starts[customer] = 0
+            self.deltas[customer] = 20 + rd.randint(-1,1) * rd.randint(1, 20)
+            self.betas[customer] = self.deltas[customer] / 2
+            self.lowers[customer] = 0
+            self.uppers[customer] = 1000000
+        '''
+
+    def create_setE(self, folder = 'instances'):
+        # Create instance set E
+
+        try:
+            # Read specifications from file
+            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
+                self.parameters = js.load(content)
+        except:
+            with open ('experiments/{}/{}.json'.format(folder, self.keyword), 'r') as content:
+                self.parameters = js.load(content)
+
+        rd.seed(self.parameters['O'] * 10 + self.parameters['S'])
+
+        # Set instance size
+        number_locations = int(self.parameters['I'])
+        number_customers = int(self.parameters['J'])
+        number_periods = int(self.parameters['T'])
+
+        self.locations = [str(i + 1) for i in range(number_locations)]
+        self.customers = [str(i + 1) for i in range(number_customers)]
+        self.periods = [str(i + 1) for i in range(number_periods)]
+
+        # Create map points
+        self.points = {}
+        '''
+        self.points['i1'] = [-5,-5]
+        self.points['i2'] = [-5,0]
+        self.points['i3'] = [-5,5]
+        self.points['i4'] = [0,-5]
+        self.points['i5'] = [0,5]
+        self.points['i6'] = [5,-5]
+        self.points['i7'] = [5,0]
+        self.points['i8'] = [5,5]
+        self.points['j1'] = [-2.5,-2.5]
+        self.points['j2'] = [-2.5,2.5]
+        self.points['j3'] = [2.5,-2.5]
+        self.points['j4'] = [2.5,2.5]
+        self.points['j5'] = [-7.5,-7.5]
+        self.points['j6'] = [-7.5,-2.5]
+        self.points['j7'] = [-7.5,2.5]
+        self.points['j8'] = [-7.5,7.5]
+        self.points['j9'] = [7.5,-7.5]
+        self.points['j10'] = [7.5,-2.5]
+        self.points['j11'] = [7.5,2.5]
+        self.points['j12'] = [7.5,7.5]
+        self.points['j13'] = [-2.5,-7.5]
+        self.points['j14'] = [-2.5,7.5]
+        self.points['j15'] = [2.5,-7.5]
+        self.points['j16'] = [2.5,7.5]
+        '''
+        # Create map points
+        self.points = {}
+        for location in self.locations:
+            self.points['i{}'.format(location)] = [rd.randint(-10, 10), rd.randint(-10, 10)]
+        for customer in self.customers:
+            self.points['j{}'.format(customer)] = [rd.randint(-10, 10), rd.randint(-10, 10)]
+        X = [self.points['i{}'.format(location)][0] for location in self.locations]
+        Y = [self.points['i{}'.format(location)][1] for location in self.locations]
+        pt.scatter(X, Y, marker = 'o')
+        for location in self.locations:
+            pt.annotate(location, (X[int(location) - 1], Y[int(location) - 1]))
+        X = [self.points['j{}'.format(customer)][0] for customer in self.customers]
+        Y = [self.points['j{}'.format(customer)][1] for customer in self.customers]
+        pt.scatter(X, Y, marker = 'x')
+        for customer in self.customers:
+            pt.annotate(customer, (X[int(customer) - 1], Y[int(customer) - 1]))
+        pt.savefig('archives/map-{}.png'.format(self.keyword))
+
+        '''
+        self.threshold = {}
+        radius_index = mt.floor((self.parameters['theta'] / 100) * number_locations) - 1
+        for customer in self.customers:
+            distances = []
+            for location in self.locations:
+                distances.append(mt.dist(self.points['i{}'.format(location)], self.points['j{}'.format(customer)]))
+            distances.sort()
+            self.threshold[customer] = distances[radius_index]
+        '''
+
+        # Create catalogs
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1. if mt.dist(self.points['i{}'.format(location)], self.points['j{}'.format(customer)]) <= rd.randint(2,5) else 0. # self.parameters['B'] else 0.
+
+        '''
+        avg_patronizable = 0
+        for customer in self.customers:
+            patronizable = sum([self.catalogs[location][customer] for location in self.locations])
+            print('Customer: {} -> {}'.format(customer, patronizable))
+            avg_patronizable += patronizable
+        print(avg_patronizable/len(self.customers))
+        '''
+
+        # Absorption varieties
+        # Gamma values
+        G = {
+            'rel': [0.1, 0.2, 0.3],
+            'abs': [0.2, 0.4, 0.6]
+        }
+        # Delta values
+        D = {
+            'rel': [1.0, 1.5, 2.0],
+            'abs': [2.0, 3.0, 4.0]
+        }
+
+        # Handle customers
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.deltas = {}
+        self.starts = {}
+        self.lowers = {}
+        self.uppers = {}
+
+        for customer in self.customers:
+            # Upper, lower and initial demand
+            self.lowers[customer] = 1
+            self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
+            self.uppers[customer] = self.parameters['U']
+
+        for customer in self.customers:
+
+            # Demand replenishment assignments
+            if self.parameters['R'] == 'rel':
+                self.alphas[customer] = 0.1
+                self.betas[customer] = 0.0
+            elif self.parameters['R'] == 'abs':
+                self.alphas[customer] = 0.0
+                self.betas[customer] = 1.0
+            else:
+                exit('Wrong replenishment parameter')
+
+            # Demand absorption assignments
+            if self.parameters['A'] == 'rel':
+                self.deltas[customer] = 0.0
+                if self.parameters['C'] == 'hom':
+                    self.gammas[customer] = G[self.parameters['R']][self.parameters['O']]
+                elif self.parameters['C'] == 'het':
+                    scale = rd.sample([i for i in range(0,100)], 1)[0] / 100.
+                    self.gammas[customer] = G[self.parameters['R']][0] + scale * (G[self.parameters['R']][2] - G[self.parameters['R']][0])
+                    self.gammas[customer] = round(self.gammas[customer], 2)
+                else:
+                    exit('Wrong (relative) customer parameter')
+            elif self.parameters['A'] == 'abs':
+                self.gammas[customer] = 0.0
+                if self.parameters['C'] == 'hom':
+                    self.deltas[customer] = D[self.parameters['R']][self.parameters['O']]
+                elif self.parameters['C'] == 'het':
+                    scale = rd.sample([i for i in range(0,100)], 1)[0] / 100.
+                    self.deltas[customer] = D[self.parameters['R']][0] + scale * (D[self.parameters['R']][2] - D[self.parameters['R']][0])
+                    self.deltas[customer] = round(self.deltas[customer], 2)
+                else:
+                    exit('Wrong (absorption) customer parameter')
+            else:
+                exit('Wrong absorption parameter')
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                if period == '1':
+                    self.revenues[period][location] = round(100 * 1 / sum([self.catalogs[location][customer] for customer in self.customers]), 2) + rd.randint(-5,5)
+                else:
+                    self.revenues[period][location] = self.revenues['1'][location]
+
     def create_spp(self, K = 2):
         # Create SPP instances
 
@@ -527,7 +711,7 @@ class instance:
 
         self.parameters = {}
 
-    def create_gap(self):
+    def create_gap1(self):
         # Create bad gap instance
 
         self.locations = ['1', '2', '3']
@@ -572,6 +756,123 @@ class instance:
         self.starts['1'] = 1.1
         self.starts['2'] = 3.0
         self.starts['3'] = 1.0
+
+        self.parameters = {}
+
+    def create_gap2(self):
+        # Create bad gap instance
+
+        crafted_t = 5
+        crafted_b1 = 5
+        crafted_b2 = 4.9
+
+        self.locations = ['1', '2']
+        self.customers = ['1', '2']
+        self.periods = [str(i) for i in range(1, crafted_t + 1)]
+
+        # Create catalogs
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1 if location == customer else 0
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] = 1
+
+        # Create alphas
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.lowers = {}
+        self.uppers = {}
+        self.deltas = {}
+        self.starts = {}
+
+        self.alphas['1'] = 0.
+        self.betas['1'] = crafted_b1
+        self.gammas['1'] = 0.
+        self.lowers['1'] = 0.
+        self.uppers['1'] = 10 * crafted_t
+        self.deltas['1'] = crafted_b1 * crafted_t
+        self.starts['1'] = 0.
+
+        self.alphas['2'] = 0.
+        self.betas['2'] = crafted_b2
+        self.gammas['2'] = 0.
+        self.lowers['2'] = 0.
+        self.uppers['2'] = 10 * crafted_t
+        self.deltas['2'] = crafted_b2
+        self.starts['2'] = 0.
+
+        self.parameters = {}
+
+    def create_gap3(self):
+        # Create bad gap instance
+
+        crafted_t = 2
+        crafted_b1 = 5
+        crafted_b2 = 9.9
+        crafted_b3 = 5
+
+        self.locations = ['1', '2']
+        self.customers = ['1', '2', '3']
+        self.periods = [str(i) for i in range(1, crafted_t + 1)]
+
+        # Create catalogs
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 0
+
+        self.catalogs['1']['2'] = 1
+        self.catalogs['2']['1'] = 1
+        self.catalogs['2']['3'] = 1
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] = 1
+
+        # Create alphas
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.lowers = {}
+        self.uppers = {}
+        self.deltas = {}
+        self.starts = {}
+
+        self.alphas['1'] = 0.
+        self.betas['1'] = crafted_b1
+        self.gammas['1'] = 0.
+        self.lowers['1'] = 0.
+        self.uppers['1'] = 10 * crafted_t
+        self.deltas['1'] = crafted_b1 * crafted_t
+        self.starts['1'] = 0.
+
+        self.alphas['2'] = 0.
+        self.betas['2'] = crafted_b2
+        self.gammas['2'] = 0.
+        self.lowers['2'] = 0.
+        self.uppers['2'] = 10 * crafted_t
+        self.deltas['2'] = crafted_b2
+        self.starts['2'] = 0.
+
+        self.alphas['3'] = 0.
+        self.betas['3'] = crafted_b3
+        self.gammas['3'] = 0.
+        self.lowers['3'] = 0.
+        self.uppers['3'] = 10 * crafted_t
+        self.deltas['3'] = crafted_b3 * crafted_t
+        self.starts['3'] = 0.
 
         self.parameters = {}
 
