@@ -46,6 +46,9 @@ def main():
     lpr_objective = round(lpr.objVal, 2)
     lpr_runtime = round(lpr.runtime, 2)
     print('Optimal LPR solution: [{}] no interpretable solution'.format(round(lpr.objVal, 2)))
+    with open('lpr.csv', 'w') as content:
+        for v in lpr.getVars():
+            content.write('{},{}\n'.format(v.varName, v.x))
     record = rc.update_record(record, {
         'lpr_objective': lpr_objective,
         'lpr_runtime': lpr_runtime,
@@ -69,6 +72,9 @@ def main():
         'mip_intgap': compute_gap(lpr_objective, mip_objective),
         'hrs_optgap': compute_gap(mip_objective, hrs_objective)
     })
+    with open('mip.csv', 'w') as content:
+        for v in mip.getVars():
+            content.write('{},{}\n'.format(v.varName, v.x))
 
     mark_section('Validating the solution of the 1-DFLP-RA analytically...')
     analytical = vd.evaluate_solution(instance, mip_solution)
@@ -98,5 +104,7 @@ def main():
         })
 
     mark_section('Wrapping up the execution with sanity check {}!'.format(validation))
+
+    print('>>>>>>>>> Heuristic gap: {}'.format(record['hrs_optgap']))
 
 main()
