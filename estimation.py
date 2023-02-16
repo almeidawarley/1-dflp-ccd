@@ -184,14 +184,14 @@ instance.print_instance()
 
 # Build 1-DFLP-RA model
 mip, variable = fm.build_fancy(instance)
-
+'''
 try:
     for period in instance.periods:
         mip.addConstr(variable['y'][period, period] == 1)
 except Exception as e:
     print('Not able to add one of the constraints')
     print('Error message: {}'.format(e))
-
+'''
 # Find optimal solution
 mip.optimize()
 org_solution = fm.format_solution(instance, mip, variable)
