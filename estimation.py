@@ -184,6 +184,7 @@ instance.print_instance()
 
 # Build 1-DFLP-RA model
 mip, variable = fm.build_fancy(instance)
+
 try:
     for period in instance.periods:
         mip.addConstr(variable['y'][period, period] == 1)
