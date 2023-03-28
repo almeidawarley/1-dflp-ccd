@@ -18,6 +18,7 @@ def main():
     parser = ap.ArgumentParser(description = 'Run 1-DFLP-RA for some instance')
     parser.add_argument('keyword', type = str, help = 'Instance keyword following established patterns')
     parser.add_argument('-p', '--project', default = '1-dflp-ra', type = str, help = 'Project name on Weights & Biases for storing results')
+    parser.add_argument('--hide', action = 'store_true', help = 'Run only HRS, MIP and LPR (i.e., hide approximations)')
     args = parser.parse_args()
 
     mark_section('Generating instance information based on the parameters...')
@@ -46,9 +47,11 @@ def main():
     lpr_objective = round(lpr.objVal, 2)
     lpr_runtime = round(lpr.runtime, 2)
     print('Optimal LPR solution: [{}] no interpretable solution'.format(round(lpr.objVal, 2)))
+    '''
     with open('lpr.csv', 'w') as content:
         for v in lpr.getVars():
             content.write('{},{}\n'.format(v.varName, v.x))
+    '''
     record = rc.update_record(record, {
         'lpr_objective': lpr_objective,
         'lpr_runtime': lpr_runtime,
@@ -72,9 +75,11 @@ def main():
         'mip_intgap': compute_gap(lpr_objective, mip_objective),
         'hrs_optgap': compute_gap(mip_objective, hrs_objective)
     })
+    '''
     with open('mip.csv', 'w') as content:
         for v in mip.getVars():
             content.write('{},{}\n'.format(v.varName, v.x))
+    '''
 
     mark_section('Validating the solution of the 1-DFLP-RA analytically...')
     analytical = vd.evaluate_solution(instance, mip_solution)
@@ -84,27 +89,33 @@ def main():
     })
     print('>>> Sanity check: {} = {}? {} <<<'.format(mip_objective, analytical, validation))
 
-    for method in ['1', '2', '3']:
+    if not args.hide:
 
-        mark_section('Approximating the 1-DFLP-RA by the #{} method...'.format(method))
-        apr, variable = fm.build_simple(instance, method)
-        apr.write('archives/ap{}-{}.lp'.format(method, instance.keyword))
-        apr.optimize()
-        apr.write('archives/ap{}-{}.sol'.format(method, instance.keyword))
-        apr_solution = fm.format_solution(instance, apr, variable)
-        apr_objective = vd.evaluate_solution(instance, apr_solution)
-        apr_runtime = round(apr.runtime, 2)
-        print('Approximate solution #{}: [{}] {}'.format(method, apr_objective, apr_solution))
-        record = rc.update_record(record, {
-            'ap{}_objective'.format(method): apr_objective,
-            'ap{}_solution'.format(method): '-'.join(apr_solution.values()),
-            'ap{}_runtime'.format(method): apr_runtime,
-            'ap{}_status'.format(method): apr.status,
-            'ap{}_optgap'.format(method): compute_gap(mip_objective, apr_objective)
-        })
+        for method in ['1', '2', '3']:
+
+            mark_section('Approximating the 1-DFLP-RA by the #{} method...'.format(method))
+            apr, variable = fm.build_simple(instance, method)
+            apr.write('archives/ap{}-{}.lp'.format(method, instance.keyword))
+            apr.optimize()
+            apr.write('archives/ap{}-{}.sol'.format(method, instance.keyword))
+            apr_solution = fm.format_solution(instance, apr, variable)
+            apr_objective = vd.evaluate_solution(instance, apr_solution)
+            apr_runtime = round(apr.runtime, 2)
+            print('Approximate solution #{}: [{}] {}'.format(method, apr_objective, apr_solution))
+            record = rc.update_record(record, {
+                'ap{}_objective'.format(method): apr_objective,
+                'ap{}_solution'.format(method): '-'.join(apr_solution.values()),
+                'ap{}_runtime'.format(method): apr_runtime,
+                'ap{}_status'.format(method): apr.status,
+                'ap{}_optgap'.format(method): compute_gap(mip_objective, apr_objective)
+            })
 
     mark_section('Wrapping up the execution with sanity check {}!'.format(validation))
 
     print('>>>>>>>>> Heuristic gap: {}'.format(record['hrs_optgap']))
+    print('>>>>>>>>> MIP objective: {}'.format(record['mip_objective']))
+    print('>>>>>>>>> HRS objective: {}'.format(record['hrs_objective']))
+    print('>>>>>>>>> MIP solution: {}'.format('-'.join(mip_solution.values())))
+    print('>>>>>>>>> HRS solution: {}'.format('-'.join(hrs_solution.values())))
 
 main()

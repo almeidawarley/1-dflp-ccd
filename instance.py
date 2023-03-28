@@ -31,6 +31,9 @@ class instance:
         elif keyword == 'gap3':
             # Create GAP3 instance
             self.create_gap3()
+        elif keyword == 'slovakia':
+            # Create slovakia instance
+            self.create_slovakia()
         else:
             # Create random instance
             if 'A-' in keyword:
@@ -629,9 +632,11 @@ class instance:
     def create_gap1(self):
         # Create bad gap instance
 
+        crafted_t = 3
+
         self.locations = ['1', '2', '3']
         self.customers = ['1', '2', '3']
-        self.periods = [str(i) for i in range(1, 10**3 + 1)]
+        self.periods = [str(i) for i in range(1, crafted_t + 1)]
 
         # Create catalogs
         self.catalogs = {}
@@ -658,11 +663,11 @@ class instance:
             self.betas[customer] = 1
             self.gammas[customer] = 0
             self.lowers[customer] = 1
-            self.uppers[customer] = 10**3
+            self.uppers[customer] = crafted_t
 
         # Create deltas
         self.deltas = {}
-        self.deltas['1'] = 10**3
+        self.deltas['1'] = crafted_t
         self.deltas['2'] = 3
         self.deltas['3'] = 3
 
@@ -790,6 +795,52 @@ class instance:
         self.starts['3'] = 0.
 
         self.parameters = {}
+
+    def create_slovakia(self):
+        # Create slovakia instance
+
+        self.parameters = {}
+        self.parameters['B'] = 10
+        self.parameters['T'] = 12
+
+        table = pd.read_csv('slovakia/csv/nodes.csv')
+
+        self.locations = table['id'].tolist()
+        self.locations = [str(location) for location in self.locations]
+        self.customers = table['id'].tolist()
+        self.customers = [str(customer) for customer in self.customers]
+        self.periods = [str(i) for i in range(1, self.parameters['T'] + 1)]
+
+        self.distances = {}
+        for location in self.locations:
+            self.distances[location] = {}
+            for customer in self.customers:
+                self.distances[location][customer] = 0.
+
+        with open('slovakia/csv/Dmatrix.txt') as content:
+
+            # Read number of rows and columns
+            rows = int(content.readline())
+            cols = int(content.readline())
+
+            # Store distances between points
+            for location in self.locations:
+                for customer in self.customers:
+                    self.distances[location][customer] = float(content.readline())
+
+        # Create catalogs
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1. if self.distances[location][customer] <= self.parameters['B'] else 0.
+
+        avg_patronizable = 0
+        for customer in self.customers:
+            patronizable = sum([self.catalogs[location][customer] for location in self.locations])
+            print('Customer: {} -> {}'.format(customer, patronizable))
+            avg_patronizable += patronizable
+        print(avg_patronizable/len(self.customers))
 
     def create_example(self):
         # Create example instance

@@ -57,6 +57,8 @@ def evaluate_solution(instance, solution):
 
             score = evaluate_location(instance, cumulative, period, solution[period])
 
+            # print('| scoring {} through location {} at time period {}'.format(score, solution[period], period))
+
             fitness += score
 
             cumulative = apply_absorption(instance, cumulative, solution[period])
