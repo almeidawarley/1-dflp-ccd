@@ -31,6 +31,12 @@ class instance:
         elif keyword == 'gap3':
             # Create GAP3 instance
             self.create_gap3()
+        elif keyword == 'gap4':
+            # Create GAP4 instance
+            self.create_gap4()
+        elif keyword == '3sat':
+            # Create 3SAT instance
+            self.create_3sat()
         elif keyword == 'slovakia':
             # Create slovakia instance
             self.create_slovakia()
@@ -94,7 +100,7 @@ class instance:
         for period in self.periods:
             self.revenues[period] = {}
             for location in self.locations:
-                self.revenues[period][location] = 10
+                self.revenues[period][location] = 1 # 10
 
         # Absorption varieties
         # Gamma values
@@ -330,7 +336,7 @@ class instance:
         for period in self.periods:
             self.revenues[period] = {}
             for location in self.locations:
-                self.revenues[period][location] = 10
+                self.revenues[period][location] = 1 # 10
 
         # Absorption varieties
         # Gamma values
@@ -626,6 +632,106 @@ class instance:
             self.starts[customer] = 1
             self.lowers[customer] = 0
             self.uppers[customer] = 10
+
+        self.parameters = {}
+
+    def create_gap4(self):
+        # Create GAP4 instances
+
+        self.locations = ['1', '2']
+        self.customers = ['1', '2']
+        self.periods = ['1', '2']
+
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1. if customer == location else 0.
+
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] =  1
+
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.deltas = {}
+        self.starts = {}
+        self.uppers = {}
+        self.lowers = {}
+        for customer in self.customers:
+            self.starts[customer] = 0
+            self.lowers[customer] = 0
+            self.uppers[customer] = 10**3
+
+            self.alphas[customer] = 0
+            self.gammas[customer] = 0
+
+        self.betas['1'] = 1
+        self.deltas['1'] = 1.001
+        self.betas['2'] = 0.1
+        self.deltas['2'] = 0.1
+
+        self.parameters = {}
+
+    def create_3sat(self):
+        # Create 3SAT instances
+
+        # with open('3sat/uuf50-01.cnf', 'r') as content:
+        with open('3sat/toy.cnf', 'r') as content:
+            clauses = []
+            for line in content:
+                if 'p' in line:
+                    line = line.strip().split(' ')
+                    variables = [str(i + 1) for i in range(0, int(line[2]))]
+                elif 'c' not in line:
+                    line = line.strip().split(' ')
+                    if len(line) == 4:
+                        clauses.append([line[0], line[1], line[2]])
+                    else:
+                        print('Skipped: {}'.format(line))
+                else:
+                    print('Skipped: {}'.format(line))
+
+        self.locations = [variable for variable in variables] + ['-' + variable for variable in variables]
+        self.customers = ['c{}'.format(index + 1) for index, _ in enumerate(clauses)] + ['v{}'.format(variable) for variable in variables]
+        self.periods = [variable for variable in variables]
+
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for index, customer in enumerate(self.customers):
+                if 'c' in customer:
+                    self.catalogs[location][customer] = 1. if location in clauses[int(customer.replace('c', '')) - 1] else 0.
+                elif 'v' in customer:
+                    self.catalogs[location][customer] = 1. if int(customer.replace('v', '')) == int(location.replace('-','')) else 0.
+                else:
+                    print('customer: {}'.format(customer))
+                    exit('Error, unexpected type of customer')
+
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] =  1
+
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.deltas = {}
+        self.starts = {}
+        self.uppers = {}
+        self.lowers = {}
+        for customer in self.customers:
+            self.starts[customer] = 1
+            self.betas[customer] = 0
+            self.deltas[customer] = 1
+            self.lowers[customer] = 0
+            self.uppers[customer] = 10**3
+            self.alphas[customer] = 0
+            self.gammas[customer] = 0
 
         self.parameters = {}
 

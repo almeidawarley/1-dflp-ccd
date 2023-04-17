@@ -29,7 +29,9 @@ def main():
     record = rc.create_record(args.project, instance)
 
     mark_section('Applying the greedy heuristic to the instance...')
-    hrs_solution, hrs_objective = hr.greedy_heuristic(instance)
+    # hrs_solution, hrs_objective = hr.greedy_heuristic(instance)
+    # hrs_solution, hrs_objective = hr.postpone_heuristic(instance)
+    hrs_solution, hrs_objective = hr.progressive_heuristic(instance)
     print('Heuristic solution: [{}] {}'.format(hrs_objective, hrs_solution))
     record = rc.update_record(record, {
         'hrs_objective': hrs_objective,
@@ -37,7 +39,7 @@ def main():
     })
 
     mark_section('Building the 1-DFLP-RA for the instance...')
-    mip, variable = fm.build_fancy(instance)
+    mip, mip_variable = fm.build_fancy(instance)
     mip.write('archives/mip-{}.lp'.format(instance.keyword))
 
     mark_section('Solving the LPR of the 1-DFLP-RA model...')
@@ -59,10 +61,10 @@ def main():
     })
 
     mark_section('Solving the MIP of the 1-DFLP-RA model...')
-    fm.warm_start(instance, variable, hrs_solution)
+    fm.warm_start(instance, mip_variable, hrs_solution)
     mip.optimize()
     mip.write('archives/mip-{}.sol'.format(instance.keyword))
-    mip_solution = fm.format_solution(instance, mip, variable)
+    mip_solution = fm.format_solution(instance, mip, mip_variable)
     mip_objective = round(mip.objVal, 2)
     mip_runtime = round(mip.runtime, 2)
     print('Optimal MIP solution: [{}] {}'.format(mip_objective, mip_solution))
@@ -94,11 +96,11 @@ def main():
         for method in ['1', '2', '3']:
 
             mark_section('Approximating the 1-DFLP-RA by the #{} method...'.format(method))
-            apr, variable = fm.build_simple(instance, method)
+            apr, apr_variable = fm.build_simple(instance, method)
             apr.write('archives/ap{}-{}.lp'.format(method, instance.keyword))
             apr.optimize()
             apr.write('archives/ap{}-{}.sol'.format(method, instance.keyword))
-            apr_solution = fm.format_solution(instance, apr, variable)
+            apr_solution = fm.format_solution(instance, apr, apr_variable)
             apr_objective = vd.evaluate_solution(instance, apr_solution)
             apr_runtime = round(apr.runtime, 2)
             print('Approximate solution #{}: [{}] {}'.format(method, apr_objective, apr_solution))
@@ -117,5 +119,19 @@ def main():
     print('>>>>>>>>> HRS objective: {}'.format(record['hrs_objective']))
     print('>>>>>>>>> MIP solution: {}'.format('-'.join(mip_solution.values())))
     print('>>>>>>>>> HRS solution: {}'.format('-'.join(hrs_solution.values())))
+
+    mark_section('Listing all optimal MIP solution...')
+
+    print('Optimal MIP solution: [{}] {} <{}>'.format(mip_objective, mip_solution, '-'.join(mip_solution.values())))
+    fm.block_solution(mip, mip_variable, mip_solution)
+    ref_objective = mip_objective
+    while mip_objective == ref_objective:
+        mip.setParam('OutputFlag', 0)
+        mip.optimize()
+        mip_solution = fm.format_solution(instance, mip, mip_variable)
+        mip_objective = round(mip.objVal, 2)
+        mip_runtime = round(mip.runtime, 2)
+        print('Optimal MIP solution: [{}] {} <{}>'.format(mip_objective, mip_solution, '-'.join(mip_solution.values())))
+        fm.block_solution(mip, mip_variable, mip_solution)
 
 main()
