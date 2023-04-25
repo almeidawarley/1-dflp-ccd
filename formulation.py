@@ -95,7 +95,12 @@ def build_fancy(instance):
 
 def block_solution(mip, variable, solution):
 
-    mip.addConstr(gp.quicksum(variable['y'][period, location] for period, location in solution.items()) <= len(solution) - 1)
+    ignored = 0
+    for location in solution.values():
+        if location == '0':
+            ignored += 1
+
+    mip.addConstr(gp.quicksum(variable['y'][period, location] for period, location in solution.items() if location != '0') <= len(solution) - ignored - 1)
 
 def fix_solution(mip, variable, solution):
 
