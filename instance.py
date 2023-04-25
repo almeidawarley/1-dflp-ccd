@@ -28,15 +28,15 @@ class instance:
         elif keyword == 'gap2':
             # Create GAP2 instance
             self.create_gap2()
-        elif keyword == 'gap3':
-            # Create GAP3 instance
-            self.create_gap3()
-        elif keyword == 'gap4':
-            # Create GAP4 instance
-            self.create_gap4()
         elif keyword == '3sat':
             # Create 3SAT instance
             self.create_3sat()
+        elif keyword == 'rnd1':
+            # Create RND1 instance
+            self.create_rnd1()
+        elif keyword == 'rnd2':
+            # Create RND2 instance
+            self.create_rnd2()
         elif keyword == 'slovakia':
             # Create slovakia instance
             self.create_slovakia()
@@ -125,7 +125,7 @@ class instance:
 
         for customer in self.customers:
             # Upper, lower and initial demand
-            self.lowers[customer] = 1
+            self.lowers[customer] = 0 # actually 1 in previous experiments
             self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
             self.uppers[customer] = self.parameters['U']
 
@@ -635,50 +635,10 @@ class instance:
 
         self.parameters = {}
 
-    def create_gap4(self):
-        # Create GAP4 instances
-
-        self.locations = ['1', '2']
-        self.customers = ['1', '2']
-        self.periods = ['1', '2']
-
-        self.catalogs = {}
-        for location in self.locations:
-            self.catalogs[location] = {}
-            for customer in self.customers:
-                self.catalogs[location][customer] = 1. if customer == location else 0.
-
-        self.revenues = {}
-        for period in self.periods:
-            self.revenues[period] = {}
-            for location in self.locations:
-                self.revenues[period][location] =  1
-
-        self.alphas = {}
-        self.betas = {}
-        self.gammas = {}
-        self.deltas = {}
-        self.starts = {}
-        self.uppers = {}
-        self.lowers = {}
-        for customer in self.customers:
-            self.starts[customer] = 0
-            self.lowers[customer] = 0
-            self.uppers[customer] = 10**3
-
-            self.alphas[customer] = 0
-            self.gammas[customer] = 0
-
-        self.betas['1'] = 1
-        self.deltas['1'] = 1.001
-        self.betas['2'] = 0.1
-        self.deltas['2'] = 0.1
-
-        self.parameters = {}
-
     def create_3sat(self):
         # Create 3SAT instances
 
+        # with open('3sat/uf20-01.cnf', 'r') as content:
         # with open('3sat/uuf50-01.cnf', 'r') as content:
         with open('3sat/toy.cnf', 'r') as content:
             clauses = []
@@ -735,21 +695,32 @@ class instance:
 
         self.parameters = {}
 
-    def create_gap1(self):
-        # Create bad gap instance
+    def create_rnd1(self, folder = 'instances'):
+        # Create RND1 instance
 
-        crafted_t = 3
+        self.parameters = {}
+        self.parameters['S'] = 0
+        self.parameters['T'] = 8
+        self.parameters['I'] = 30
+        self.parameters['J'] = 30
 
-        self.locations = ['1', '2', '3']
-        self.customers = ['1', '2', '3']
-        self.periods = [str(i) for i in range(1, crafted_t + 1)]
+        rd.seed(self.parameters['S'])
+
+        # Set instance size
+        number_locations = int(self.parameters['I'])
+        number_customers = int(self.parameters['J'])
+        number_periods = int(self.parameters['T'])
+
+        self.locations = [str(i + 1) for i in range(number_locations)]
+        self.customers = [str(i + 1) for i in range(number_customers)]
+        self.periods = [str(i + 1) for i in range(number_periods)]
 
         # Create catalogs
         self.catalogs = {}
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                self.catalogs[location][customer] = 1 if location == customer else 0
+                self.catalogs[location][customer] = 1. if location == customer else 0.
 
         # Create revenues
         self.revenues = {}
@@ -758,35 +729,84 @@ class instance:
             for location in self.locations:
                 self.revenues[period][location] = 1
 
-        # Create alphas
+        # Handle customers
         self.alphas = {}
         self.betas = {}
         self.gammas = {}
+        self.deltas = {}
+        self.starts = {}
         self.lowers = {}
         self.uppers = {}
+
         for customer in self.customers:
+            # Upper, lower and initial demand
+            self.lowers[customer] = 0
+            self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
+            self.uppers[customer] = 10 ** 10
             self.alphas[customer] = 0
-            self.betas[customer] = 1
             self.gammas[customer] = 0
-            self.lowers[customer] = 1
-            self.uppers[customer] = crafted_t
+            self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
+            self.deltas[customer] = 5 * self.betas[customer]
 
-        # Create deltas
-        self.deltas = {}
-        self.deltas['1'] = crafted_t
-        self.deltas['2'] = 3
-        self.deltas['3'] = 3
-
-        # Create start values
-        self.starts = {}
-        self.starts['1'] = 1.1
-        self.starts['2'] = 3.0
-        self.starts['3'] = 1.0
+    def create_rnd2(self, folder = 'instances'):
+        # Create RND2 instance
 
         self.parameters = {}
+        self.parameters['S'] = 0
+        self.parameters['T'] = 10
+        self.parameters['I'] = 30
+        self.parameters['J'] = 30
 
-    def create_gap2(self):
-        # Create bad gap instance
+        rd.seed(self.parameters['S'])
+
+        # Set instance size
+        number_locations = int(self.parameters['I'])
+        number_customers = int(self.parameters['J'])
+        number_periods = int(self.parameters['T'])
+
+        self.locations = [str(i + 1) for i in range(number_locations)]
+        self.customers = [str(i + 1) for i in range(number_customers)]
+        self.periods = [str(i + 1) for i in range(number_periods)]
+
+        # Create catalogs
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = rd.sample([0.,1.], 1)[0]
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] = 1
+
+        # Handle customers
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.deltas = {}
+        self.starts = {}
+        self.lowers = {}
+        self.uppers = {}
+
+        for customer in self.customers:
+            # Upper, lower and initial demand
+            self.lowers[customer] = 0
+            self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
+            self.uppers[customer] = 10 ** 3
+            self.alphas[customer] = 0
+            self.gammas[customer] = 0
+            self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
+            self.deltas[customer] = 5 * self.betas[customer]
+
+    '''
+        Create instance used as worst-case scenario
+        (the greedy heuristic is as close to 50%)
+    '''
+    def create_gap1(self):
+        # Create GAP1 instance
 
         crafted_t = 5
         crafted_b1 = 5
@@ -837,71 +857,55 @@ class instance:
 
         self.parameters = {}
 
-    def create_gap3(self):
-        # Create bad gap instance
-
-        crafted_t = 2
-        crafted_b1 = 5
-        crafted_b2 = 9.9
-        crafted_b3 = 5
+    '''
+        Create instance used as a counter example
+        (here, forced postponing is not always optimal)
+    '''
+    def create_gap2(self):
+        # Create GAP2 instance
 
         self.locations = ['1', '2']
-        self.customers = ['1', '2', '3']
-        self.periods = [str(i) for i in range(1, crafted_t + 1)]
+        self.customers = ['1', '2']
+        self.periods = ['1', '2']
 
-        # Create catalogs
         self.catalogs = {}
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                self.catalogs[location][customer] = 0
+                self.catalogs[location][customer] = 1. if customer == location else 0.
 
-        self.catalogs['1']['2'] = 1
-        self.catalogs['2']['1'] = 1
-        self.catalogs['2']['3'] = 1
-
-        # Create revenues
         self.revenues = {}
         for period in self.periods:
             self.revenues[period] = {}
             for location in self.locations:
-                self.revenues[period][location] = 1
+                self.revenues[period][location] =  1
 
-        # Create alphas
         self.alphas = {}
         self.betas = {}
         self.gammas = {}
-        self.lowers = {}
-        self.uppers = {}
         self.deltas = {}
         self.starts = {}
+        self.uppers = {}
+        self.lowers = {}
+        for customer in self.customers:
+            self.starts[customer] = 0
+            self.lowers[customer] = 0
+            self.uppers[customer] = 10**3
 
-        self.alphas['1'] = 0.
-        self.betas['1'] = crafted_b1
-        self.gammas['1'] = 0.
-        self.lowers['1'] = 0.
-        self.uppers['1'] = 10 * crafted_t
-        self.deltas['1'] = crafted_b1 * crafted_t
-        self.starts['1'] = 0.
+            self.alphas[customer] = 0
+            self.gammas[customer] = 0
 
-        self.alphas['2'] = 0.
-        self.betas['2'] = crafted_b2
-        self.gammas['2'] = 0.
-        self.lowers['2'] = 0.
-        self.uppers['2'] = 10 * crafted_t
-        self.deltas['2'] = crafted_b2
-        self.starts['2'] = 0.
-
-        self.alphas['3'] = 0.
-        self.betas['3'] = crafted_b3
-        self.gammas['3'] = 0.
-        self.lowers['3'] = 0.
-        self.uppers['3'] = 10 * crafted_t
-        self.deltas['3'] = crafted_b3 * crafted_t
-        self.starts['3'] = 0.
+        self.betas['1'] = 1
+        self.deltas['1'] = 1.001
+        self.betas['2'] = 0.1
+        self.deltas['2'] = 0.1
 
         self.parameters = {}
 
+    '''
+        Create instance used as a case study for the paper
+        (this might not be in the paper after all though)
+    '''
     def create_slovakia(self):
         # Create slovakia instance
 
@@ -948,6 +952,9 @@ class instance:
             avg_patronizable += patronizable
         print(avg_patronizable/len(self.customers))
 
+    '''
+        Create instance used for introducing problem in the paper
+    '''
     def create_example(self):
         # Create example instance
 
@@ -1010,6 +1017,9 @@ class instance:
         for customer in self.customers:
             self.uppers[customer] = 50
 
+    '''
+        Create instance used for drawing graphs for the paper
+    '''
     def create_graph(self):
         # Create graph instance
 
