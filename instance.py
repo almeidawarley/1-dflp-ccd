@@ -699,10 +699,10 @@ class instance:
         # Create RND1 instance
 
         self.parameters = {}
-        self.parameters['S'] = 0
-        self.parameters['T'] = 8
-        self.parameters['I'] = 30
-        self.parameters['J'] = 30
+        self.parameters['S'] = 1
+        self.parameters['T'] = 4
+        self.parameters['I'] = 10
+        self.parameters['J'] = 10
 
         rd.seed(self.parameters['S'])
 
@@ -746,7 +746,7 @@ class instance:
             self.alphas[customer] = 0
             self.gammas[customer] = 0
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
-            self.deltas[customer] = 5 * self.betas[customer]
+            self.deltas[customer] = 4 * self.betas[customer]
 
     def create_rnd2(self, folder = 'instances'):
         # Create RND2 instance
