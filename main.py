@@ -31,7 +31,9 @@ def main():
     mark_section('Applying the greedy heuristic to the instance...')
     # hrs_solution, hrs_objective = hr.greedy_heuristic(instance)
     # hrs_solution, hrs_objective = hr.postpone_heuristic(instance)
-    hrs_solution, hrs_objective = hr.progressive_heuristic(instance)
+    # hrs_solution, hrs_objective = hr.progressive_heuristic(instance)
+    # hrs_solution, hrs_objective = hr.passing_heuristic(instance)
+    hrs_solution, hrs_objective = hr.optimal_algorithm(instance)
     print('Heuristic solution: [{}] {}'.format(hrs_objective, hrs_solution))
     record = rc.update_record(record, {
         'hrs_objective': hrs_objective,
@@ -133,5 +135,7 @@ def main():
         mip_runtime = round(mip.runtime, 2)
         print('Optimal MIP solution: [{}] {} <{}>'.format(mip_objective, mip_solution, '-'.join(mip_solution.values())))
         fm.block_solution(mip, mip_variable, mip_solution)
+
+    # print(vd.evaluate_solution(instance, {'1':'4','2':'7','3':'3'}))
 
 main()

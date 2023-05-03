@@ -1,5 +1,22 @@
 import validation as vd
 
+def copy_solution(solution):
+
+    return {period : location for period, location in solution.items()}
+
+def insert_location(solution, period, location):
+
+    inserted = copy_solution(solution)
+
+    for reference in inserted.keys():
+        previous = str(int(reference) - 1)
+        if int(reference) > int(period):
+            inserted[reference] = solution[previous]
+
+    inserted[period] = location
+
+    return inserted
+
 def rank_locations(instance, cumulative, period):
 
     scores = {}
@@ -168,10 +185,75 @@ def progressive_heuristic(instance):
 
         # _ = input(' enter...')
 
-        if best_local >= best_global:
+        if best_local > best_global:
             best_global = best_local
             solution = {key : value for key, value in solution_local.items()}
 
         print('Best solution so far: {}'.format('-'.join(solution.values())))
 
     return solution, round(best_global, 2)
+
+def passing_heuristic(instance):
+
+    # Create partial solution
+    best_solution, best_objective = greedy_heuristic(instance)
+
+    for reference in instance.periods:
+
+        for location in instance.locations:
+
+            print('| Trying out location {} for period {}'.format(location, reference))
+
+            local_solution = copy_solution(best_solution)
+            local_solution[reference] = location
+            local_objective = vd.evaluate_solution(instance, local_solution)
+
+            if local_objective > best_objective:
+                best_objective = local_objective
+                best_solution = copy_solution(local_solution)
+            elif local_objective == best_objective:
+                print('Tie between {} and {} '.format('-'.join(best_solution.values()), '-'.join(local_solution.values())))
+            else:
+                pass
+
+    return best_solution, round(best_objective, 2)
+
+# built upon best solution with n - 1, n -2, ..., 1 time periods
+# allow flips of locations before inserting
+
+def optimal_algorithm(instance):
+
+    # Create partial solution
+    best_solution = {}
+    for period in instance.periods:
+        best_solution[period] = '0'
+    best_objective = 0.
+
+    for frontier in instance.periods:
+
+        local_objective = best_objective
+        local_solution = copy_solution(best_solution)
+
+        for reference in reversed(instance.periods):
+
+            if int(reference) <= int(frontier):
+
+                for location in instance.locations:
+
+                    # Copy partial solution
+                    candidate = copy_solution(best_solution)
+                    # Insert location
+                    candidate = insert_location(candidate, reference, location)
+                    objective = vd.evaluate_solution(instance, candidate)
+                    # if objective >= local_objective: # to get alternative wrong solution
+                    if objective >= local_objective:
+                        local_objective =  objective
+                        local_solution = copy_solution(candidate)
+
+        if local_objective > best_objective:
+            best_objective = local_objective
+            best_solution = copy_solution(local_solution)
+
+        print('Best solution so far: {}'.format('-'.join(best_solution.values())))
+
+    return best_solution, round(best_objective, 2)

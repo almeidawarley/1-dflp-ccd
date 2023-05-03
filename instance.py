@@ -6,7 +6,7 @@ import pandas as pd
 
 class instance:
 
-    def __init__(self, keyword):
+    def __init__(self, keyword, argument = 0):
         # Initiate instance class
 
         # Store instance keyword
@@ -30,13 +30,13 @@ class instance:
             self.create_gap2()
         elif keyword == '3sat':
             # Create 3SAT instance
-            self.create_3sat()
+            self.create_3sat(argument)
         elif keyword == 'rnd1':
             # Create RND1 instance
             self.create_rnd1()
         elif keyword == 'rnd2':
             # Create RND2 instance
-            self.create_rnd2()
+            self.create_rnd2(argument)
         elif keyword == 'slovakia':
             # Create slovakia instance
             self.create_slovakia()
@@ -635,12 +635,15 @@ class instance:
 
         self.parameters = {}
 
-    def create_3sat(self):
+    def create_3sat(self, argument = 'toy.cnf'):
         # Create 3SAT instances
+
+        self.keyword = self.keyword + argument
 
         # with open('3sat/uf20-01.cnf', 'r') as content:
         # with open('3sat/uuf50-01.cnf', 'r') as content:
-        with open('3sat/toy.cnf', 'r') as content:
+        # with open('3sat/toy.cnf', 'r') as content:
+        with open('3sat/{}'.format(argument), 'r') as content:
             clauses = []
             for line in content:
                 if 'p' in line:
@@ -695,7 +698,7 @@ class instance:
 
         self.parameters = {}
 
-    def create_rnd1(self, folder = 'instances'):
+    def create_rnd1(self):
         # Create RND1 instance
 
         self.parameters = {}
@@ -742,17 +745,17 @@ class instance:
             # Upper, lower and initial demand
             self.lowers[customer] = 0
             self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
-            self.uppers[customer] = 10 ** 10
+            self.uppers[customer] = 10 * (self.parameters['T'] + 1)
             self.alphas[customer] = 0
             self.gammas[customer] = 0
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
             self.deltas[customer] = 4 * self.betas[customer]
 
-    def create_rnd2(self, folder = 'instances'):
+    def create_rnd2(self, seed):
         # Create RND2 instance
 
         self.parameters = {}
-        self.parameters['S'] = 0
+        self.parameters['S'] = seed
         self.parameters['T'] = 10
         self.parameters['I'] = 30
         self.parameters['J'] = 30
@@ -772,8 +775,13 @@ class instance:
         self.catalogs = {}
         for location in self.locations:
             self.catalogs[location] = {}
+            maximum = rd.sample([0.1 * self.parameters['J'], 0.3 * self.parameters['J'], 0.5 * self.parameters['J']], 1)[0]
+            assigned = 0
             for customer in self.customers:
-                self.catalogs[location][customer] = rd.sample([0.,1.], 1)[0]
+                self.catalogs[location][customer] = 1. if location == customer else rd.sample([0.,1.], 1)[0]
+                assigned += self.catalogs[location][customer]
+                if location != customer and assigned > maximum:
+                    self.catalogs[location][customer] = 0.
 
         # Create revenues
         self.revenues = {}
@@ -799,7 +807,7 @@ class instance:
             self.alphas[customer] = 0
             self.gammas[customer] = 0
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
-            self.deltas[customer] = 5 * self.betas[customer]
+            self.deltas[customer] = rd.sample([1,2,3,4,5], 1)[0] * self.betas[customer]
 
     '''
         Create instance used as worst-case scenario
