@@ -34,4 +34,10 @@ def write_record(record):
     with open('records/{}.csv'.format(record['keyword']), 'w') as output:
         head = ','.join([str(key) for key in record.keys()])
         row  = ','.join([str(value) for value in record.values()])
-        output.write('{}\n{}'.format(head, row))
+        output.write(format_record(record))
+
+def format_record(record):
+
+    head = ','.join([str(key) for key in record.keys()])
+    row  = ','.join([str(value) for value in record.values()])
+    return '{}\n{}'.format(head, row)
