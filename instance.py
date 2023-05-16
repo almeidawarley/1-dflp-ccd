@@ -752,6 +752,7 @@ class instance:
             self.alphas[customer] = 0
             self.gammas[customer] = 0
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
+            self.betas[customer] /= 3
             self.deltas[customer] = 4 * self.betas[customer]
 
     def create_rnd2(self, seed):
@@ -862,8 +863,8 @@ class instance:
             self.uppers[customer] = (self.parameters['T'] + 1) * 10 # infinity
             self.alphas[customer] = 0
             self.gammas[customer] = 0
-            self.betas[customer] = rd.sample([1,2,3,4,5], 1)[0]
-            self.deltas[customer] = 4 * self.betas[customer]
+            self.betas[customer] = rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
+            self.deltas[customer] = 2 * self.betas[customer]
 
     '''
         Create instance used as worst-case scenario
