@@ -6,7 +6,7 @@ import pandas as pd
 
 class instance:
 
-    def __init__(self, keyword, argument = 0):
+    def __init__(self, keyword, argument = 'uuf50-01.cnf'):
         # Initiate instance class
 
         # Store instance keyword
@@ -37,6 +37,9 @@ class instance:
         elif keyword == 'rnd2':
             # Create RND2 instance
             self.create_rnd2(argument)
+        elif keyword == '1toN':
+            # Create 1:N instance
+            self.create_1toN(argument)
         elif keyword == 'slovakia':
             # Create slovakia instance
             self.create_slovakia()
@@ -755,7 +758,7 @@ class instance:
         # Create RND2 instance
 
         self.parameters = {}
-        self.parameters['S'] = seed
+        self.parameters['S'] = 222 # seed
         self.parameters['T'] = 10
         self.parameters['I'] = 30
         self.parameters['J'] = 30
@@ -808,6 +811,59 @@ class instance:
             self.gammas[customer] = 0
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
             self.deltas[customer] = rd.sample([1,2,3,4,5], 1)[0] * self.betas[customer]
+
+    def create_1toN(self, seed):
+        # Create RND2 instance
+
+        self.parameters = {}
+        self.parameters['S'] = 0
+        self.parameters['T'] = 10
+        self.parameters['I'] = 10
+        self.parameters['J'] = 10
+
+        rd.seed(self.parameters['S'])
+
+        # Set instance size
+        number_locations = int(self.parameters['I'])
+        number_customers = int(self.parameters['J'])
+        number_periods = int(self.parameters['T'])
+
+        self.locations = [str(i + 1) for i in range(number_locations)]
+        self.customers = [str(i + 1) for i in range(number_customers)]
+        self.periods = [str(i + 1) for i in range(number_periods)]
+
+        # Create catalogs
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1. if location == customer else rd.sample([0.,1.], 1)[0]
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] = 1
+
+        # Handle customers
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.deltas = {}
+        self.starts = {}
+        self.lowers = {}
+        self.uppers = {}
+
+        for customer in self.customers:
+            # Upper, lower and initial demand
+            self.lowers[customer] = 0
+            self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
+            self.uppers[customer] = (self.parameters['T'] + 1) * 10 # infinity
+            self.alphas[customer] = 0
+            self.gammas[customer] = 0
+            self.betas[customer] = rd.sample([1,2,3,4,5], 1)[0]
+            self.deltas[customer] = 4 * self.betas[customer]
 
     '''
         Create instance used as worst-case scenario
@@ -1085,6 +1141,7 @@ class instance:
         print('Keyword: <{}>'.format(self.keyword))
 
         print('Customers: {}'.format(self.customers))
+        print('\t| j: a, b, g, d, l, u, s [M]')
         for customer in self.customers:
             print('\t| {}: {}, {}, {}, {}, {}, {}, {} [{}]'.format(
                 customer,

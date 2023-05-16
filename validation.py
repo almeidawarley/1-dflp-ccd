@@ -67,6 +67,46 @@ def evaluate_solution(instance, solution):
 
     return round(fitness, 2)
 
+def export_data(instance, solution, filename = 'analysis.csv'):
+
+    with open(filename, 'w') as output:
+
+        output.write('period, location, customer, units\n')
+
+    cumulative = {}
+
+    for customer in instance.customers:
+
+        cumulative[customer] = instance.starts[customer]
+
+    fitness = 0.
+
+    for period in instance.periods:
+
+        cumulative = apply_replenishment(instance, cumulative)
+
+        if solution[period] != '0':
+
+            score = 0.
+
+            for customer in instance.customers:
+
+                if instance.catalogs[solution[period]][customer]:
+
+                    score += instance.revenues[period][period] * min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
+
+                    with open(filename, 'a') as output:
+
+                        output.write('{},{},{},{}\n'.format(period, solution[period], customer, score))
+
+            fitness += score
+
+            cumulative = apply_absorption(instance, cumulative, solution[period])
+
+        cumulative = apply_consolidation(instance, cumulative)
+
+    return round(fitness, 2)
+
 def detail_solution(instance, solution, filename = 'detailed_hrs.csv'):
 
     cumulative = {}
