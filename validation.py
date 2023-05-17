@@ -93,11 +93,13 @@ def export_data(instance, solution, filename = 'analysis.csv'):
 
                 if instance.catalogs[solution[period]][customer]:
 
-                    score += instance.revenues[period][period] * min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
+                    local = instance.revenues[period][period] * min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
+
+                    score += local
 
                     with open(filename, 'a') as output:
 
-                        output.write('{},{},{},{}\n'.format(period, solution[period], customer, score))
+                        output.write('{},{},{},{}\n'.format(period, solution[period], customer, local))
 
             fitness += score
 
