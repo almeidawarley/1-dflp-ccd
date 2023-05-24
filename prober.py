@@ -16,14 +16,14 @@ def compute_gap(major, minor):
 def main(seed):
 
     mark_section('Generating instance information based on the parameters...')
-    instance = ic.instance('rnd2', seed)
+    instance = ic.instance('rnd1', seed)
     instance.print_instance()
 
     mark_section('Logging instance parameters read from file ...')
     record = rc.create_record('prober', instance)
 
     mark_section('Applying the greedy heuristic to the instance...')
-    hrs_solution, hrs_objective = hr.greedy_heuristic(instance)
+    hrs_solution, hrs_objective = hr.optimal_algorithm(instance)
     print('Heuristic solution: [{}] {}'.format(hrs_objective, hrs_solution))
     record = rc.update_record(record, {
         'hrs_objective': hrs_objective,
@@ -85,7 +85,7 @@ def main(seed):
 
     mark_section('Wrapping up the execution with sanity check {}!'.format(validation))
 
-    with open('prober.csv', 'a') as content:
+    with open('prober-rnd1.csv', 'a') as content:
         content.write(rc.format_record(record))
 
     print('>>>>>>>>> Heuristic gap: {}'.format(record['hrs_optgap']))
@@ -94,7 +94,7 @@ def main(seed):
     print('>>>>>>>>> MIP solution: {}'.format('-'.join(mip_solution.values())))
     print('>>>>>>>>> HRS solution: {}'.format('-'.join(hrs_solution.values())))
 
-    if record['hrs_optgap'] >= 0.5:
+    if record['hrs_optgap'] > 0.:
         _ = input('Found hard counter example!!!')
 
 for i in range(0, 1000):
