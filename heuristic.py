@@ -231,6 +231,8 @@ def optimal_algorithm(instance):
 
     for frontier in instance.periods:
 
+        print('Starting with {}'.format('-'.join(best_solution.values())))
+
         local_objective = best_objective
         local_solution = copy_solution(best_solution)
 
@@ -245,10 +247,39 @@ def optimal_algorithm(instance):
                     # Insert location
                     candidate = insert_location(candidate, reference, location)
                     objective = vd.evaluate_solution(instance, candidate)
+
                     # if objective >= local_objective: # to get alternative wrong solution
-                    if objective >= local_objective:
-                        local_objective =  objective
+                    if objective > local_objective:
                         local_solution = copy_solution(candidate)
+                        local_objective =  objective
+
+                    elif objective == local_objective:
+
+                        # Tie breaking ruleS
+
+                        if location not in local_solution.values():
+
+                            # What to do if
+
+                            org_deltas = {key: value for (key, value) in instance.deltas.items()}
+                            for customer in instance.customers:
+                                instance.deltas[customer] = 10**6
+
+                            ign_solutionA = vd.evaluate_solution(instance, candidate)
+                            ign_solutionB = vd.evaluate_solution(instance, local_solution)
+
+                            if ign_solutionA > ign_solutionB:
+                                local_solution = copy_solution(candidate)
+                                local_objective =  objective
+                            else:
+                                print(candidate)
+                                print(local_solution)
+                                print('Solutions should be equivalent...')
+
+                            for customer in instance.customers:
+                                instance.deltas[customer] = org_deltas[customer]
+                    else:
+                        pass
 
         if local_objective > best_objective:
             best_objective = local_objective
