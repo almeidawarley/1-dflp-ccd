@@ -16,6 +16,9 @@ class instance:
         if keyword == 'example':
             # Create example instance
             self.create_example()
+        if keyword == 'jopt':
+            # Create example instance
+            self.create_jopt()
         elif keyword == 'graph':
             self.create_graph()
             # Create graph instance
@@ -33,7 +36,7 @@ class instance:
             self.create_3sat(argument)
         elif keyword == 'rnd1':
             # Create RND1 instance
-            self.create_rnd1()
+            self.create_rnd1(argument)
         elif keyword == 'rnd2':
             # Create RND2 instance
             self.create_rnd2(argument)
@@ -701,12 +704,17 @@ class instance:
 
         self.parameters = {}
 
-    def create_rnd1(self):
+    def create_rnd1(self, seed):
         # Create RND1 instance
 
+        '''
+            Previous key RND1 example could be fixed with a tie breaking rule.
+            Here are the configurations: S = 1, T = 4, I = J = 10, delta = 4 * beta
+        '''
+
         self.parameters = {}
-        self.parameters['S'] = 1
-        self.parameters['T'] = 4
+        self.parameters['S'] = 5
+        self.parameters['T'] = 5
         self.parameters['I'] = 10
         self.parameters['J'] = 10
 
@@ -752,8 +760,7 @@ class instance:
             self.alphas[customer] = 0
             self.gammas[customer] = 0
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
-            self.betas[customer] /= 3
-            self.deltas[customer] = 4 * self.betas[customer]
+            self.deltas[customer] = 4 * self.betas[customer] # 10 * (self.parameters['T'] + 1) # 4 * self.betas[customer]
 
     def create_rnd2(self, seed):
         # Create RND2 instance
@@ -860,11 +867,11 @@ class instance:
             # Upper, lower and initial demand
             self.lowers[customer] = 0
             self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
-            self.uppers[customer] = (self.parameters['T'] + 1) * 10 # infinity
-            self.alphas[customer] = 0
-            self.gammas[customer] = 0
+            self.uppers[customer] = (self.parameters['T'] + 1) * 10 ** 5 # infinity
+            self.alphas[customer] = 0.1 * rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
+            self.gammas[customer] = 0.1 * rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
             self.betas[customer] = rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
-            self.deltas[customer] = 2 * self.betas[customer]
+            self.deltas[customer] = rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
 
     '''
         Create instance used as worst-case scenario
@@ -1081,6 +1088,77 @@ class instance:
         self.uppers = {}
         for customer in self.customers:
             self.uppers[customer] = 50
+
+        self.parameters = {}
+
+    '''
+        Create instance used for JOPT presentation
+    '''
+    def create_jopt(self):
+        # Create JOPT instance
+
+        self.locations = ['1', '2', '3', '4']
+        self.customers = ['A', 'B', 'C']
+        self.periods = ['1', '2', '3']
+
+        # Create catalogs
+        considerations = {}
+        considerations ['A'] = ['1', '2', '4']
+        considerations ['B'] = ['1', '3', '4']
+        considerations ['C'] = ['2', '3', '4']
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1 if location in considerations[customer] else 0
+
+        revenues = {'1': 4., '2': 4., '3': 4., '4': 3.}
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] = revenues [location]
+
+        # Create alphas
+        self.alphas = {}
+        for customer in self.customers:
+            self.alphas[customer] = 0
+
+        # Create betas
+        self.betas = {}
+        self.betas['A'] = 1
+        self.betas['B'] = 1
+        self.betas['C'] = 1
+
+        # Create gammmas
+        self.gammas = {}
+        for customer in self.customers:
+            self.gammas[customer] = 1
+
+        # Create deltas
+        self.deltas = {}
+        for customer in self.customers:
+            self.deltas[customer] = 0
+
+        # Create start values
+        self.starts = {}
+        self.starts['A'] = 0.
+        self.starts['B'] = 0.
+        self.starts['C'] = 0.
+
+        # Create lower bounds
+        self.lowers = {}
+        for customer in self.customers:
+            self.lowers[customer] = 0
+
+        # Create upper bounds
+        self.uppers = {}
+        for customer in self.customers:
+            self.uppers[customer] = 10**3
+
+        self.parameters = {}
 
     '''
         Create instance used for drawing graphs for the paper

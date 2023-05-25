@@ -64,6 +64,7 @@ def main():
 
     mark_section('Solving the MIP of the 1-DFLP-RA model...')
     fm.warm_start(instance, mip_variable, hrs_solution)
+    # mip.addConstr(mip_variable['y'].sum('7', '*') <= 0, name = 'add')
     mip.optimize()
     mip.write('archives/mip-{}.sol'.format(instance.keyword))
     mip_solution = fm.format_solution(instance, mip, mip_variable)
@@ -122,12 +123,16 @@ def main():
     print('>>>>>>>>> MIP solution: {}'.format('-'.join(mip_solution.values())))
     print('>>>>>>>>> HRS solution: {}'.format('-'.join(hrs_solution.values())))
 
+    print(vd.evaluate_solution(instance, hrs_solution))
+
+    '''
     mark_section('Listing all optimal MIP solution...')
 
     print('Optimal MIP solution: [{}] {} <{}>'.format(mip_objective, mip_solution, '-'.join(mip_solution.values())))
     fm.block_solution(mip, mip_variable, mip_solution)
     ref_objective = mip_objective
     while mip_objective == ref_objective:
+        print(vd.evaluate_solution(instance, mip_solution))
         mip.setParam('OutputFlag', 0)
         mip.optimize()
         mip_solution = fm.format_solution(instance, mip, mip_variable)
@@ -136,6 +141,43 @@ def main():
         print('Optimal MIP solution: [{}] {} <{}>'.format(mip_objective, mip_solution, '-'.join(mip_solution.values())))
         fm.block_solution(mip, mip_variable, mip_solution)
 
-    # print(vd.evaluate_solution(instance, {'1':'4','2':'7','3':'3'}))
+    '''
+
+    # print(vd.evaluate_solution(instance, {'1':'9','2':'3','3':'4', '4': '7', '5':'3', '6':'4'}))
+    # analytical = vd.evaluate_solution(instance, hrs_solution)
+
+    # for customer in instance.customers:
+    #     print('Customer {}: {}'.format(customer, instance.deltas[customer]))
+
+
+    '''
+    sld_solution = {}
+    sld_solution['1'] = '8'
+    sld_solution['2'] = '6'
+    sld_solution['3'] = '2'
+    sld_solution['4'] = '9'
+    sld_solution['5'] = '4'
+    sld_solution['6'] = '7'
+    sld_solution['7'] = '0'
+    sld_solution['8'] = '3'
+    '''
+
+    '''
+    print(vd.evaluate_solution(instance, {
+        '1':'0',
+        '2': '7',
+        '3': '6',
+        '4': '3',
+        '5': '2'
+    }))
+
+    print(vd.evaluate_solution(instance, {
+        '1':'0',
+        '2': '1',
+        '3': '6',
+        '4': '2',
+        '5': '3'
+    }))
+    '''
 
 main()
