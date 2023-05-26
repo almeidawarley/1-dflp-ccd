@@ -41,7 +41,7 @@ mip.setAttr('ModelSense', -1)
 
 mip.optimize()
 
-mip.write('bounder.lp')
+# mip.write('bounder.lp')
 
 for variable in mip.getVars():
     if variable.x > 0. and 'y' in variable.varName:

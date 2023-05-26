@@ -6,43 +6,45 @@ import pandas as pd
 
 class instance:
 
-    def __init__(self, keyword, argument = 'uuf50-01.cnf'):
+    def __init__(self, keyword, project):
         # Initiate instance class
 
         # Store instance keyword
         instance.keyword = keyword
+        # Store project keyword
+        instance.project = project
 
         # Decide instance type
         if keyword == 'example':
             # Create example instance
             self.create_example()
         if keyword == 'jopt':
-            # Create example instance
+            # Create JOPT instance
             self.create_jopt()
         elif keyword == 'graph':
             self.create_graph()
             # Create graph instance
-        elif keyword == 'spp':
-            # Create SPP instance
-            self.create_spp()
         elif keyword == 'gap1':
             # Create GAP1 instance
             self.create_gap1()
         elif keyword == 'gap2':
             # Create GAP2 instance
             self.create_gap2()
-        elif keyword == '3sat':
+        elif keyword == 'spp':
+            # Create SPP instance
+            self.create_spp()
+        elif '.cnf' in keyword:
             # Create 3SAT instance
-            self.create_3sat(argument)
-        elif keyword == 'rnd1':
+            self.create_3sat()
+        elif 'rnd1' in keyword:
             # Create RND1 instance
-            self.create_rnd1(argument)
-        elif keyword == 'rnd2':
+            self.create_rnd1()
+        elif 'rnd2' in keyword:
             # Create RND2 instance
-            self.create_rnd2(argument)
+            self.create_rnd2()
         elif keyword == '1toN':
             # Create 1:N instance
-            self.create_1toN(argument)
+            self.create_1toN()
         elif keyword == 'slovakia':
             # Create slovakia instance
             self.create_slovakia()
@@ -72,16 +74,12 @@ class instance:
         for customer in self.customers:
             self.bigM[customer] = self.uppers[customer] + self.alphas[customer] * self.uppers[customer] + self.betas[customer] + self.gammas[customer] * self.uppers[customer] + self.deltas[customer]
 
-    def create_setA(self, folder = 'instances'):
+    def create_setA(self, folder = 'instances/exploratory'):
         # Create instance set A
 
         # Read specifications from file
-        try:
-            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
-        except:
-            with open ('experiments/{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
+        with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
+            self.parameters = js.load(content)
 
         rd.seed(self.parameters['O'] * 10 + self.parameters['S'])
 
@@ -171,16 +169,12 @@ class instance:
             else:
                 exit('Wrong absorption parameter')
 
-    def create_setB(self, folder = 'instances'):
+    def create_setB(self, folder = 'instances/exploratory'):
         # Create instance set B
 
-        try:
-            # Read specifications from file
-            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
-        except:
-            with open ('experiments/{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
+        # Read specifications from file
+        with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
+            self.parameters = js.load(content)
 
         rd.seed(self.parameters['O'] * 10 + self.parameters['S'])
 
@@ -308,16 +302,12 @@ class instance:
             else:
                 exit('Wrong absorption parameter')
 
-    def create_setC(self, folder = 'instances'):
+    def create_setC(self, folder = 'instances/exploratory'):
         # Create instance set C
 
         # Read specifications from file
-        try:
-            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
-        except:
-            with open ('experiments/{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
+        with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
+            self.parameters = js.load(content)
 
         rd.seed(self.parameters['O'] * 10 + self.parameters['S'])
 
@@ -407,16 +397,12 @@ class instance:
             else:
                 exit('Wrong absorption parameter')
 
-    def create_setD(self, folder = 'instances'):
+    def create_setD(self, folder = 'instances/exploratory'):
         # Create instance set D
 
-        try:
-            # Read specifications from file
-            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
-        except:
-            with open ('experiments/{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
+        # Read specifications from file
+        with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
+            self.parameters = js.load(content)
 
         rd.seed(self.parameters['O'] * 10 + self.parameters['S'])
 
@@ -507,16 +493,12 @@ class instance:
                 exit('Wrong absorption parameter')
 
     # Difficult E-toy: {"S": 9, "L": 3, "T": 10, "H": 75, "O": 0}
-    def create_setE(self, folder = 'instances'):
+    def create_setE(self, folder = 'instances/exploratory'):
         # Create instance set E
 
-        try:
-            # Read specifications from file
-            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
-        except:
-            with open ('experiments/{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
+        # Read specifications from file
+        with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
+            self.parameters = js.load(content)
 
         rd.seed(self.parameters['O'] * 10 + self.parameters['S'])
 
@@ -641,15 +623,10 @@ class instance:
 
         self.parameters = {}
 
-    def create_3sat(self, argument = 'toy.cnf'):
+    def create_3sat(self, folder = 'instances/3sat'):
         # Create 3SAT instances
 
-        self.keyword = self.keyword + argument
-
-        # with open('3sat/uf20-01.cnf', 'r') as content:
-        # with open('3sat/uuf50-01.cnf', 'r') as content:
-        # with open('3sat/toy.cnf', 'r') as content:
-        with open('3sat/{}'.format(argument), 'r') as content:
+        with open('{}/{}'.format(folder, self.keyword), 'r') as content:
             clauses = []
             for line in content:
                 if 'p' in line:
@@ -704,13 +681,15 @@ class instance:
 
         self.parameters = {}
 
-    def create_rnd1(self, seed):
+    def create_rnd1(self):
         # Create RND1 instance
 
         '''
             Previous key RND1 example could be fixed with a tie breaking rule.
             Here are the configurations: S = 1, T = 4, I = J = 10, delta = 4 * beta
         '''
+
+        seed = int(self.keyword.replace('rnd1', ''))
 
         self.parameters = {}
         self.parameters['S'] = 5
@@ -762,8 +741,10 @@ class instance:
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
             self.deltas[customer] = 4 * self.betas[customer] # 10 * (self.parameters['T'] + 1) # 4 * self.betas[customer]
 
-    def create_rnd2(self, seed):
+    def create_rnd2(self):
         # Create RND2 instance
+
+        seed = int(self.keyword.replace('rnd2', ''))
 
         self.parameters = {}
         self.parameters['S'] = 222 # seed
@@ -821,11 +802,11 @@ class instance:
             self.deltas[customer] = rd.sample([1,2,3,4,5], 1)[0] * self.betas[customer]
 
     def create_1toN(self, seed):
-        # Create RND2 instance
+        # Create 1toN instance
 
         self.parameters = {}
         self.parameters['S'] = 0
-        self.parameters['T'] = 10
+        self.parameters['T'] = 20
         self.parameters['I'] = 10
         self.parameters['J'] = 10
 
@@ -867,9 +848,9 @@ class instance:
             # Upper, lower and initial demand
             self.lowers[customer] = 0
             self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
-            self.uppers[customer] = (self.parameters['T'] + 1) * 10 ** 5 # infinity
-            self.alphas[customer] = 0.1 * rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
-            self.gammas[customer] = 0.1 * rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
+            self.uppers[customer] = 10 ** 6 # infinity
+            self.alphas[customer] = 0.1
+            self.gammas[customer] = 0.1
             self.betas[customer] = rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
             self.deltas[customer] = rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
 

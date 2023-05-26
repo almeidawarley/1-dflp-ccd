@@ -17,12 +17,12 @@ def main():
 
     parser = ap.ArgumentParser(description = 'Run 1-DFLP-RA for some instance')
     parser.add_argument('keyword', type = str, help = 'Instance keyword following established patterns')
-    parser.add_argument('-p', '--project', default = '1-dflp-ra', type = str, help = 'Project name on Weights & Biases for storing results')
+    parser.add_argument('-p', '--project', default = '1-dflp-ra', type = str, help = 'Instance project name')
     parser.add_argument('--hide', action = 'store_true', help = 'Run only HRS, MIP and LPR (i.e., hide approximations)')
     args = parser.parse_args()
 
     mark_section('Generating instance information based on the parameters...')
-    instance = ic.instance(args.keyword)
+    instance = ic.instance(args.keyword, args.project)
     instance.print_instance()
 
     mark_section('Logging instance parameters read from file ...')
@@ -30,10 +30,7 @@ def main():
 
     mark_section('Applying the greedy heuristic to the instance...')
     # hrs_solution, hrs_objective = hr.greedy_heuristic(instance)
-    # hrs_solution, hrs_objective = hr.postpone_heuristic(instance)
-    # hrs_solution, hrs_objective = hr.progressive_heuristic(instance)
-    # hrs_solution, hrs_objective = hr.passing_heuristic(instance)
-    hrs_solution, hrs_objective = hr.optimal_algorithm(instance)
+    hrs_solution, hrs_objective = hr.progressive_algorithm(instance)
     print('Heuristic solution: [{}] {}'.format(hrs_objective, hrs_solution))
     record = rc.update_record(record, {
         'hrs_objective': hrs_objective,
@@ -123,8 +120,6 @@ def main():
     print('>>>>>>>>> MIP solution: {}'.format('-'.join(mip_solution.values())))
     print('>>>>>>>>> HRS solution: {}'.format('-'.join(hrs_solution.values())))
 
-    print(vd.evaluate_solution(instance, hrs_solution))
-
     '''
     mark_section('Listing all optimal MIP solution...')
 
@@ -132,7 +127,7 @@ def main():
     fm.block_solution(mip, mip_variable, mip_solution)
     ref_objective = mip_objective
     while mip_objective == ref_objective:
-        print(vd.evaluate_solution(instance, mip_solution))
+        # print(vd.evaluate_solution(instance, mip_solution))
         mip.setParam('OutputFlag', 0)
         mip.optimize()
         mip_solution = fm.format_solution(instance, mip, mip_variable)
