@@ -71,7 +71,7 @@ def export_data(instance, solution, filename = 'analysis.csv'):
 
     with open(filename, 'w') as output:
 
-        output.write('period, location, customer, units\n')
+        output.write('j,t,{},{},w\n'.format(','.join(['v{}'.format(period) for period in instance.periods]),','.join(['w{}'.format(period) for period in instance.periods])))
 
     cumulative = {}
 
@@ -81,9 +81,13 @@ def export_data(instance, solution, filename = 'analysis.csv'):
 
     fitness = 0.
 
+    memory = {}
+
     for period in instance.periods:
 
         cumulative = apply_replenishment(instance, cumulative)
+
+        memory[period] = {}
 
         if solution[period] != '0':
 
@@ -93,13 +97,22 @@ def export_data(instance, solution, filename = 'analysis.csv'):
 
                 if instance.catalogs[solution[period]][customer]:
 
-                    local = instance.revenues[period][period] * min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
+                    local = instance.revenues[period][solution[period]] * min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
 
                     score += local
 
-                    with open(filename, 'a') as output:
+                    memory[period][customer] = local
 
-                        output.write('{},{},{},{}\n'.format(period, solution[period], customer, local))
+                else:
+
+                    memory[period][customer] = 0.
+
+                with open(filename, 'a') as output:
+
+                        output.write('{},{},{},{},{}\n'.format(customer, period,
+                            ','.join(['{}'.format(instance.catalogs[solution[reference]][customer]) if int(reference) < int(period) else '{}'.format(0.) for reference in instance.periods]),
+                            ','.join(['{}'.format(memory[reference][customer]) if int(reference) < int(period) else '{}'.format(0.) for reference in instance.periods])
+                            , memory[period][customer]))
 
             fitness += score
 
