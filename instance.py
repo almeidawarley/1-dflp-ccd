@@ -18,7 +18,10 @@ class instance:
         if keyword == 'example':
             # Create example instance
             self.create_example()
-        if keyword == 'jopt':
+        elif keyword == 'approx':
+            # Create approx instance
+            self.create_approx()
+        elif keyword == 'jopt':
             # Create JOPT instance
             self.create_jopt()
         elif keyword == 'graph':
@@ -801,7 +804,7 @@ class instance:
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
             self.deltas[customer] = rd.sample([1,2,3,4,5], 1)[0] * self.betas[customer]
 
-    def create_1toN(self, seed):
+    def create_1toN(self):
         # Create 1toN instance
 
         self.parameters = {}
@@ -1069,6 +1072,73 @@ class instance:
         self.uppers = {}
         for customer in self.customers:
             self.uppers[customer] = 50
+
+        self.parameters = {}
+
+    '''
+        Create instance used for approximation proof
+    '''
+    def create_approx(self):
+        # Create approx instance
+
+        self.locations = ['1', '2', '3']
+        self.customers = ['A','B', 'C', 'D', 'E']
+        self.periods = ['1', '2']
+
+        # Create catalogs
+        considerations = {}
+        considerations ['A'] = ['1', '3']
+        considerations ['B'] = ['1', '2']
+        considerations ['C'] = ['1', '2', '3']
+        considerations ['D'] = ['2']
+        considerations ['E'] = ['3']
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1 if location in considerations[customer] else 0
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] =  1
+
+        # Create alphas
+        self.alphas = {}
+        for customer in self.customers:
+            self.alphas[customer] = 0
+
+        # Create betas
+        self.betas = {}
+        for customer in self.customers:
+            self.betas[customer] = 0
+
+        # Create gammmas
+        self.gammas = {}
+        for customer in self.customers:
+            self.gammas[customer] = 1
+
+        # Create deltas
+        self.deltas = {}
+        for customer in self.customers:
+            self.deltas[customer] = 0
+
+        # Create start values
+        self.starts = {}
+        for customer in self.customers:
+            self.starts[customer] = 1
+
+        # Create lower bounds
+        self.lowers = {}
+        for customer in self.customers:
+            self.lowers[customer] = 0
+
+        # Create upper bounds
+        self.uppers = {}
+        for customer in self.customers:
+            self.uppers[customer] = 10 ** 3
 
         self.parameters = {}
 

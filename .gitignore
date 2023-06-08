@@ -15,6 +15,7 @@ experiments/*
 outputs/*.out
 records/*.csv
 ignorable/*
+episodes/*
 
 # Instance files
 instances/*.json
