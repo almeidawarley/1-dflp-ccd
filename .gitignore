@@ -18,7 +18,8 @@ ignorable/*
 episodes/*
 
 # Instance files
-instances/*.json
+instances/exploratory/*.json
+instances/synthetic/*.json
 
 # Script files
 scripts/*.sh
