@@ -121,7 +121,7 @@ class instance:
         pt.scatter(X, Y, marker = 'o')
         for location in self.locations:
             pt.annotate(location, (X[int(location) - 1], Y[int(location) - 1]))
-        pt.savefig('archives/{}-coordinates.png'.format(self.keyword))
+        pt.savefig('archives/{}-map.png'.format(self.keyword))
 
         # Create catalogs
         self.catalogs = {}

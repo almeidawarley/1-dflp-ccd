@@ -18,7 +18,6 @@ def main():
     parser = ap.ArgumentParser(description = 'Run 1-DFLP-RA for some instance')
     parser.add_argument('keyword', type = str, help = 'Instance keyword following established patterns')
     parser.add_argument('-p', '--project', default = '1-dflp-ra', type = str, help = 'Instance project name')
-    parser.add_argument('--hide', action = 'store_true', help = 'Run only HRS, MIP and LPR (i.e., hide approximations)')
     args = parser.parse_args()
 
     mark_section('Generating instance information based on the parameters...')
@@ -29,30 +28,32 @@ def main():
     record = rc.create_record(args.project, instance)
 
     mark_section('Applying the greedy heuristic to the instance...')
-    # hrs_solution, hrs_objective = hr.greedy_heuristic(instance)
-    hrs_solution, hrs_objective = hr.progressive_algorithm(instance)
-    print('Heuristic solution: [{}] {}'.format(hrs_objective, hrs_solution))
+    grd_solution, grd_objective = hr.greedy_heuristic(instance)
+    print('Greedy solution: [{}] {}'.format(grd_objective, grd_solution))
     record = rc.update_record(record, {
-        'hrs_objective': hrs_objective,
-        'hrs_solution': '-'.join(hrs_solution.values())
+        'grd_objective': grd_objective,
+        'grd_solution': '-'.join(grd_solution.values())
+    })
+
+    mark_section('Applying the progressive heuristic to the instance...')
+    prg_solution, prg_objective = hr.progressive_algorithm(instance)
+    print('Progressive solution: [{}] {}'.format(prg_objective, prg_solution))
+    record = rc.update_record(record, {
+        'prg_objective': prg_objective,
+        'prg_solution': '-'.join(prg_solution.values())
     })
 
     mark_section('Building the 1-DFLP-RA for the instance...')
     mip, mip_variable = fm.build_fancy(instance)
-    mip.write('archives/mip-{}.lp'.format(instance.keyword))
+    mip.write('archives/{}-mip.lp'.format(instance.keyword))
 
     mark_section('Solving the LPR of the 1-DFLP-RA model...')
     lpr = mip.relax()
     lpr.optimize()
-    lpr.write('archives/lpr-{}.sol'.format(instance.keyword))
+    lpr.write('archives/{}-lpr.sol'.format(instance.keyword))
     lpr_objective = round(lpr.objVal, 2)
     lpr_runtime = round(lpr.runtime, 2)
     print('Optimal LPR solution: [{}] no interpretable solution'.format(round(lpr.objVal, 2)))
-    '''
-    with open('lpr.csv', 'w') as content:
-        for v in lpr.getVars():
-            content.write('{},{}\n'.format(v.varName, v.x))
-    '''
     record = rc.update_record(record, {
         'lpr_objective': lpr_objective,
         'lpr_runtime': lpr_runtime,
@@ -60,10 +61,9 @@ def main():
     })
 
     mark_section('Solving the MIP of the 1-DFLP-RA model...')
-    fm.warm_start(instance, mip_variable, hrs_solution)
-    # mip.addConstr(mip_variable['y'].sum('7', '*') <= 0, name = 'add')
+    fm.warm_start(instance, mip_variable, prg_solution)
     mip.optimize()
-    mip.write('archives/mip-{}.sol'.format(instance.keyword))
+    mip.write('archives/{}-mip.sol'.format(instance.keyword))
     mip_solution = fm.format_solution(instance, mip, mip_variable)
     mip_objective = round(mip.objVal, 2)
     mip_runtime = round(mip.runtime, 2)
@@ -75,13 +75,9 @@ def main():
         'mip_status': mip.status,
         'mip_optgap': mip.MIPGap,
         'mip_intgap': compute_gap(lpr_objective, mip_objective),
-        'hrs_optgap': compute_gap(mip_objective, hrs_objective)
+        'grd_optgap': compute_gap(mip_objective, grd_objective),
+        'prg_optgap': compute_gap(mip_objective, prg_objective)
     })
-    '''
-    with open('mip.csv', 'w') as content:
-        for v in mip.getVars():
-            content.write('{},{}\n'.format(v.varName, v.x))
-    '''
 
     mark_section('Validating the solution of the 1-DFLP-RA analytically...')
     analytical = vd.evaluate_solution(instance, mip_solution)
@@ -91,34 +87,35 @@ def main():
     })
     print('>>> Sanity check: {} = {}? {} <<<'.format(mip_objective, analytical, validation))
 
-    if not args.hide:
+    for method in ['1', '2', '3']:
 
-        for method in ['1', '2', '3']:
-
-            mark_section('Approximating the 1-DFLP-RA by the #{} method...'.format(method))
-            apr, apr_variable = fm.build_simple(instance, method)
-            apr.write('archives/ap{}-{}.lp'.format(method, instance.keyword))
-            apr.optimize()
-            apr.write('archives/ap{}-{}.sol'.format(method, instance.keyword))
-            apr_solution = fm.format_solution(instance, apr, apr_variable)
-            apr_objective = vd.evaluate_solution(instance, apr_solution)
-            apr_runtime = round(apr.runtime, 2)
-            print('Approximate solution #{}: [{}] {}'.format(method, apr_objective, apr_solution))
-            record = rc.update_record(record, {
-                'ap{}_objective'.format(method): apr_objective,
-                'ap{}_solution'.format(method): '-'.join(apr_solution.values()),
-                'ap{}_runtime'.format(method): apr_runtime,
-                'ap{}_status'.format(method): apr.status,
-                'ap{}_optgap'.format(method): compute_gap(mip_objective, apr_objective)
-            })
+        mark_section('Approximating the 1-DFLP-RA by the #{} method...'.format(method))
+        apr, apr_variable = fm.build_simple(instance, method)
+        apr.write('archives/{}-ap{}.lp'.format(instance.keyword, method))
+        apr.optimize()
+        apr.write('archives/{}-ap{}.sol'.format(instance.keyword, method))
+        apr_solution = fm.format_solution(instance, apr, apr_variable)
+        apr_objective = vd.evaluate_solution(instance, apr_solution)
+        apr_runtime = round(apr.runtime, 2)
+        print('Approximate solution #{}: [{}] {}'.format(method, apr_objective, apr_solution))
+        record = rc.update_record(record, {
+            'ap{}_objective'.format(method): apr_objective,
+            'ap{}_solution'.format(method): '-'.join(apr_solution.values()),
+            'ap{}_runtime'.format(method): apr_runtime,
+            'ap{}_status'.format(method): apr.status,
+            'ap{}_optgap'.format(method): compute_gap(mip_objective, apr_objective)
+        })
 
     mark_section('Wrapping up the execution with sanity check {}!'.format(validation))
 
-    print('>>>>>>>>> Heuristic gap: {}'.format(record['hrs_optgap']))
-    print('>>>>>>>>> MIP objective: {}'.format(record['mip_objective']))
-    print('>>>>>>>>> HRS objective: {}'.format(record['hrs_objective']))
-    print('>>>>>>>>> MIP solution: {}'.format('-'.join(mip_solution.values())))
-    print('>>>>>>>>> HRS solution: {}'.format('-'.join(hrs_solution.values())))
+    print('>>> MIP objective: {}'.format(record['mip_objective']))
+    print('>>> GRD objective: {}'.format(record['grd_objective']))
+    print('>>> GRD optimality: {}'.format(record['grd_optgap']))
+    print('>>> PRG objective: {}'.format(record['prg_objective']))
+    print('>>> PRG optimality: {}'.format(record['prg_optgap']))
+    print('>>> MIP solution: {}'.format('-'.join(mip_solution.values())))
+    print('>>> GRD solution: {}'.format('-'.join(grd_solution.values())))
+    print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
 
     '''
     mark_section('Listing all optimal MIP solution...')
@@ -136,43 +133,6 @@ def main():
         print('Optimal MIP solution: [{}] {} <{}>'.format(mip_objective, mip_solution, '-'.join(mip_solution.values())))
         fm.block_solution(mip, mip_variable, mip_solution)
 
-    '''
-
-    # print(vd.evaluate_solution(instance, {'1':'9','2':'3','3':'4', '4': '7', '5':'3', '6':'4'}))
-    # analytical = vd.evaluate_solution(instance, hrs_solution)
-
-    # for customer in instance.customers:
-    #     print('Customer {}: {}'.format(customer, instance.deltas[customer]))
-
-
-    '''
-    sld_solution = {}
-    sld_solution['1'] = '8'
-    sld_solution['2'] = '6'
-    sld_solution['3'] = '2'
-    sld_solution['4'] = '9'
-    sld_solution['5'] = '4'
-    sld_solution['6'] = '7'
-    sld_solution['7'] = '0'
-    sld_solution['8'] = '3'
-    '''
-
-    '''
-    print(vd.evaluate_solution(instance, {
-        '1':'0',
-        '2': '7',
-        '3': '6',
-        '4': '3',
-        '5': '2'
-    }))
-
-    print(vd.evaluate_solution(instance, {
-        '1':'0',
-        '2': '1',
-        '3': '6',
-        '4': '2',
-        '5': '3'
-    }))
     '''
 
 main()

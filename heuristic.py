@@ -74,7 +74,7 @@ def progressive_algorithm(instance):
 
     for frontier in instance.periods:
 
-        print('Starting with {}'.format('-'.join(best_solution.values())))
+        # print('Starting with {}'.format('-'.join(best_solution.values())))
 
         local_objective = best_objective
         local_solution = copy_solution(best_solution)
@@ -128,6 +128,6 @@ def progressive_algorithm(instance):
             best_objective = local_objective
             best_solution = copy_solution(local_solution)
 
-        print('Best solution: {}'.format('-'.join(best_solution.values())))
+        # print('Best solution: {}'.format('-'.join(best_solution.values())))
 
     return best_solution, round(best_objective, 2)
