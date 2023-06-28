@@ -52,9 +52,12 @@ class instance:
         elif keyword == 'slovakia':
             # Create slovakia instance
             self.create_slovakia()
-        elif 'syn' in keyword:
-            # Create synthetic instance
-            self.create_synthetic()
+        elif 'map' in keyword:
+            # Create map-based instance
+            self.create_map()
+        elif 'rnd' in keyword:
+            # Create rnd-based instance
+            self.create_rnd()
         else:
             exit('Invalid instance keyword')
 
@@ -63,8 +66,8 @@ class instance:
         for customer in self.customers:
             self.bigM[customer] = self.uppers[customer] + self.alphas[customer] * self.uppers[customer] + self.betas[customer] + self.gammas[customer] * self.uppers[customer] + self.deltas[customer]
 
-    def create_synthetic(self, folder = 'instances/synthetic'):
-        # Create synthetic instances
+    def create_map(self, folder = 'instances/synthetic'):
+        # Create map-based instances
 
         # Read specifications from file
         with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
@@ -78,7 +81,6 @@ class instance:
         number_periods = int(self.parameters['periods'])
 
         assert number_customers == number_locations, 'Number of customers and locations must be equal'
-        assert number_periods == number_locations/5, 'Number of periods must be 1/5 number of locations'
 
         self.locations = [str(i + 1) for i in range(number_locations)]
         self.customers = [str(i + 1) for i in range(number_customers)]
@@ -186,9 +188,9 @@ class instance:
                 if self.parameters['replenishment'] == 'none':
                     self.alphas[customer] = 0
                 elif self.parameters['replenishment'] == 'low':
-                    self.alphas[customer] = 0.1
+                    self.alphas[customer] = 0.05
                 elif self.parameters['replenishment'] == 'high':
-                    self.alphas[customer] = 0.5
+                    self.alphas[customer] = 0.10
                 else:
                     exit('Wrong value for replenishment parameter')
             elif self.parameters['type'] == 'absolute':
@@ -214,13 +216,114 @@ class instance:
                 else:
                     exit('Wrong value for absorption parameter')
                 self.gammas[customer] = 0
+                self.deltas[customer] = np.floor(factor * number_periods) * max(self.betas[customer], (20 if self.alphas[customer] == 0.05 else 50) * self.alphas[customer])
+
+    def create_rnd(self, folder = 'instances/synthetic'):
+        # Create rnd-based instances
+
+        # Read specifications from file
+        with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
+            self.parameters = js.load(content)
+
+        np.random.seed(self.parameters['seed'])
+
+        # Set instance information
+        number_locations = int(self.parameters['locations'])
+        number_customers = int(self.parameters['customers'])
+        number_periods = int(self.parameters['periods'])
+
+        assert number_customers == number_locations, 'Number of customers and locations must be equal'
+
+        self.locations = [str(i + 1) for i in range(number_locations)]
+        self.customers = [str(i + 1) for i in range(number_customers)]
+        self.periods = [str(i + 1) for i in range(number_periods)]
+
+        if self.parameters['patronizing'] == 'none':
+            patronizing = 0.00
+        elif self.parameters['patronizing'] == 'weak':
+            patronizing = 0.20
+        elif self.parameters['patronizing'] == 'medium':
+            patronizing = 0.30
+        elif self.parameters['patronizing'] == 'strong':
+            patronizing = 0.40
+        else:
+            exit('Wrong value for patronizing parameter')
+
+        patronizing_lower, patronizing_upper = int(np.ceil(0.5 * patronizing * number_locations)), int(np.ceil(patronizing * number_locations))
+
+        consideration_sets = {}
+        for customer in self.customers:
+            consideration_size = np.random.choice([i for i in range(patronizing_lower, patronizing_upper)])
+            consideration_sets[customer] = np.random.choice(self.locations, consideration_size)
+
+        # Create catalogs
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1. if location in consideration_sets[customer] or location == customer else 0.
+
+        # Create revenues
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                popularity = sum([self.catalogs[location][customer] for customer in self.customers])
+                if self.parameters['rewards'] == 'identical':
+                    coefficient = 1.
+                elif self.parameters['rewards'] == 'inversely':
+                    coefficient = 1. / popularity
+                elif self.parameters['rewards'] == 'directly':
+                    coefficient = 1. - 1. / popularity
+                else:
+                    exit('Wrong value for rewards parameter')
+                self.revenues[period][location] = np.ceil(coefficient * 10)
+
+        # Create parameters
+        self.alphas = {}
+        self.betas = {}
+        self.gammas = {}
+        self.deltas = {}
+        self.starts = {}
+        self.lowers = {}
+        self.uppers = {}
+
+        for customer in self.customers:
+            # Upper, lower and initial demand
+            self.lowers[customer] = 0
+            self.uppers[customer] = 10**6
+            self.starts[customer] = 1
+            if self.parameters['replenishment'] == 'none':
+                self.alphas[customer] = 0
+                self.betas[customer] = 0
+            elif self.parameters['replenishment'] == 'absolute':
+                self.alphas[customer] = 0
+                self.betas[customer] = 1
+            elif self.parameters['replenishment'] == 'relative':
+                self.alphas[customer] = 0.1
+                self.betas[customer] = 0
+            else:
+                exit('Wrong value for replenishment parameter')
+            if self.parameters['absorption'] == 'full':
+                self.gammas[customer] = 1
+                self.deltas[customer] = 0
+            else:
+                if self.parameters['absorption'] == 'low':
+                    factor = 0.25
+                elif self.parameters['absorption'] == 'medium':
+                    factor = 0.50
+                elif self.parameters['absorption'] == 'high':
+                    factor = 0.75
+                else:
+                    exit('Wrong value for absorption parameter')
+                self.gammas[customer] = 0
                 self.deltas[customer] = np.floor(factor * number_periods) * max(self.betas[customer], 10 * self.alphas[customer])
 
-    def create_spp(self, K = 2):
+    def create_spp(self, K = 5):
         # Create SPP instances
 
         elements = ['1', '2', '3', '4', '5']
-        collections = [['1', '2', '3', '4', '5'], ['1'], ['2'], ['3'], ['4', '5']]
+        collections = [['1', '2', '3', '4', '5'], ['1'], ['2'], ['3'], ['4'], ['5']]
 
         self.locations = [str(i + 1) for i in range(0, len(collections))]
         self.customers = [e for e in elements]
@@ -249,9 +352,9 @@ class instance:
         self.uppers = {}
         self.lowers = {}
         for customer in self.customers:
-            self.alphas[customer] = 0.5
+            self.alphas[customer] = 0
             self.betas[customer] = 0
-            self.gammas[customer] = 0.5
+            self.gammas[customer] = 1
             self.deltas[customer] = 0
             self.starts[customer] = 1
             self.lowers[customer] = 0
