@@ -71,7 +71,7 @@ def export_data(instance, solution, filename = 'analysis.csv'):
 
     with open(filename, 'w') as output:
 
-        output.write('i,j,t,{},{},w\n'.format(','.join(['v{}'.format(period) for period in instance.periods]),','.join(['w{}'.format(period) for period in instance.periods])))
+        output.write('i,j,t,{},{},{},w,d\n'.format(','.join(['v{}'.format(period) for period in instance.periods]),','.join(['w{}'.format(period) for period in instance.periods]), ','.join(['d{}'.format(period) for period in instance.periods])))
 
     cumulative = {}
 
@@ -82,12 +82,14 @@ def export_data(instance, solution, filename = 'analysis.csv'):
     fitness = 0.
 
     memory = {}
+    memory_d = {}
 
     for period in instance.periods:
 
         cumulative = apply_replenishment(instance, cumulative)
 
         memory[period] = {}
+        memory_d[period] = {}
 
         if solution[period] != '0':
 
@@ -103,16 +105,24 @@ def export_data(instance, solution, filename = 'analysis.csv'):
 
                     memory[period][customer] = local
 
+                    memory_d[period][customer] = max(cumulative[customer] - local, 0.)
+
                 else:
 
                     memory[period][customer] = 0.
 
+                    memory_d[period][customer] = cumulative[customer]
+
                 with open(filename, 'a') as output:
 
-                        output.write('{},{},{},{},{},{}\n'.format(solution[period], customer, period,
+                        print('Period: {}, Customer: {}'.format(period, customer))
+
+                        output.write('{},{},{},{},{},{},{},{}\n'.format(solution[period], customer, period,
                             ','.join(['{}'.format(instance.catalogs[solution[reference]][customer]) if int(reference) < int(period) else '{}'.format(0.) for reference in instance.periods]),
-                            ','.join(['{}'.format(memory[reference][customer]) if int(reference) < int(period) else '{}'.format(0.) for reference in instance.periods])
-                            , memory[period][customer]))
+                            ','.join(['{}'.format(memory[reference][customer]) if int(reference) < int(period) else '{}'.format(0.) for reference in instance.periods]),
+                            ','.join(['{}'.format(memory_d[reference][customer]) if int(reference) < int(period) else '{}'.format(0.) for reference in instance.periods]),
+                            memory[period][customer],
+                            memory_d[period][customer]))
 
             fitness += score
 
