@@ -2,11 +2,11 @@ import json as js
 import instance as ic
 
 features = {
-    'seed': [i for i in range(0, 100)],
+    'seed': [i for i in range(0, 10)],
     'points': [20],
     'patronizing': ['weak', 'medium', 'strong'],
     'rewards': ['identical', 'inversely', 'directly'],
-    'replenishment': ['absolute'],
+    'replenishment': ['none', 'absolute', 'relative'],
     'absorption': ['full']
 }
 
@@ -35,6 +35,7 @@ for seed in features['seed']:
 
                             keyword = '{}_{}'.format('rnd', '-'.join([str(value) for value in instance.values()]))
 
+                            '''
                             with open('{}/{}.json'.format('instances/synthetic', keyword), 'w') as output:
                                 js.dump(instance, output)
 
@@ -44,7 +45,7 @@ for seed in features['seed']:
 
                                 output.write('#!/bin/bash\n')
 
-                                output.write('#SBATCH --time=12:00:00\n')
+                                output.write('#SBATCH --time=22:00:00\n')
                                 output.write('#SBATCH --job-name={}.job\n'.format(keyword))
                                 output.write('#SBATCH --output={}.out\n'.format(keyword))
                                 output.write('#SBATCH --account=def-mxm\n')
@@ -58,5 +59,6 @@ for seed in features['seed']:
 
                             commands.write('dos2unix ../scripts/{}.sh\n'.format(keyword))
                             commands.write('sbatch ../scripts/{}.sh\n'.format(keyword))
+                            '''
 
                             print(keyword)
