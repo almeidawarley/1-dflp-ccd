@@ -130,22 +130,8 @@ class instance:
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                if self.parameters['patronizing'] == 'radius0':
-                    radius = 0.
-                elif self.parameters['patronizing'] == 'radius15':
-                    radius = 15.
-                elif self.parameters['patronizing'] == 'radius30':
-                    radius = 30.
-                else:
-                    exit('Wrong value for patronizing parameter')
-                if self.parameters['correlation'] == 'low':
-                    chance = 0.25
-                elif self.parameters['correlation'] == 'medium':
-                    chance = 0.50
-                elif self.parameters['correlation'] == 'high':
-                    chance = 0.75
-                else:
-                    exit('Wrong value for correlation parameter')
+                radius = 5
+                chance = 0.5
                 self.catalogs[location][customer] = 1. if mt.dist(self.points['{}'.format(location)], self.points['{}'.format(customer)]) <= radius and (np.random.choice([0., 1.], p = [1 - chance, chance]) or location == customer) else 0.
 
         # Create revenues
@@ -177,32 +163,18 @@ class instance:
             # Upper, lower and initial demand
             self.lowers[customer] = 0
             self.uppers[customer] = 10**6
-            if self.parameters['initial'] == 'low':
-                self.starts[customer] = 1
-            elif self.parameters['initial'] == 'high':
-                self.starts[customer] = 5
-            else:
-                exit('Wrong value for initial parameter')
-            if self.parameters['type'] == 'relative':
-                self.betas[customer] = 0
-                if self.parameters['replenishment'] == 'none':
-                    self.alphas[customer] = 0
-                elif self.parameters['replenishment'] == 'low':
-                    self.alphas[customer] = 0.05
-                elif self.parameters['replenishment'] == 'high':
-                    self.alphas[customer] = 0.10
-                else:
-                    exit('Wrong value for replenishment parameter')
-            elif self.parameters['type'] == 'absolute':
+            self.starts[customer] = 1
+            if self.parameters['replenishment'] == 'none':
                 self.alphas[customer] = 0
-                if self.parameters['replenishment'] == 'none':
-                    self.betas[customer] = 0
-                elif self.parameters['replenishment'] == 'low':
-                    self.betas[customer] = 1
-                elif self.parameters['replenishment'] == 'high':
-                    self.betas[customer] = 5
-                else:
-                    exit('Wrong value for replenishment parameter')
+                self.betas[customer] = 0
+            elif self.parameters['replenishment'] == 'absolute':
+                self.alphas[customer] = 0
+                self.betas[customer] = 1
+            elif self.parameters['replenishment'] == 'relative':
+                self.alphas[customer] = 0.1
+                self.betas[customer] = 0
+            else:
+                exit('Wrong value for replenishment parameter')
             if self.parameters['absorption'] == 'full':
                 self.gammas[customer] = 1
                 self.deltas[customer] = 0
@@ -216,7 +188,7 @@ class instance:
                 else:
                     exit('Wrong value for absorption parameter')
                 self.gammas[customer] = 0
-                self.deltas[customer] = np.floor(factor * number_periods) * max(self.betas[customer], (20 if self.alphas[customer] == 0.05 else 50) * self.alphas[customer])
+                self.deltas[customer] = np.floor(factor * number_periods) * max(self.betas[customer], 10 * self.alphas[customer])
 
     def create_rnd(self, folder = 'instances/synthetic'):
         # Create rnd-based instances

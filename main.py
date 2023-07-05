@@ -4,6 +4,7 @@ import heuristic as hr
 import validation as vd
 import argparse as ap
 import recording as rc
+import time as tm
 
 def mark_section(title):
     print('\n-----------------------------------------------------------------------------------\n')
@@ -28,24 +29,31 @@ def main():
     record = rc.create_record(args.project, instance)
 
     mark_section('Applying the greedy heuristic to the instance...')
+    start = tm.time()
     grd_solution, grd_objective = hr.greedy_heuristic(instance)
+    end = tm.time()
     print('Greedy solution: [{}] {}'.format(grd_objective, grd_solution))
     record = rc.update_record(record, {
         'grd_objective': grd_objective,
-        'grd_solution': '-'.join(grd_solution.values())
+        'grd_solution': '-'.join(grd_solution.values()),
+        'grd_runtime': round(end - start, 2)
     })
 
     mark_section('Applying the progressive heuristic to the instance...')
+    start = tm.time()
     prg_solution, prg_objective = hr.progressive_algorithm(instance)
+    end = tm.time()
     print('Progressive solution: [{}] {}'.format(prg_objective, prg_solution))
     record = rc.update_record(record, {
         'prg_objective': prg_objective,
-        'prg_solution': '-'.join(prg_solution.values())
+        'prg_solution': '-'.join(prg_solution.values()),
+        'prg_runtime': round(end - start, 2)
     })
 
     mark_section('Building the 1-DFLP-RA for the instance...')
     mip, mip_variable = fm.build_fancy(instance)
     mip.write('archives/{}-mip.lp'.format(instance.keyword))
+    nws, nws_variable = fm.build_fancy(instance)
 
     mark_section('Solving the LPR of the 1-DFLP-RA model...')
     lpr = mip.relax()
@@ -77,6 +85,21 @@ def main():
         'mip_intgap': compute_gap(lpr_objective, mip_objective),
         'grd_optgap': compute_gap(mip_objective, grd_objective),
         'prg_optgap': compute_gap(mip_objective, prg_objective)
+    })
+
+    mark_section('Solving the MIP (no warm start) of the 1-DFLP-RA model...')
+    nws.optimize()
+    nws.write('archives/{}-nws.sol'.format(instance.keyword))
+    nws_solution = fm.format_solution(instance, nws, nws_variable)
+    nws_objective = round(nws.objVal, 2)
+    nws_runtime = round(nws.runtime, 2)
+    print('Optimal MIP solution: [{}] {}'.format(nws_objective, nws_solution))
+    record = rc.update_record(record,{
+        'nws_objective': nws_objective,
+        'nws_solution': '-'.join(nws_solution.values()),
+        'nws_runtime': nws_runtime,
+        'nws_status': nws.status,
+        'nws_optgap': nws.MIPGap
     })
 
     mark_section('Validating the solution of the 1-DFLP-RA analytically...')

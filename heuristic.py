@@ -83,7 +83,7 @@ def progressive_algorithm(instance):
 
             if int(reference) <= int(frontier):
 
-                for location in instance.locations:
+                for location in instance.locations + ['0']:
 
                     # Copy partial solution
                     candidate = copy_solution(best_solution)
