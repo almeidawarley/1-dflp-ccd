@@ -6,11 +6,11 @@ features = {
     'points': [20],
     'patronizing': ['weak', 'medium', 'strong'],
     'rewards': ['identical', 'inversely', 'directly'],
-    'replenishment': ['none', 'absolute', 'relative'],
-    'absorption': ['full']
+    'replenishment': ['absolute', 'relative'], #none
+    'absorption': ['full', 'low', 'medium', 'high']
 }
 
-project = 'rnd1A'
+project = 'rnd2A'
 
 instance = {}
 
@@ -32,10 +32,10 @@ for seed in features['seed']:
                             instance['rewards'] = rewards
                             instance['replenishment'] = replenishment
                             instance['absorption'] = absorption
+                            instance['homogeneity'] = 'no'
 
                             keyword = '{}_{}'.format('rnd', '-'.join([str(value) for value in instance.values()]))
 
-                            '''
                             with open('{}/{}.json'.format('instances/synthetic', keyword), 'w') as output:
                                 js.dump(instance, output)
 
@@ -59,6 +59,5 @@ for seed in features['seed']:
 
                             commands.write('dos2unix ../scripts/{}.sh\n'.format(keyword))
                             commands.write('sbatch ../scripts/{}.sh\n'.format(keyword))
-                            '''
 
                             print(keyword)

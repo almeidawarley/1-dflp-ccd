@@ -264,15 +264,15 @@ class instance:
             # Upper, lower and initial demand
             self.lowers[customer] = 0
             self.uppers[customer] = 10**6
-            self.starts[customer] = 1
+            self.starts[customer] = 1 if self.parameters['homogeneity'] == 'yes' else np.random.choice([i for i in range(1, 10)])
             if self.parameters['replenishment'] == 'none':
                 self.alphas[customer] = 0
                 self.betas[customer] = 0
             elif self.parameters['replenishment'] == 'absolute':
                 self.alphas[customer] = 0
-                self.betas[customer] = 1
+                self.betas[customer] = 1 if self.parameters['homogeneity'] == 'yes' else np.random.choice([i for i in range(1, 6)])
             elif self.parameters['replenishment'] == 'relative':
-                self.alphas[customer] = 0.1
+                self.alphas[customer] = 0.1 if self.parameters['homogeneity'] == 'yes' else np.random.choice([i for i in range(6, 11)])/10
                 self.betas[customer] = 0
             else:
                 exit('Wrong value for replenishment parameter')
