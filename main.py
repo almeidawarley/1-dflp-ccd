@@ -28,18 +28,40 @@ def main():
     mark_section('Logging instance parameters read from file ...')
     record = rc.create_record(args.project, instance)
 
-    mark_section('Applying the greedy heuristic to the instance...')
+    mark_section('Applying the random algorithm to the instance...')
     start = tm.time()
-    grd_solution, grd_objective = hr.greedy_heuristic(instance)
+    rnd_solution, rnd_objective = hr.forward_algorithm(instance)
     end = tm.time()
-    print('Greedy solution: [{}] {}'.format(grd_objective, grd_solution))
+    print('Random solution: [{}] {}'.format(rnd_objective, rnd_solution))
     record = rc.update_record(record, {
-        'grd_objective': grd_objective,
-        'grd_solution': '-'.join(grd_solution.values()),
-        'grd_runtime': round(end - start, 2)
+        'rnd_objective': rnd_objective,
+        'rnd_solution': '-'.join(rnd_solution.values()),
+        'rnd_runtime': round(end - start, 2)
     })
 
-    mark_section('Applying the progressive heuristic to the instance...')
+    mark_section('Applying the forward (greedy) algorithm to the instance...')
+    start = tm.time()
+    frw_solution, frw_objective = hr.forward_algorithm(instance)
+    end = tm.time()
+    print('Forward solution: [{}] {}'.format(frw_objective, frw_solution))
+    record = rc.update_record(record, {
+        'frw_objective': frw_objective,
+        'frw_solution': '-'.join(frw_solution.values()),
+        'frw_runtime': round(end - start, 2)
+    })
+
+    mark_section('Applying the backward (greedy) algorithm to the instance...')
+    start = tm.time()
+    bcw_solution, bcw_objective = hr.forward_algorithm(instance)
+    end = tm.time()
+    print('Backward solution: [{}] {}'.format(bcw_objective, bcw_solution))
+    record = rc.update_record(record, {
+        'bcw_objective': bcw_objective,
+        'bcw_solution': '-'.join(bcw_solution.values()),
+        'bcw_runtime': round(end - start, 2)
+    })
+
+    mark_section('Applying the progressive algorithm to the instance...')
     start = tm.time()
     prg_solution, prg_objective = hr.progressive_algorithm(instance)
     end = tm.time()
@@ -69,7 +91,17 @@ def main():
     })
 
     mark_section('Solving the MIP of the 1-DFLP-RA model...')
-    fm.warm_start(instance, mip_variable, prg_solution)
+    wms_objective = max(rnd_objective, frw_objective, bcw_objective, prg_objective)
+    if wms_objective == rnd_objective:
+        fm.warm_start(instance, mip_variable, rnd_solution)
+    elif wms_objective == frw_objective:
+        fm.warm_start(instance, mip_variable, frw_solution)
+    elif wms_objective == bcw_objective:
+        fm.warm_start(instance, mip_variable, bcw_solution)
+    elif wms_objective == prg_objective:
+        fm.warm_start(instance, mip_variable, prg_solution)
+    else:
+        raise Exception('No warm start solution found')
     mip.optimize()
     mip.write('archives/{}-mip.sol'.format(instance.keyword))
     mip_solution = fm.format_solution(instance, mip, mip_variable)
@@ -83,7 +115,9 @@ def main():
         'mip_status': mip.status,
         'mip_optgap': mip.MIPGap,
         'mip_intgap': compute_gap(lpr_objective, mip_objective),
-        'grd_optgap': compute_gap(mip_objective, grd_objective),
+        'rnd_optgap': compute_gap(mip_objective, rnd_objective),
+        'frw_optgap': compute_gap(mip_objective, frw_objective),
+        'bcw_optgap': compute_gap(mip_objective, bcw_objective),
         'prg_optgap': compute_gap(mip_objective, prg_objective)
     })
 
@@ -132,12 +166,12 @@ def main():
     mark_section('Wrapping up the execution with sanity check {}!'.format(validation))
 
     print('>>> MIP objective: {}'.format(record['mip_objective']))
-    print('>>> GRD objective: {}'.format(record['grd_objective']))
-    print('>>> GRD optimality: {}'.format(record['grd_optgap']))
+    print('>>> FRW objective: {}'.format(record['frw_objective']))
+    print('>>> FRW optimality: {}'.format(record['frw_optgap']))
     print('>>> PRG objective: {}'.format(record['prg_objective']))
     print('>>> PRG optimality: {}'.format(record['prg_optgap']))
     print('>>> MIP solution: {}'.format('-'.join(mip_solution.values())))
-    print('>>> GRD solution: {}'.format('-'.join(grd_solution.values())))
+    print('>>> FRW solution: {}'.format('-'.join(frw_solution.values())))
     print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
 
     '''
@@ -155,7 +189,6 @@ def main():
         mip_runtime = round(mip.runtime, 2)
         print('Optimal MIP solution: [{}] {} <{}>'.format(mip_objective, mip_solution, '-'.join(mip_solution.values())))
         fm.block_solution(mip, mip_variable, mip_solution)
-
     '''
 
 main()

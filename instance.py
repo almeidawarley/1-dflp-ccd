@@ -46,6 +46,9 @@ class instance:
         elif 'rnd2' in keyword:
             # Create RND2 instance
             self.create_rnd2()
+        elif 'ML' in keyword:
+            # Create ML instance
+            self.create_ML()
         elif keyword == '1toN':
             # Create 1:N instance
             self.create_1toN()
@@ -69,9 +72,12 @@ class instance:
     def create_map(self, folder = 'instances/synthetic'):
         # Create map-based instances
 
-        # Read specifications from file
-        with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
-            self.parameters = js.load(content)
+        try:
+            # Read specifications from file
+            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
+                self.parameters = js.load(content)
+        except:
+            print('No file found for keyword {}'.format(self.keyword))
 
         np.random.seed(self.parameters['seed'])
 
@@ -89,50 +95,37 @@ class instance:
         # Create coordinates in map
         self.points = {}
         for location in self.locations:
-            if self.parameters['coordinates'] == 'uniform':
-                x = np.random.uniform(0,100)
-                y = np.random.uniform(0,100)
-            elif self.parameters['coordinates'] == 'normal1':
-                x = max(0, min(np.random.normal(50,10), 100), 0)
-                y = max(0, min(np.random.normal(50,10), 100), 0)
-                self.points['{}'.format(location)] = [x, y]
-            elif self.parameters['coordinates'] == 'normal5':
-                sector = number_locations/5
-                if int(location) <= 1 * sector:
-                    x = max(0, min(np.random.normal(25,10), 100), 0)
-                    y = max(0, min(np.random.normal(25,10), 100), 0)
-                elif int(location) <= 2 * sector:
-                    x = max(0, min(np.random.normal(25,10), 100), 0)
-                    y = max(0, min(np.random.normal(75,10), 100), 0)
-                elif int(location) <= 3 * sector:
-                    x = max(0, min(np.random.normal(50,10), 100), 0)
-                    y = max(0, min(np.random.normal(50,10), 100), 0)
-                elif int(location) <= 4 * sector:
-                    x = max(0, min(np.random.normal(75,10), 100), 0)
-                    y = max(0, min(np.random.normal(25,10), 100), 0)
-                elif int(location) <= 5 * sector:
-                    x = max(0, min(np.random.normal(75,10), 100), 0)
-                    y = max(0, min(np.random.normal(75,10), 100), 0)
-            else:
-                exit('Wrong value for coordinates parameter')
-            self.points['{}'.format(location)] = [int(np.floor(x)), int(np.floor(y))]
+            x = np.random.randint(0,5)
+            y = np.random.randint(0,5)
+            while [x, y] in self.points.values():
+                x = np.random.randint(0,5)
+                y = np.random.randint(0,5)
+            self.points['{}'.format(location)] = [x, y]
         X = [self.points['{}'.format(location)][0] for location in self.locations]
         Y = [self.points['{}'.format(location)][1] for location in self.locations]
-        pt.xticks(range(0, 101, 20))
-        pt.yticks(range(0, 101, 20))
         pt.scatter(X, Y, marker = 'o')
         for location in self.locations:
             pt.annotate(location, (X[int(location) - 1], Y[int(location) - 1]))
         pt.savefig('archives/{}-map.png'.format(self.keyword))
+
+        if self.parameters['patronizing'] == 'none':
+            radius = 0
+        elif self.parameters['patronizing'] == 'weak':
+            radius = 1
+        elif self.parameters['patronizing'] == 'medium':
+            radius = 2
+        elif self.parameters['patronizing'] == 'strong':
+            radius = 3
+        else:
+            exit('Wrong value for patronizing parameter')
 
         # Create catalogs
         self.catalogs = {}
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                radius = 5
-                chance = 0.5
-                self.catalogs[location][customer] = 1. if mt.dist(self.points['{}'.format(location)], self.points['{}'.format(customer)]) <= radius and (np.random.choice([0., 1.], p = [1 - chance, chance]) or location == customer) else 0.
+                variability = max(np.random.choice([0, 1], p = [0.25, 0.75]), 1 if location == customer else 0)
+                self.catalogs[location][customer] = 1. if mt.dist(self.points['{}'.format(location)], self.points['{}'.format(customer)]) <= radius and variability == 1 else 0.
 
         # Create revenues
         self.revenues = {}
@@ -158,44 +151,43 @@ class instance:
         self.starts = {}
         self.lowers = {}
         self.uppers = {}
+        self.intensities = {}
 
         for customer in self.customers:
             # Upper, lower and initial demand
-            self.lowers[customer] = 0
-            self.uppers[customer] = 10**6
-            self.starts[customer] = 1
+            self.starts[customer] = 1 if self.parameters['character'] == 'homogeneous' else np.random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+            self.intensities[customer] = 1 if self.parameters['character'] == 'homogeneous' else np.random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
             if self.parameters['replenishment'] == 'none':
                 self.alphas[customer] = 0
                 self.betas[customer] = 0
             elif self.parameters['replenishment'] == 'absolute':
                 self.alphas[customer] = 0
-                self.betas[customer] = 1
+                self.betas[customer] = self.intensities[customer]
             elif self.parameters['replenishment'] == 'relative':
-                self.alphas[customer] = 0.1
+                self.alphas[customer] = round((number_periods * self.intensities[customer] + self.starts[customer])**(1. / number_periods) - 1, 2)
                 self.betas[customer] = 0
             else:
                 exit('Wrong value for replenishment parameter')
-            if self.parameters['absorption'] == 'full':
+            if self.parameters['absorption'] == 'complete':
                 self.gammas[customer] = 1
                 self.deltas[customer] = 0
-            else:
-                if self.parameters['absorption'] == 'low':
-                    factor = 0.25
-                elif self.parameters['absorption'] == 'medium':
-                    factor = 0.50
-                elif self.parameters['absorption'] == 'high':
-                    factor = 0.75
-                else:
-                    exit('Wrong value for absorption parameter')
+            elif self.parameters['absorption'] == 'constrained':
                 self.gammas[customer] = 0
-                self.deltas[customer] = np.floor(factor * number_periods) * max(self.betas[customer], 10 * self.alphas[customer])
+                self.deltas[customer] = np.ceil(0.5 * number_periods) * self.intensities[customer]
+            else:
+                exit('Wrong value for absorption parameter')
+            self.lowers[customer] = 0
+            self.uppers[customer] = (number_periods * self.intensities[customer] + self.starts[customer])
 
     def create_rnd(self, folder = 'instances/synthetic'):
         # Create rnd-based instances
 
-        # Read specifications from file
-        with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
-            self.parameters = js.load(content)
+        try:
+            # Read specifications from file
+            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
+                self.parameters = js.load(content)
+        except:
+            print('No file found for keyword {}'.format(self.keyword))
 
         np.random.seed(self.parameters['seed'])
 
@@ -204,8 +196,6 @@ class instance:
         number_customers = int(self.parameters['customers'])
         number_periods = int(self.parameters['periods'])
 
-        assert number_customers == number_locations, 'Number of customers and locations must be equal'
-
         self.locations = [str(i + 1) for i in range(number_locations)]
         self.customers = [str(i + 1) for i in range(number_customers)]
         self.periods = [str(i + 1) for i in range(number_periods)]
@@ -213,19 +203,18 @@ class instance:
         if self.parameters['patronizing'] == 'none':
             patronizing = 0.00
         elif self.parameters['patronizing'] == 'weak':
-            patronizing = 0.20
+            patronizing = 0.10
         elif self.parameters['patronizing'] == 'medium':
             patronizing = 0.30
         elif self.parameters['patronizing'] == 'strong':
-            patronizing = 0.40
+            patronizing = 0.50
         else:
             exit('Wrong value for patronizing parameter')
 
-        patronizing_lower, patronizing_upper = int(np.ceil(0.5 * patronizing * number_locations)), int(np.ceil(patronizing * number_locations))
+        consideration_size = int(patronizing * number_locations)
 
         consideration_sets = {}
         for customer in self.customers:
-            consideration_size = np.random.choice([i for i in range(patronizing_lower, patronizing_upper)])
             consideration_sets[customer] = np.random.choice(self.locations, consideration_size)
 
         # Create catalogs
@@ -259,37 +248,55 @@ class instance:
         self.starts = {}
         self.lowers = {}
         self.uppers = {}
+        self.intensities = {}
 
         for customer in self.customers:
             # Upper, lower and initial demand
-            self.lowers[customer] = 0
-            self.uppers[customer] = 10**6
-            self.starts[customer] = 1 if self.parameters['homogeneity'] == 'yes' else np.random.choice([i for i in range(1, 10)])
+            self.starts[customer] = 1 if self.parameters['character'] == 'homogeneous' else np.random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+            self.intensities[customer] = 1 if self.parameters['character'] == 'homogeneous' else np.random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
             if self.parameters['replenishment'] == 'none':
                 self.alphas[customer] = 0
                 self.betas[customer] = 0
             elif self.parameters['replenishment'] == 'absolute':
                 self.alphas[customer] = 0
-                self.betas[customer] = 1 if self.parameters['homogeneity'] == 'yes' else np.random.choice([i for i in range(1, 6)])
+                self.betas[customer] = self.intensities[customer]
             elif self.parameters['replenishment'] == 'relative':
-                self.alphas[customer] = 0.1 if self.parameters['homogeneity'] == 'yes' else np.random.choice([i for i in range(6, 11)])/10
+                self.alphas[customer] = round((number_periods * self.intensities[customer] + self.starts[customer])**(1. / number_periods) - 1, 2)
                 self.betas[customer] = 0
             else:
                 exit('Wrong value for replenishment parameter')
-            if self.parameters['absorption'] == 'full':
+            if self.parameters['absorption'] == 'complete':
                 self.gammas[customer] = 1
                 self.deltas[customer] = 0
-            else:
-                if self.parameters['absorption'] == 'low':
-                    factor = 0.25
-                elif self.parameters['absorption'] == 'medium':
-                    factor = 0.50
-                elif self.parameters['absorption'] == 'high':
-                    factor = 0.75
-                else:
-                    exit('Wrong value for absorption parameter')
+            elif self.parameters['absorption'] == 'constrained':
                 self.gammas[customer] = 0
-                self.deltas[customer] = np.floor(factor * number_periods) * max(self.betas[customer], 10 * self.alphas[customer])
+                self.deltas[customer] = np.ceil(0.5 * number_periods) * self.intensities[customer]
+            else:
+                exit('Wrong value for absorption parameter')
+            self.lowers[customer] = 0
+            self.uppers[customer] = number_periods * self.intensities[customer] + self.starts[customer]
+
+    def create_ML(self):
+
+        _, sed, lct, prd, rpl = self.keyword.split('-')
+
+        self.parameters['seed'] = int(sed)
+        self.parameters['locations'] = int(lct)
+        self.parameters['customers'] = int(lct)
+        self.parameters['periods'] = int(prd)
+        self.parameters['rewards'] = 'identical'
+        self.parameters['patronizing'] = 'medium'
+        self.parameters['replenishment'] = 'absolute' if rpl == 'abs' else 'relative'
+        self.parameters['character'] = 'homogeneous'
+        self.parameters['absorption'] = 'complete'
+
+        self.create_rnd()
+
+        # Resetting revenue to 1.
+
+        for period in self.periods:
+            for location in self.locations:
+                self.revenues[period][location] = 1.
 
     def create_spp(self, K = 5):
         # Create SPP instances

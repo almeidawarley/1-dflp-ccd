@@ -3,14 +3,14 @@ import instance as ic
 
 features = {
     'seed': [i for i in range(0, 10)],
-    'points': [20],
+    'points': [10],
     'patronizing': ['weak', 'medium', 'strong'],
     'rewards': ['identical', 'inversely', 'directly'],
-    'replenishment': ['absolute', 'relative'], #none
-    'absorption': ['full', 'low', 'medium', 'high']
+    'replenishment': ['absolute', 'relative'],
+    'absorption': ['complete', 'constrained']
 }
 
-project = 'rnd2A'
+project = 'predoc3'
 
 instance = {}
 
@@ -22,7 +22,7 @@ for seed in features['seed']:
             for rewards in features['rewards']:
                 for replenishment in features['replenishment']:
                     for absorption in features['absorption']:
-                        for periods in [int(points/4), int(points/2), int(points/1)]:
+                        for periods in [int(points/2), int(points), int(2 * points)]:
 
                             instance['seed'] = seed
                             instance['locations'] = points
@@ -32,7 +32,7 @@ for seed in features['seed']:
                             instance['rewards'] = rewards
                             instance['replenishment'] = replenishment
                             instance['absorption'] = absorption
-                            instance['homogeneity'] = 'no'
+                            instance['character'] = 'homogeneous'
 
                             keyword = '{}_{}'.format('rnd', '-'.join([str(value) for value in instance.values()]))
 
