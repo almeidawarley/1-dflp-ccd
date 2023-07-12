@@ -4,6 +4,8 @@ slovakia
 3sat
 bckp
 *.lp
+ML*
+sarwesh_*
 
 # Experimental files
 archives/*.lp

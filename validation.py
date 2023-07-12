@@ -132,6 +132,64 @@ def export_data(instance, solution, filename = 'analysis.csv'):
 
     return round(fitness, 2)
 
+def export_data2(instance, solution, filename = 'analysis.csv'):
+
+    with open(filename, 'w') as output:
+
+        output.write('i,t,{},W\n'.format(','.join(['W{}'.format(period) for period in instance.periods])))
+
+    cumulative = {}
+
+    for customer in instance.customers:
+
+        cumulative[customer] = instance.starts[customer]
+
+    fitness = 0.
+
+    memory_l = {}
+
+    for period in instance.periods:
+
+        cumulative = apply_replenishment(instance, cumulative)
+
+        memory_l[period] = {}
+
+        for location in instance.locations:
+
+            memory_l[period][location] = 0.
+
+        if solution[period] != '0':
+
+            score = 0.
+
+            for customer in instance.customers:
+
+                if instance.catalogs[solution[period]][customer]:
+
+                    local = instance.revenues[period][solution[period]] * min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
+
+                    score += local
+
+            memory_l[period][solution[period]] = score
+
+        for location in instance.locations:
+
+            with open(filename, 'a') as output:
+
+                print('Period: {}, Location: {}'.format(period, location))
+
+                output.write('{},{},{},{}\n'.format(location, period,
+                    ','.join(['{}'.format(memory_l[reference][location]) if int(reference) < int(period) else '{}'.format(0.) for reference in instance.periods]),
+                    memory_l[period][location]))
+
+                fitness += score
+
+            cumulative = apply_absorption(instance, cumulative, solution[period])
+
+        cumulative = apply_consolidation(instance, cumulative)
+
+    return round(fitness, 2)
+
 def detail_solution(instance, solution, filename = 'detailed_hrs.csv'):
 
     cumulative = {}
