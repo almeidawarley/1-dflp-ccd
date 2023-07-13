@@ -30,7 +30,7 @@ def main():
 
     mark_section('Applying the random algorithm to the instance...')
     start = tm.time()
-    rnd_solution, rnd_objective = hr.forward_algorithm(instance)
+    rnd_solution, rnd_objective = hr.random_algorithm(instance)
     end = tm.time()
     print('Random solution: [{}] {}'.format(rnd_objective, rnd_solution))
     record = rc.update_record(record, {
