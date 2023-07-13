@@ -52,7 +52,7 @@ def main():
 
     mark_section('Applying the backward (greedy) algorithm to the instance...')
     start = tm.time()
-    bcw_solution, bcw_objective = hr.forward_algorithm(instance)
+    bcw_solution, bcw_objective = hr.backward_algorithm(instance)
     end = tm.time()
     print('Backward solution: [{}] {}'.format(bcw_objective, bcw_solution))
     record = rc.update_record(record, {
