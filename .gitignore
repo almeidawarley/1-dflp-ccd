@@ -6,6 +6,7 @@ bckp
 *.lp
 ML*
 sarwesh_*
+*.txt
 
 # Experimental files
 archives/*.lp
