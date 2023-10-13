@@ -19,6 +19,7 @@ def main():
     parser = ap.ArgumentParser(description = 'Run 1-DFLP-RA for some instance')
     parser.add_argument('keyword', type = str, help = 'Instance keyword following established patterns')
     parser.add_argument('-p', '--project', default = '1-dflp-ra', type = str, help = 'Instance project name')
+    parser.add_argument('-e', '--enumerate', action = 'store_true', help = 'Enumerate optimal solutions')
     args = parser.parse_args()
 
     mark_section('Generating instance information based on the parameters...')
@@ -174,21 +175,20 @@ def main():
     print('>>> FRW solution: {}'.format('-'.join(frw_solution.values())))
     print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
 
-    '''
-    mark_section('Listing all optimal MIP solution...')
+    if args.enumerate:
+        mark_section('Listing all optimal MIP solution...')
 
-    print('Optimal MIP solution: [{}] {} <{}>'.format(mip_objective, mip_solution, '-'.join(mip_solution.values())))
-    fm.block_solution(mip, mip_variable, mip_solution)
-    ref_objective = mip_objective
-    while mip_objective == ref_objective:
-        # print(vd.evaluate_solution(instance, mip_solution))
-        mip.setParam('OutputFlag', 0)
-        mip.optimize()
-        mip_solution = fm.format_solution(instance, mip, mip_variable)
-        mip_objective = round(mip.objVal, 2)
-        mip_runtime = round(mip.runtime, 2)
         print('Optimal MIP solution: [{}] {} <{}>'.format(mip_objective, mip_solution, '-'.join(mip_solution.values())))
         fm.block_solution(mip, mip_variable, mip_solution)
-    '''
+        ref_objective = mip_objective
+        while mip_objective == ref_objective:
+            # print(vd.evaluate_solution(instance, mip_solution))
+            mip.setParam('OutputFlag', 0)
+            mip.optimize()
+            mip_solution = fm.format_solution(instance, mip, mip_variable)
+            mip_objective = round(mip.objVal, 2)
+            mip_runtime = round(mip.runtime, 2)
+            print('Optimal MIP solution: [{}] {} <{}>'.format(mip_objective, mip_solution, '-'.join(mip_solution.values())))
+            fm.block_solution(mip, mip_variable, mip_solution)
 
 main()
