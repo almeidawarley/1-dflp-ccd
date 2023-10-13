@@ -93,6 +93,47 @@ def build_fancy(instance):
 
     return mip, variable
 
+def build_nonlinear(instance):
+    # Build the 1-DFLP-DRA
+
+    mip = gp.Model('1-DFLP-DRA')
+
+    # Create decision variables
+    variable = {
+        'y': vb.create_vry(instance, mip),
+        'w': vb.create_vrw(instance, mip),
+        'd1': vb.create_vrd1(instance, mip),
+        'd2': vb.create_vrd2(instance, mip),
+        'd3': vb.create_vrd3(instance, mip),
+        'o': vb.create_vro(instance, mip),
+        'p': vb.create_vrp(instance, mip),
+        'q': vb.create_vrq(instance, mip),
+        'r': vb.create_vrr(instance, mip)
+    }
+
+    # Maximize the total revenue
+    mip.setAttr('ModelSense', -1)
+
+    # Turn off GUROBI logs
+    # mip.setParam('OutputFlag', 0)
+    # mip.setParam('NumericFocus', 3)
+    mip.setParam('Threads', 1)
+    mip.setParam('TimeLimit', 10 * 60 * 60)
+
+    # Create main constraints
+    ct.create_c1(instance, mip, variable)
+    ct.create_c2(instance, mip, variable)
+    ct.create_c3(instance, mip, variable)
+    ct.create_c3X(instance, mip, variable)
+    ct.create_c4(instance, mip, variable)
+    ct.create_c5(instance, mip, variable)
+    ct.create_c6(instance, mip, variable)
+    ct.create_c6X1(instance, mip, variable)
+    ct.create_c6X2(instance, mip, variable)
+    ct.create_c6X3(instance, mip, variable)
+
+    return mip, variable
+
 def block_solution(mip, variable, solution):
 
     ignored = 0

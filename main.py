@@ -77,6 +77,7 @@ def main():
     mip, mip_variable = fm.build_fancy(instance)
     mip.write('archives/{}-mip.lp'.format(instance.keyword))
     nws, nws_variable = fm.build_fancy(instance)
+    nlr, nlr_variable = fm.build_nonlinear(instance)
 
     mark_section('Solving the LPR of the 1-DFLP-RA model...')
     lpr = mip.relax()
@@ -135,6 +136,21 @@ def main():
         'nws_runtime': nws_runtime,
         'nws_status': nws.status,
         'nws_optgap': nws.MIPGap
+    })
+
+    mark_section('Solving the nonlinear MIP of the 1-DFLP-RA model...')
+    nlr.optimize()
+    nlr.write('archives/{}-nlr.sol'.format(instance.keyword))
+    nlr_solution = fm.format_solution(instance, nlr, nlr_variable)
+    nlr_objective = round(nlr.objVal, 2)
+    nlr_runtime = round(nlr.runtime, 2)
+    print('Optimal MIP solution: [{}] {}'.format(nlr_objective, nlr_solution))
+    record = rc.update_record(record,{
+        'nlr_objective': nlr_objective,
+        'nlr_solution': '-'.join(nlr_solution.values()),
+        'nlr_runtime': nlr_runtime,
+        'nlr_status': nlr.status,
+        'nlr_optgap': nlr.MIPGap
     })
 
     mark_section('Validating the solution of the 1-DFLP-RA analytically...')
