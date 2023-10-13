@@ -18,6 +18,9 @@ class instance:
         # Store parameters
         self.parameters = {}
 
+        # Standard seed
+        self.parameters['seed'] = 0
+
         # Decide instance type
         if keyword == 'jopt':
             # Create JOPT instance
@@ -404,8 +407,9 @@ class instance:
         '''
 
         seed = int(self.keyword.replace('rnd1', ''))
+        self.parameters['seed'] = seed
 
-        self.parameters['S'] = 5
+        self.parameters['S'] = seed
         self.parameters['T'] = 5
         self.parameters['I'] = 10
         self.parameters['J'] = 10
@@ -450,19 +454,20 @@ class instance:
             self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
             self.uppers[customer] = 10 * (self.parameters['T'] + 1)
             self.alphas[customer] = 0
-            self.gammas[customer] = 0
+            self.gammas[customer] = 1 #0
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
-            self.deltas[customer] = 4 * self.betas[customer] # 10 * (self.parameters['T'] + 1) # 4 * self.betas[customer]
+            self.deltas[customer] = 0 #4 * self.betas[customer] # 10 * (self.parameters['T'] + 1) # 4 * self.betas[customer]
 
     def create_rnd2(self):
         # Create RND2 instance
 
         seed = int(self.keyword.replace('rnd2', ''))
+        self.parameters['seed'] = seed
 
-        self.parameters['S'] = 222 # seed
-        self.parameters['T'] = 10
-        self.parameters['I'] = 30
-        self.parameters['J'] = 30
+        self.parameters['S'] = seed
+        self.parameters['T'] = 5
+        self.parameters['I'] = 100
+        self.parameters['J'] = 100
 
         rd.seed(self.parameters['S'])
 
@@ -509,12 +514,14 @@ class instance:
             self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
             self.uppers[customer] = 10 ** 3
             self.alphas[customer] = 0
-            self.gammas[customer] = 0
+            self.gammas[customer] = 1
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
-            self.deltas[customer] = rd.sample([1,2,3,4,5], 1)[0] * self.betas[customer]
+            self.deltas[customer] = 0. # rd.sample([1,2,3,4,5], 1)[0] * self.betas[customer]
 
     def create_1toN(self):
         # Create 1toN instance
+
+        self.parameters['seed'] = 0
 
         self.parameters['S'] = 0
         self.parameters['T'] = 20
