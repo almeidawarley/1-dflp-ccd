@@ -33,6 +33,7 @@ for seed in features['seed']:
                             instance['replenishment'] = replenishment
                             instance['absorption'] = absorption
                             instance['character'] = 'homogeneous'
+                            # instance['character'] = 'heterogeneous'
 
                             keyword = '{}_{}'.format('rnd', '-'.join([str(value) for value in instance.values()]))
 
