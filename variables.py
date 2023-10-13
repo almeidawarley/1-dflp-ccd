@@ -22,12 +22,7 @@ def create_vrw(instance, mip):
 
     lowers = [0 for _ in instance.periods for _ in instance.locations for _ in instance.customers]
     uppers = [gp.GRB.INFINITY for _ in instance.periods for _ in instance.locations for _ in instance.customers]
-    coefs = [
-        1.* instance.revenues[period][location] * instance.catalogs[location][customer]
-        for period in instance.periods
-        for location in instance.locations
-        for customer in instance.customers
-    ]
+    coefs = [0 for _ in instance.periods for _ in instance.locations for _ in instance.customers]
     types = ['C' for _ in instance.periods for _ in instance.locations for _ in instance.customers]
     names = [
         'w~{}_{}_{}'.format(period, location, customer)
@@ -37,6 +32,23 @@ def create_vrw(instance, mip):
     ]
 
     return mip.addVars(instance.periods, instance.locations, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+
+# ---------------------------------------------------------------------------
+
+def create_vrw_NL(instance, mip):
+    # Create w^{t}_{j} variables
+
+    lowers = [0 for _ in instance.periods for _ in instance.customers]
+    uppers = [gp.GRB.INFINITY for _ in instance.periods for _ in instance.customers]
+    coefs = [0 for _ in instance.periods for _ in instance.customers]
+    types = ['C' for _ in instance.periods for _ in instance.customers]
+    names = [
+        'w~{}_{}'.format(period, customer)
+        for period in instance.periods
+        for customer in instance.customers
+    ]
+
+    return mip.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
 # ---------------------------------------------------------------------------
 
@@ -145,18 +157,17 @@ def create_vrq(instance, mip):
 def create_vrr(instance, mip):
     # Create r^{t}_{ij} variables
 
-    lowers = [0. for _ in instance.periods for _ in instance.locations for _ in instance.customers]
-    uppers = [1 for _ in instance.periods for _ in instance.locations  for _ in instance.customers]
-    coefs = [0. for _ in instance.periods for _ in instance.locations  for _ in instance.customers]
-    types = ['B' for _ in instance.periods for _ in instance.locations  for _ in instance.customers]
+    lowers = [0. for _ in instance.periods for _ in instance.customers]
+    uppers = [1 for _ in instance.periods  for _ in instance.customers]
+    coefs = [0. for _ in instance.periods  for _ in instance.customers]
+    types = ['B' for _ in instance.periods  for _ in instance.customers]
     names = [
-        'r~{}_{}_{}'.format(period, location, customer)
+        'r~{}_{}'.format(period, customer)
         for period in instance.periods
-        for location in instance.locations
         for customer in instance.customers
     ]
 
-    return mip.addVars(instance.periods, instance.locations, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+    return mip.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
 # ---------------------------------------------------------------------------
 

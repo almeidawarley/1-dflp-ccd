@@ -133,7 +133,7 @@ for beta in [1]:
                 instance.lowers[customer] = 1
                 instance.uppers[customer] = 10
 
-            mip, variable = fm.build_fancy(instance)
+            mip, variable = fm.build_linearized(instance)
             fm.fix_solution(mip, variable, capture_all)
             mip.optimize()
             fm.write_scatter(instance, variable, colorg[gamma])

@@ -168,7 +168,6 @@ def build_estimation(instance, training):
 
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
-    # mip.setParam('NumericFocus', 3)
     mip.setParam('Threads', 1)
     mip.setParam('TimeLimit', 10 * 60 * 60)
 
@@ -248,7 +247,7 @@ for customer in instance.customers:
     modified.gammas[customer] = 0.
 
 '''
-mip2, variable2 = fm.build_fancy(modified)
+mip2, variable2 = fm.build_linearized(modified)
 mip2.optimize()
 mip2_solution = fm.format_solution(modified, mip2, variable2)
 

@@ -131,7 +131,6 @@ def build_estimation(instance, training):
 
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
-    # mip.setParam('NumericFocus', 3)
     mip.setParam('Threads', 1)
     mip.setParam('TimeLimit', 10 * 60 * 60)
 
@@ -183,7 +182,7 @@ for customer in instance.customers:
 instance.print_instance()
 
 # Build 1-DFLP-RA model
-mip, variable = fm.build_fancy(instance)
+mip, variable = fm.build_linearized(instance)
 '''
 try:
     for period in instance.periods:
@@ -238,7 +237,7 @@ for customer in instance.customers:
     modified.deltas[customer] = variable['d'][customer].x
 
 # Build 1-DFLP-RA model
-mip, variable = fm.build_fancy(modified)
+mip, variable = fm.build_linearized(modified)
 # Find optimal solution
 mip.optimize()
 est_solution = fm.format_solution(modified, mip, variable)

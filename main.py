@@ -16,9 +16,9 @@ def compute_gap(major, minor):
 
 def main():
 
-    parser = ap.ArgumentParser(description = 'Run 1-DFLP-RA for some instance')
+    parser = ap.ArgumentParser(description = 'Run DSFLP-DAR for some instance')
     parser.add_argument('keyword', type = str, help = 'Instance keyword following established patterns')
-    parser.add_argument('-p', '--project', default = '1-dflp-ra', type = str, help = 'Instance project name')
+    parser.add_argument('-p', '--project', default = 'dsflp-dar', type = str, help = 'Instance project name')
     parser.add_argument('-e', '--enumerate', action = 'store_true', help = 'Enumerate optimal solutions')
     args = parser.parse_args()
 
@@ -73,13 +73,13 @@ def main():
         'prg_runtime': round(end - start, 2)
     })
 
-    mark_section('Building the 1-DFLP-RA for the instance...')
-    mip, mip_variable = fm.build_fancy(instance)
+    mark_section('Building the DSFLP-DAR for the instance...')
+    mip, mip_variable = fm.build_linearized(instance)
     mip.write('archives/{}-mip.lp'.format(instance.keyword))
-    nws, nws_variable = fm.build_fancy(instance)
+    nws, nws_variable = fm.build_linearized(instance)
     nlr, nlr_variable = fm.build_nonlinear(instance)
 
-    mark_section('Solving the LPR of the 1-DFLP-RA model...')
+    mark_section('Solving the LPR of the DSFLP-DAR model...')
     lpr = mip.relax()
     lpr.optimize()
     lpr.write('archives/{}-lpr.sol'.format(instance.keyword))
@@ -92,7 +92,7 @@ def main():
         'lpr_status': lpr.status
     })
 
-    mark_section('Solving the MIP of the 1-DFLP-RA model...')
+    mark_section('Solving the linearized MIP of the DSFLP-DAR model with warm start...')
     wms_objective = max(rnd_objective, frw_objective, bcw_objective, prg_objective)
     if wms_objective == rnd_objective:
         fm.warm_start(instance, mip_variable, rnd_solution)
@@ -123,7 +123,7 @@ def main():
         'prg_optgap': compute_gap(mip_objective, prg_objective)
     })
 
-    mark_section('Solving the MIP (no warm start) of the 1-DFLP-RA model...')
+    mark_section('Solving the linearized MIP of the DSFLP-DAR model without warm start...')
     nws.optimize()
     nws.write('archives/{}-nws.sol'.format(instance.keyword))
     nws_solution = fm.format_solution(instance, nws, nws_variable)
@@ -138,7 +138,18 @@ def main():
         'nws_optgap': nws.MIPGap
     })
 
-    mark_section('Solving the nonlinear MIP of the 1-DFLP-RA model...')
+    mark_section('Solving the nonlinear MIP of the DSFLP-DAR model...')
+    wms_objective = max(rnd_objective, frw_objective, bcw_objective, prg_objective)
+    if wms_objective == rnd_objective:
+        fm.warm_start(instance, nlr_variable, rnd_solution)
+    elif wms_objective == frw_objective:
+        fm.warm_start(instance, nlr_variable, frw_solution)
+    elif wms_objective == bcw_objective:
+        fm.warm_start(instance, nlr_variable, bcw_solution)
+    elif wms_objective == prg_objective:
+        fm.warm_start(instance, nlr_variable, prg_solution)
+    else:
+        raise Exception('No warm start solution found')
     nlr.optimize()
     nlr.write('archives/{}-nlr.sol'.format(instance.keyword))
     nlr_solution = fm.format_solution(instance, nlr, nlr_variable)
@@ -153,17 +164,19 @@ def main():
         'nlr_optgap': nlr.MIPGap
     })
 
-    mark_section('Validating the solution of the 1-DFLP-RA analytically...')
+    mark_section('Validating the solution of the DSFLP-DAR analytically...')
     analytical = vd.evaluate_solution(instance, mip_solution)
-    validation = vd.is_equal(mip_objective, analytical, 0.1)
     record = rc.update_record(record, {
-        'sanity_check': validation
+        'mip_check': vd.is_equal(mip_objective, analytical, 0.1),
+        'nlr_check': vd.is_equal(nlr_objective, analytical, 0.1),
     })
-    print('>>> Sanity check: {} = {}? {} <<<'.format(mip_objective, analytical, validation))
+
+    assert(vd.is_equal(mip_objective, analytical, 0.1))
+    assert(vd.is_equal(mip_objective, nlr_objective, 0.1))
 
     for method in ['1', '2', '3']:
 
-        mark_section('Approximating the 1-DFLP-RA by the #{} method...'.format(method))
+        mark_section('Approximating the DSFLP-DAR through DSFLP with method #{}...'.format(method))
         apr, apr_variable = fm.build_simple(instance, method)
         apr.write('archives/{}-ap{}.lp'.format(instance.keyword, method))
         apr.optimize()
@@ -180,17 +193,6 @@ def main():
             'ap{}_optgap'.format(method): compute_gap(mip_objective, apr_objective)
         })
 
-    mark_section('Wrapping up the execution with sanity check {}!'.format(validation))
-
-    print('>>> MIP objective: {}'.format(record['mip_objective']))
-    print('>>> FRW objective: {}'.format(record['frw_objective']))
-    print('>>> FRW optimality: {}'.format(record['frw_optgap']))
-    print('>>> PRG objective: {}'.format(record['prg_objective']))
-    print('>>> PRG optimality: {}'.format(record['prg_optgap']))
-    print('>>> MIP solution: {}'.format('-'.join(mip_solution.values())))
-    print('>>> FRW solution: {}'.format('-'.join(frw_solution.values())))
-    print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
-
     if args.enumerate:
         mark_section('Listing all optimal MIP solution...')
 
@@ -206,5 +208,16 @@ def main():
             mip_runtime = round(mip.runtime, 2)
             print('Optimal MIP solution: [{}] {} <{}>'.format(mip_objective, mip_solution, '-'.join(mip_solution.values())))
             fm.block_solution(mip, mip_variable, mip_solution)
+
+    mark_section('Wrapping up the execution with the following information...')
+
+    print('>>> MIP objective: {}'.format(record['mip_objective']))
+    print('>>> FRW objective: {}'.format(record['frw_objective']))
+    print('>>> FRW optimality: {}'.format(record['frw_optgap']))
+    print('>>> PRG objective: {}'.format(record['prg_objective']))
+    print('>>> PRG optimality: {}'.format(record['prg_optgap']))
+    print('>>> MIP solution: {}'.format('-'.join(mip_solution.values())))
+    print('>>> FRW solution: {}'.format('-'.join(frw_solution.values())))
+    print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
 
 main()

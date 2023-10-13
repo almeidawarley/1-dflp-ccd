@@ -74,7 +74,7 @@ def main(keyword, project = 'prober'):
     })
 
     mark_section('Building the 1-DFLP-RA for the instance...')
-    mip, mip_variable = fm.build_fancy(instance)
+    mip, mip_variable = fm.build_linearized(instance)
     mip.write('archives/{}-mip.lp'.format(instance.keyword))
     nlr, nlr_variable = fm.build_nonlinear(instance)
 

@@ -27,19 +27,11 @@ def create_c2(instance, mip, variable):
 
 # ---------------------------------------------------------------------------
 
-def create_c3(instance, mip, variable):
+def create_c3_NL(instance, mip, variable):
     # Create constraint 3, nonlinear
 
-    mip.addConstrs((variable['d1'][period, customer] == gp.min_(variable['o'][period, customer], instance.uppers[customer]) for period in instance.periods for customer in instance.customers), name = 'c3')
-
-# ---------------------------------------------------------------------------
-
-def create_c3X(instance, mip, variable):
-    # Create constraint 3, auxiliary, nonlinear
-
-    mip.addConstrs((variable['o'][period, customer] == (1 + instance.alphas[customer]) * variable['d3'][previous(period), customer] + instance.betas[customer] for period in instance.periods for customer in instance.customers), name = 'c3X')
-
-# ---------------------------------------------------------------------------
+    mip.addConstrs((variable['d1'][period, customer] == gp.min_(variable['o'][period, customer], instance.uppers[customer]) for period in instance.periods for customer in instance.customers), name = 'c3_p1')
+    mip.addConstrs((variable['o'][period, customer] == (1 + instance.alphas[customer]) * variable['d3'][previous(period), customer] + instance.betas[customer] for period in instance.periods for customer in instance.customers), name = 'c3_p2')
 
 def create_c3A(instance, mip, variable):
     # Create constraint 3, part A, linearized
@@ -70,13 +62,20 @@ def create_c3D(instance, mip, variable):
 # ---------------------------------------------------------------------------
 
 def create_c4(instance, mip, variable):
-    # Create constraint 4
+    # Create constraint 4, linearized
 
     mip.addConstrs((variable['d2'][period, customer] == variable['d1'][period, customer] - variable['w'].sum(period, '*', customer) for period in instance.periods for customer in instance.customers), name = 'c4')
 
 # ---------------------------------------------------------------------------
 
-def create_c5(instance, mip, variable):
+def create_c4_NL(instance, mip, variable):
+    # Create constraint 4, nonlinear
+
+    mip.addConstrs((variable['d2'][period, customer] == variable['d1'][period, customer] - variable['w'].sum(period, customer) for period in instance.periods for customer in instance.customers), name = 'c4')
+
+# ---------------------------------------------------------------------------
+
+def create_c5_NL(instance, mip, variable):
     # Create constraint 5, nonlinear
 
     mip.addConstrs((variable['d3'][period, customer] == gp.max_(variable['d2'][period, customer], instance.lowers[customer]) for period in instance.periods for customer in instance.customers), name = 'c5')
@@ -111,32 +110,15 @@ def create_c5D(instance, mip, variable):
 
 # ---------------------------------------------------------------------------
 
-def create_c6(instance, mip, variable):
+def create_c6_NL(instance, mip, variable):
     # Create constraint 6, nonlinear
 
-    mip.addConstrs(( (variable['r'][period, location, customer] == 1) >> (variable['w'][period, location, customer] == variable['q'][period, customer]) for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c61')
-    mip.addConstrs(( (variable['r'][period, location, customer] == 0) >> (variable['w'][period, location, customer] == 0) for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c62')
+    mip.addConstrs(((variable['r'][period, customer] == 1) >> (variable['w'][period, customer] == variable['q'][period, customer]) for period in instance.periods for customer in instance.customers), name = 'c6_p1')
+    mip.addConstrs(((variable['r'][period, customer] == 0) >> (variable['w'][period, customer] == 0) for period in instance.periods for customer in instance.customers), name = 'c6_p2')
 
-# ---------------------------------------------------------------------------
-
-def create_c6X1(instance, mip, variable):
-    # Create constraint 6, auxiliary 1, nonlinear
-
-    mip.addConstrs((variable['p'][period, customer] == instance.gammas[customer] * variable['d1'][period, customer] + instance.deltas[customer] for period in instance.periods for customer in instance.customers), name = 'c6X1')
-
-# ---------------------------------------------------------------------------
-
-def create_c6X2(instance, mip, variable):
-    # Create constraint 6, auxiliary 2, nonlinear
-
-    mip.addConstrs((variable['q'][period, customer] == gp.min_(variable['p'][period, customer], variable['d1'][period, customer]) for period in instance.periods for customer in instance.customers), name = 'c6X2')
-
-# ---------------------------------------------------------------------------
-
-def create_c6X3(instance, mip, variable):
-    # Create constraint 6, auxiliary 3, nonlinear
-
-    mip.addConstrs((variable['r'][period, location, customer] == variable['y'][period, location] * instance.catalogs[location][customer] for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c6X3')
+    mip.addConstrs((variable['p'][period, customer] == instance.gammas[customer] * variable['d1'][period, customer] + instance.deltas[customer] for period in instance.periods for customer in instance.customers), name = 'c6_p3')
+    mip.addConstrs((variable['q'][period, customer] == gp.min_(variable['p'][period, customer], variable['d1'][period, customer]) for period in instance.periods for customer in instance.customers), name = 'c6_p4')
+    mip.addConstrs((variable['r'][period, customer] == sum([variable['y'][period, location] * instance.catalogs[location][customer] for location in instance.locations]) for period in instance.periods for customer in instance.customers), name = 'c6_p5')
 
 # ---------------------------------------------------------------------------
 

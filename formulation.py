@@ -4,9 +4,9 @@ import constraints as ct
 import validation as vd
 
 def build_simple(instance, method):
-    # Build the 1-DFLP
+    # Build the DSFLP
 
-    mip = gp.Model('1-DFLP')
+    mip = gp.Model('DSFLP')
 
     # Create decision variables
     variable = {
@@ -18,7 +18,6 @@ def build_simple(instance, method):
 
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
-    # mip.setParam('NumericFocus', 3)
     mip.setParam('Threads', 1)
     mip.setParam('TimeLimit', 1 * 60 * 60)
 
@@ -30,7 +29,7 @@ def build_simple(instance, method):
     for customer in instance.customers:
         cumulative[customer] = instance.starts[customer]
 
-    # Compute capturable demands
+    # Set objective function
     for period in instance.periods:
         if method in ['2', '3']:
             cumulative = vd.apply_replenishment(instance, cumulative)
@@ -43,18 +42,20 @@ def build_simple(instance, method):
 
     return mip, variable
 
-def build_fancy(instance):
-    # Build the 1-DFLP-DRA
+def build_linearized(instance):
+    # Build the (linearized) DSFLP-DAR
 
-    mip = gp.Model('1-DFLP-DRA')
+    mip = gp.Model('DSFLP-DAR')
 
     # Create decision variables
     variable = {
+        # Main decision variables
         'y': vb.create_vry(instance, mip),
         'w': vb.create_vrw(instance, mip),
         'd1': vb.create_vrd1(instance, mip),
         'd2': vb.create_vrd2(instance, mip),
         'd3': vb.create_vrd3(instance, mip),
+        # Other decision variables
         's': vb.create_vrs(instance, mip),
         't': vb.create_vrt(instance, mip),
         'u': vb.create_vru(instance, mip),
@@ -66,9 +67,11 @@ def build_fancy(instance):
 
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
-    # mip.setParam('NumericFocus', 3)
     mip.setParam('Threads', 1)
     mip.setParam('TimeLimit', 10 * 60 * 60)
+
+    # Set objective function
+    mip.setObjective(sum([instance.revenues[period][location] * instance.catalogs[location][customer] * variable['w'][period, location, customer] for period in instance.periods for location in instance.locations for customer in instance.customers]))
 
     # Create main constraints
     ct.create_c1(instance, mip, variable)
@@ -94,17 +97,19 @@ def build_fancy(instance):
     return mip, variable
 
 def build_nonlinear(instance):
-    # Build the 1-DFLP-DRA
+    # Build the (nonlinear) DSFLP-DAR
 
-    mip = gp.Model('1-DFLP-DRA')
+    mip = gp.Model('DSFLP-DAR')
 
     # Create decision variables
     variable = {
+        # Main decision variables
         'y': vb.create_vry(instance, mip),
-        'w': vb.create_vrw(instance, mip),
+        'w': vb.create_vrw_NL(instance, mip),
         'd1': vb.create_vrd1(instance, mip),
         'd2': vb.create_vrd2(instance, mip),
         'd3': vb.create_vrd3(instance, mip),
+        # Other decision variables
         'o': vb.create_vro(instance, mip),
         'p': vb.create_vrp(instance, mip),
         'q': vb.create_vrq(instance, mip),
@@ -116,21 +121,19 @@ def build_nonlinear(instance):
 
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
-    # mip.setParam('NumericFocus', 3)
     mip.setParam('Threads', 1)
     mip.setParam('TimeLimit', 10 * 60 * 60)
+
+    # Set objective function
+    mip.setObjective(sum([instance.revenues[period][location] * instance.catalogs[location][customer] * variable['w'][period, customer] * variable['y'][period, location] for period in instance.periods for location in instance.locations for customer in instance.customers]))
 
     # Create main constraints
     ct.create_c1(instance, mip, variable)
     ct.create_c2(instance, mip, variable)
-    ct.create_c3(instance, mip, variable)
-    ct.create_c3X(instance, mip, variable)
-    ct.create_c4(instance, mip, variable)
-    ct.create_c5(instance, mip, variable)
-    ct.create_c6(instance, mip, variable)
-    ct.create_c6X1(instance, mip, variable)
-    ct.create_c6X2(instance, mip, variable)
-    ct.create_c6X3(instance, mip, variable)
+    ct.create_c3_NL(instance, mip, variable)
+    ct.create_c4_NL(instance, mip, variable)
+    ct.create_c5_NL(instance, mip, variable)
+    ct.create_c6_NL(instance, mip, variable)
 
     return mip, variable
 
