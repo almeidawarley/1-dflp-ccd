@@ -5,6 +5,10 @@ def copy_solution(solution):
 
     return {period : location for period, location in solution.items()}
 
+def empty_solution(instance):
+
+    return {period: '0' for period in instance.periods}
+
 def insert_location(solution, period, location):
 
     inserted = copy_solution(solution)
@@ -21,9 +25,7 @@ def insert_location(solution, period, location):
 def progressive_algorithm(instance):
 
     # Create partial solution
-    best_solution = {}
-    for period in instance.periods:
-        best_solution[period] = '0'
+    best_solution = empty_solution(instance)
     best_objective = 0.
 
     for frontier in instance.periods:
@@ -57,9 +59,7 @@ def progressive_algorithm(instance):
 def forward_algorithm(instance):
 
     # Create partial solution
-    best_solution = {}
-    for period in instance.periods:
-        best_solution[period] = '0'
+    best_solution = empty_solution(instance)
     best_objective = 0.
 
     for reference in instance.periods:
@@ -81,9 +81,7 @@ def forward_algorithm(instance):
 def backward_algorithm(instance):
 
     # Create partial solution
-    best_solution = {}
-    for period in instance.periods:
-        best_solution[period] = '0'
+    best_solution = empty_solution(instance)
     best_objective = 0.
 
     for reference in reversed(instance.periods):
