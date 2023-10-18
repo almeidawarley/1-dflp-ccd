@@ -76,8 +76,9 @@ def main():
     mark_section('Building the DSFLP-DAR for the instance...')
     mip, mip_variable = fm.build_linearized(instance)
     mip.write('archives/{}-mip.lp'.format(instance.keyword))
-    nws, nws_variable = fm.build_linearized(instance)
+    mws, mws_variable = fm.build_linearized(instance)
     nlr, nlr_variable = fm.build_nonlinear(instance)
+    nws, nws_variable = fm.build_nonlinear(instance)
 
     mark_section('Solving the LPR of the DSFLP-DAR model...')
     lpr = mip.relax()
@@ -124,18 +125,18 @@ def main():
     })
 
     mark_section('Solving the linearized MIP of the DSFLP-DAR model without warm start...')
-    nws.optimize()
-    nws.write('archives/{}-nws.sol'.format(instance.keyword))
-    nws_solution = fm.format_solution(instance, nws, nws_variable)
-    nws_objective = round(nws.objVal, 2)
-    nws_runtime = round(nws.runtime, 2)
-    print('Optimal MIP solution: [{}] {}'.format(nws_objective, nws_solution))
+    mws.optimize()
+    mws.write('archives/{}-mws.sol'.format(instance.keyword))
+    mws_solution = fm.format_solution(instance, mws, mws_variable)
+    mws_objective = round(mws.objVal, 2)
+    mws_runtime = round(mws.runtime, 2)
+    print('Optimal MIP solution: [{}] {}'.format(mws_objective, mws_solution))
     record = rc.update_record(record,{
-        'nws_objective': nws_objective,
-        'nws_solution': '-'.join(nws_solution.values()),
-        'nws_runtime': nws_runtime,
-        'nws_status': nws.status,
-        'nws_optgap': nws.MIPGap
+        'mws_objective': mws_objective,
+        'mws_solution': '-'.join(mws_solution.values()),
+        'mws_runtime': mws_runtime,
+        'mws_status': mws.status,
+        'mws_optgap': mws.MIPGap
     })
 
     mark_section('Solving the nonlinear MIP of the DSFLP-DAR model...')
@@ -164,11 +165,26 @@ def main():
         'nlr_optgap': nlr.MIPGap
     })
 
+    mark_section('Solving the nonlinear MIP of the DSFLP-DAR model without warm start...')
+    nws.optimize()
+    nws.write('archives/{}-nws.sol'.format(instance.keyword))
+    nws_solution = fm.format_solution(instance, nws, nws_variable)
+    nws_objective = round(nws.objVal, 2)
+    nws_runtime = round(nws.runtime, 2)
+    print('Optimal MIP solution: [{}] {}'.format(nws_objective, nws_solution))
+    record = rc.update_record(record,{
+        'nws_objective': nws_objective,
+        'nws_solution': '-'.join(nws_solution.values()),
+        'nws_runtime': nws_runtime,
+        'nws_status': nws.status,
+        'nws_optgap': nws.MIPGap
+    })
+
     mark_section('Validating the solution of the DSFLP-DAR analytically...')
     analytical = vd.evaluate_solution(instance, mip_solution)
     record = rc.update_record(record, {
         'mip_check': vd.is_equal(mip_objective, analytical, 0.1),
-        'nlr_check': vd.is_equal(nlr_objective, analytical, 0.1),
+        'nlr_check': vd.is_equal(nlr_objective, analytical, 0.1)
     })
 
     assert(vd.is_equal(mip_objective, analytical, 0.1))
@@ -214,10 +230,12 @@ def main():
     print('>>> MIP objective: {}'.format(record['mip_objective']))
     print('>>> FRW objective: {}'.format(record['frw_objective']))
     print('>>> FRW optimality: {}'.format(record['frw_optgap']))
+    print('>>> BCW optimality: {}'.format(record['bcw_optgap']))
     print('>>> PRG objective: {}'.format(record['prg_objective']))
     print('>>> PRG optimality: {}'.format(record['prg_optgap']))
     print('>>> MIP solution: {}'.format('-'.join(mip_solution.values())))
     print('>>> FRW solution: {}'.format('-'.join(frw_solution.values())))
+    print('>>> BCW solution: {}'.format('-'.join(bcw_solution.values())))
     print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
 
 main()
