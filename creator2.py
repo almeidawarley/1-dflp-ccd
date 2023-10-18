@@ -11,7 +11,7 @@ features = {
 }
 
 character = 'homogeneous'
-project = 'paper1-{}'.format(character[:2])
+project = 'paper1-{}'.format(character[:3])
 
 instance = {}
 
