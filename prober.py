@@ -75,13 +75,11 @@ def main(keyword, project = 'prober'):
 
     mark_section('Building the 1-DFLP-RA for the instance...')
     mip, mip_variable = fm.build_linearized(instance)
-    mip.write('archives/{}-mip.lp'.format(instance.keyword))
     nlr, nlr_variable = fm.build_nonlinear(instance)
 
     mark_section('Solving the LPR of the 1-DFLP-RA model...')
     lpr = mip.relax()
     lpr.optimize()
-    lpr.write('archives/{}-lpr.sol'.format(instance.keyword))
     lpr_objective = round(lpr.objVal, 2)
     lpr_runtime = round(lpr.runtime, 2)
     print('Optimal LPR solution: [{}] no interpretable solution'.format(round(lpr.objVal, 2)))
@@ -104,7 +102,6 @@ def main(keyword, project = 'prober'):
     else:
         raise Exception('No warm start solution found')
     mip.optimize()
-    mip.write('archives/{}-mip.sol'.format(instance.keyword))
     mip_solution = fm.format_solution(instance, mip, mip_variable)
     mip_objective = round(mip.objVal, 2)
     mip_runtime = round(mip.runtime, 2)
@@ -136,7 +133,6 @@ def main(keyword, project = 'prober'):
 
     mark_section('Solving the nonlinear MIP of the 1-DFLP-RA model...')
     nlr.optimize()
-    nlr.write('archives/{}-nlr.sol'.format(instance.keyword))
     nlr_solution = fm.format_solution(instance, nlr, nlr_variable)
     nlr_objective = round(nlr.objVal, 2)
     nlr_runtime = round(nlr.runtime, 2)
@@ -161,9 +157,7 @@ def main(keyword, project = 'prober'):
 
         mark_section('Approximating the 1-DFLP-RA by the #{} method...'.format(method))
         apr, apr_variable = fm.build_simple(instance, method)
-        apr.write('archives/{}-ap{}.lp'.format(instance.keyword, method))
         apr.optimize()
-        apr.write('archives/{}-ap{}.sol'.format(instance.keyword, method))
         apr_solution = fm.format_solution(instance, apr, apr_variable)
         apr_objective = vd.evaluate_solution(instance, apr_solution)
         apr_runtime = round(apr.runtime, 2)
