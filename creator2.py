@@ -5,16 +5,19 @@ features = {
     'seed': [i for i in range(0, 10)],
     'points': [10],
     'patronizing': ['weak', 'medium', 'strong'],
-    'rewards': ['identical', 'inversely', 'directly'],
+    'rewards': ['identical', 'inversely'],#, 'directly'],
     'replenishment': ['absolute', 'relative'],
     'absorption': ['complete', 'constrained']
 }
 
-project = 'predoc3'
+character = 'homogeneous'
+project = 'paper1-{}'.format(character[:2])
 
 instance = {}
 
 commands = open('commands-{}.sh'.format(project), 'w')
+
+counter = 0
 
 for seed in features['seed']:
     for points in features['points']:
@@ -32,8 +35,7 @@ for seed in features['seed']:
                             instance['rewards'] = rewards
                             instance['replenishment'] = replenishment
                             instance['absorption'] = absorption
-                            instance['character'] = 'homogeneous'
-                            # instance['character'] = 'heterogeneous'
+                            instance['character'] = character
 
                             keyword = '{}_{}'.format('rnd', '-'.join([str(value) for value in instance.values()]))
 
@@ -62,3 +64,6 @@ for seed in features['seed']:
                             commands.write('sbatch ../scripts/{}.sh\n'.format(keyword))
 
                             print(keyword)
+                            counter += 1
+
+print('This script run wrote {} scripts in total!'.format(counter))
