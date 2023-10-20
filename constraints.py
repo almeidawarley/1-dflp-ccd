@@ -30,7 +30,7 @@ def create_c2(instance, mip, variable):
 def create_c3_NL(instance, mip, variable):
     # Create constraint 3, nonlinear
 
-    mip.addConstrs((variable['d1'][period, customer] == gp.min_(variable['o'][period, customer], instance.uppers[customer]) for period in instance.periods for customer in instance.customers), name = 'c3_p1')
+    mip.addConstrs((variable['d1'][period, customer] == gp.min_(variable['o'][period, customer], float(instance.uppers[customer])) for period in instance.periods for customer in instance.customers), name = 'c3_p1')
     mip.addConstrs((variable['o'][period, customer] == (1 + instance.alphas[customer]) * variable['d3'][previous(period), customer] + instance.betas[customer] for period in instance.periods for customer in instance.customers), name = 'c3_p2')
 
 def create_c3A(instance, mip, variable):
@@ -78,7 +78,7 @@ def create_c4_NL(instance, mip, variable):
 def create_c5_NL(instance, mip, variable):
     # Create constraint 5, nonlinear
 
-    mip.addConstrs((variable['d3'][period, customer] == gp.max_(variable['d2'][period, customer], instance.lowers[customer]) for period in instance.periods for customer in instance.customers), name = 'c5')
+    mip.addConstrs((variable['d3'][period, customer] == gp.max_(variable['d2'][period, customer], float(instance.lowers[customer])) for period in instance.periods for customer in instance.customers), name = 'c5')
 
 # ---------------------------------------------------------------------------
 
