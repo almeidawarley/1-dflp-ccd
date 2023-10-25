@@ -13,8 +13,7 @@ characteristics = {
     'periods': [5, 10, 20],
     'patronizing': ['weak', 'medium', 'strong'],
     'rewards': ['identical', 'inversely'],
-    'replenishment': ['absolute', 'relative'],
-    'absorption': ['complete', 'constrained']
+    'replenishment': ['absolute', 'relative']
 }
 
 labels = {
@@ -28,9 +27,7 @@ labels = {
     'identical': 'Identical rewards',
     'inversely': 'Inversely rewards',
     'absolute': 'Absolute replenishment',
-    'relative': 'Relative replenishment',
-    'complete': 'Complete absorption',
-    'constrained': 'Constrained absorption'
+    'relative': 'Relative replenishment'
 }
 
 content = content[content['character'] == '{}'.format(dataset.lower())]
@@ -76,8 +73,8 @@ for characteristic, values in characteristics.items():
 
         filter = (content[characteristic] == value)
 
-        columns = ['ap2_optgap', 'rnd_optgap', 'frw_optgap']
-        # columns = ['ap1_optgap', 'ap3_optgap', 'ap2_optgap', 'rnd_optgap', 'frw_optgap']
+        columns = ['em2_optgap', 'rnd_optgap', 'frw_optgap']
+        # columns = ['em1_optgap', 'em2_optgap', 'rnd_optgap', 'frw_optgap']
         # columns = ['rnd_optgap', 'frw_optgap']
 
         averages = {}
@@ -139,7 +136,7 @@ for characteristic, values in characteristics.items():
             'frw' : 'red',
             'bcw' : 'blue',
             'prg' : 'olive',
-            'ap2' : 'magenta',
+            'em2' : 'magenta',
             'mip' : 'gray'
         }
 
