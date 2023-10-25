@@ -465,9 +465,12 @@ class instance:
         self.parameters['seed'] = seed
 
         self.parameters['S'] = seed
-        self.parameters['T'] = 5
-        self.parameters['I'] = 100
-        self.parameters['J'] = 100
+        try:
+            self.parameters['T']
+        except:
+            self.parameters['T'] = 3
+        self.parameters['I'] = 5
+        self.parameters['J'] = 5
 
         rd.seed(self.parameters['S'])
 
