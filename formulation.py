@@ -31,14 +31,14 @@ def build_simple(instance, method):
 
     # Set objective function
     for period in instance.periods:
-        if method in ['2', '3']:
+        if method in ['2']:
             cumulative = vd.apply_replenishment(instance, cumulative)
         for location in instance.locations:
             coefficient = vd.evaluate_location(instance, cumulative, period, location)
             variable['y'][period, location].obj = coefficient
-        if method in ['3']:
-            cumulative = vd.apply_absorption(instance, cumulative, location, -1)
-            cumulative = vd.apply_consolidation(instance, cumulative)
+        # if method in ['3']:
+        #     cumulative = vd.apply_absorption(instance, cumulative, location, -1)
+        #     cumulative = vd.apply_consolidation(instance, cumulative)
 
     return mip, variable
 
@@ -78,6 +78,17 @@ def build_linearized(instance):
     ct.create_c6B(instance, mip, variable)
     ct.create_c6C(instance, mip, variable)
     ct.create_c6D(instance, mip, variable)
+
+    return mip, variable
+
+def build_relaxation(instance):
+    # Build the relaxation of DSFLP-DAR
+
+    mip, variable = build_linearized(instance)
+
+    for period in instance.periods:
+        for location in instance.locations:
+            variable['y'][period, location].vtype = 'C'
 
     return mip, variable
 
