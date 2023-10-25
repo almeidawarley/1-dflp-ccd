@@ -163,11 +163,11 @@ def main(keyword, project = 'prober'):
         apr_runtime = round(apr.runtime, 2)
         print('Approximate solution #{}: [{}] {}'.format(method, apr_objective, apr_solution))
         record = rc.update_record(record, {
-            'ap{}_objective'.format(method): apr_objective,
-            'ap{}_solution'.format(method): '-'.join(apr_solution.values()),
-            'ap{}_runtime'.format(method): apr_runtime,
-            'ap{}_status'.format(method): apr.status,
-            'ap{}_optgap'.format(method): compute_gap(mip_objective, apr_objective)
+            'em{}_objective'.format(method): apr_objective,
+            'em{}_solution'.format(method): '-'.join(apr_solution.values()),
+            'em{}_runtime'.format(method): apr_runtime,
+            'em{}_status'.format(method): apr.status,
+            'em{}_optgap'.format(method): compute_gap(mip_objective, apr_objective)
         })
 
     mark_section('Wrapping up the execution with sanity check {}!'.format(validation))

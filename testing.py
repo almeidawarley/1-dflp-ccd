@@ -36,6 +36,6 @@ class test_nonlinear_mip(unittest.TestCase):
             mip_objective = round(mip.objVal, 2)
             self.assertEqual(mip_objective, row['mip_objective'])
 
-
 if __name__ == '__main__':
+
     unittest.main()
