@@ -2,10 +2,11 @@ import pandas as pd
 
 content = pd.read_csv('experiments/predoc3/summary.csv')
 
-content = content.replace('predoc3-het', 'predoc3')
+content = content.replace('paper1-hom', 'predoc3')
+content = content.replace('paper1-het', 'predoc3')
 
-# dataset = 'Homogeneous'
-dataset = 'Heterogeneous'
+dataset = 'Homogeneous'
+# dataset = 'Heterogeneous'
 
 characteristics = {
     'project': ['predoc3'],
@@ -34,6 +35,8 @@ labels = {
 
 content = content[content['character'] == '{}'.format(dataset.lower())]
 content = content[content['rewards'] != 'directly']
+content = content[content['absorption'] != 'constrained']
+content = content[content['periods'] != 20]
 
 
 print('**************************************************************************************************')
@@ -74,8 +77,8 @@ for characteristic, values in characteristics.items():
         filter = (content[characteristic] == value)
 
         columns = ['ap2_optgap', 'rnd_optgap', 'frw_optgap']
-        columns = ['ap1_optgap', 'ap3_optgap', 'ap2_optgap', 'rnd_optgap', 'frw_optgap']
-        columns = ['rnd_optgap', 'frw_optgap']
+        # columns = ['ap1_optgap', 'ap3_optgap', 'ap2_optgap', 'rnd_optgap', 'frw_optgap']
+        # columns = ['rnd_optgap', 'frw_optgap']
 
         averages = {}
         deviations = {}
