@@ -5,7 +5,7 @@ def apply_replenishment(instance, cumulative):
 
     for customer in instance.customers:
 
-        cumulative[customer] = min((1 + instance.alphas[customer]) * cumulative[customer] + instance.betas[customer], instance.uppers[customer])
+        cumulative[customer] = (1 + instance.alphas[customer]) * cumulative[customer] + instance.betas[customer]
 
     return cumulative
 
@@ -15,7 +15,7 @@ def apply_absorption(instance, cumulative, location, flag = 0):
 
         if instance.catalogs[location][customer] or flag == -1:
 
-            cumulative[customer] -= min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
+            cumulative[customer] -= cumulative[customer]
 
     return cumulative
 
@@ -23,7 +23,7 @@ def apply_consolidation(instance, cumulative):
 
     for customer in instance.customers:
 
-            cumulative[customer] = max(cumulative[customer], instance.lowers[customer])
+            cumulative[customer] = cumulative[customer]
 
     return cumulative
 
@@ -35,7 +35,7 @@ def evaluate_location(instance, cumulative, period, location):
 
         if instance.catalogs[location][customer]:
 
-            partial = min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
+            partial = cumulative[customer]
 
             # print('| obtaning {} from customer {} at time period {}'.format(partial, customer, period))
 
@@ -103,7 +103,7 @@ def export_data(instance, solution, filename = 'analysis.csv'):
 
                 if instance.catalogs[solution[period]][customer]:
 
-                    local = instance.revenues[period][solution[period]] * min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
+                    local = instance.revenues[period][solution[period]] * cumulative[customer]
 
                     score += local
 
@@ -170,7 +170,7 @@ def export_data2(instance, solution, filename = 'analysis.csv'):
 
                 if instance.catalogs[solution[period]][customer]:
 
-                    local = instance.revenues[period][solution[period]] * min(instance.gammas[customer] * cumulative[customer] + instance.deltas[customer], cumulative[customer])
+                    local = instance.revenues[period][solution[period]] * cumulative[customer]
 
                     score += local
 

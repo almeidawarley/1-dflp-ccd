@@ -25,18 +25,9 @@ class instance:
         if keyword == 'jopt':
             # Create JOPT instance
             self.create_jopt()
-        elif keyword == 'graph':
-            # Create graph instance
-            self.create_graph()
         elif keyword == 'approx':
             # Create approx instance
             self.create_approx()
-        elif keyword == 'gap1':
-            # Create GAP1 instance
-            self.create_gap1()
-        elif keyword == 'gap2':
-            # Create GAP2 instance
-            self.create_gap2()
         elif keyword == 'spp':
             # Create SPP instance
             self.create_spp()
@@ -49,18 +40,6 @@ class instance:
         elif 'rnd2' in keyword:
             # Create RND2 instance
             self.create_rnd2()
-        elif 'ML' in keyword:
-            # Create ML instance
-            self.create_ML()
-        elif keyword == '1toN':
-            # Create 1:N instance
-            self.create_1toN()
-        elif keyword == 'slovakia':
-            # Create slovakia instance
-            self.create_slovakia()
-        elif 'map' in keyword:
-            # Create map-based instance
-            self.create_map()
         elif 'rnd' in keyword:
             # Create rnd-based instance
             self.create_rnd()
@@ -68,119 +47,12 @@ class instance:
             exit('Invalid instance keyword')
 
         # Set proper big M values
-        self.bigM = {}
+        self.limits = {}
         for customer in self.customers:
-            self.bigM[customer] = self.uppers[customer] + self.alphas[customer] * self.uppers[customer] + self.betas[customer] + self.gammas[customer] * self.uppers[customer] + self.deltas[customer]
-
-    def create_map(self, folder = 'instances/synthetic'):
-        # Create map-based instances
-
-        try:
-            # Read specifications from file
-            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
-        except:
-            print('No file found for keyword {}'.format(self.keyword))
-
-        np.random.seed(self.parameters['seed'])
-
-        # Set instance information
-        number_locations = int(self.parameters['locations'])
-        number_customers = int(self.parameters['customers'])
-        number_periods = int(self.parameters['periods'])
-
-        assert number_customers == number_locations, 'Number of customers and locations must be equal'
-
-        self.locations = [str(i + 1) for i in range(number_locations)]
-        self.customers = [str(i + 1) for i in range(number_customers)]
-        self.periods = [str(i + 1) for i in range(number_periods)]
-
-        # Create coordinates in map
-        self.points = {}
-        for location in self.locations:
-            x = np.random.randint(0,5)
-            y = np.random.randint(0,5)
-            while [x, y] in self.points.values():
-                x = np.random.randint(0,5)
-                y = np.random.randint(0,5)
-            self.points['{}'.format(location)] = [x, y]
-        X = [self.points['{}'.format(location)][0] for location in self.locations]
-        Y = [self.points['{}'.format(location)][1] for location in self.locations]
-        pt.scatter(X, Y, marker = 'o')
-        for location in self.locations:
-            pt.annotate(location, (X[int(location) - 1], Y[int(location) - 1]))
-        pt.savefig('archives/{}-map.png'.format(self.keyword))
-
-        if self.parameters['patronizing'] == 'none':
-            radius = 0
-        elif self.parameters['patronizing'] == 'weak':
-            radius = 1
-        elif self.parameters['patronizing'] == 'medium':
-            radius = 2
-        elif self.parameters['patronizing'] == 'strong':
-            radius = 3
-        else:
-            exit('Wrong value for patronizing parameter')
-
-        # Create catalogs
-        self.catalogs = {}
-        for location in self.locations:
-            self.catalogs[location] = {}
-            for customer in self.customers:
-                variability = max(np.random.choice([0, 1], p = [0.25, 0.75]), 1 if location == customer else 0)
-                self.catalogs[location][customer] = 1. if mt.dist(self.points['{}'.format(location)], self.points['{}'.format(customer)]) <= radius and variability == 1 else 0.
-
-        # Create revenues
-        self.revenues = {}
-        for period in self.periods:
-            self.revenues[period] = {}
-            for location in self.locations:
-                popularity = sum([self.catalogs[location][customer] for customer in self.customers])
-                if self.parameters['rewards'] == 'identical':
-                    coefficient = 1.
-                elif self.parameters['rewards'] == 'inversely':
-                    coefficient = 1. / popularity
-                elif self.parameters['rewards'] == 'directly':
-                    coefficient = 1. - 1. / popularity
-                else:
-                    exit('Wrong value for rewards parameter')
-                self.revenues[period][location] = np.ceil(coefficient * 10)
-
-        # Create parameters
-        self.alphas = {}
-        self.betas = {}
-        self.gammas = {}
-        self.deltas = {}
-        self.starts = {}
-        self.lowers = {}
-        self.uppers = {}
-        self.intensities = {}
-
-        for customer in self.customers:
-            # Upper, lower and initial demand
-            self.starts[customer] = 1 if self.parameters['character'] == 'homogeneous' else np.random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-            self.intensities[customer] = 1 if self.parameters['character'] == 'homogeneous' else np.random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-            if self.parameters['replenishment'] == 'none':
-                self.alphas[customer] = 0
-                self.betas[customer] = 0
-            elif self.parameters['replenishment'] == 'absolute':
-                self.alphas[customer] = 0
-                self.betas[customer] = self.intensities[customer]
-            elif self.parameters['replenishment'] == 'relative':
-                self.alphas[customer] = round((number_periods * self.intensities[customer] + self.starts[customer])**(1. / number_periods) - 1, 2)
-                self.betas[customer] = 0
-            else:
-                exit('Wrong value for replenishment parameter')
-            if self.parameters['absorption'] == 'complete':
-                self.gammas[customer] = 1
-                self.deltas[customer] = 0
-            elif self.parameters['absorption'] == 'constrained':
-                self.gammas[customer] = 0
-                self.deltas[customer] = np.ceil(0.5 * number_periods) * self.intensities[customer]
-            else:
-                exit('Wrong value for absorption parameter')
-            self.lowers[customer] = 0
-            self.uppers[customer] = (number_periods * self.intensities[customer] + self.starts[customer])
+            limit = self.starts[customer]
+            for _ in self.periods:
+                limit += (1 + self.alphas[customer]) * limit + self.betas[customer]
+            self.limits[customer] = np.ceil(limit)
 
     def create_rnd(self, folder = 'instances/synthetic'):
         # Create rnd-based instances
@@ -246,15 +118,10 @@ class instance:
         # Create parameters
         self.alphas = {}
         self.betas = {}
-        self.gammas = {}
-        self.deltas = {}
         self.starts = {}
-        self.lowers = {}
-        self.uppers = {}
         self.intensities = {}
 
         for customer in self.customers:
-            # Upper, lower and initial demand
             self.starts[customer] = 1 if self.parameters['character'] == 'homogeneous' else np.random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
             self.intensities[customer] = 1 if self.parameters['character'] == 'homogeneous' else np.random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
             if self.parameters['replenishment'] == 'none':
@@ -264,42 +131,10 @@ class instance:
                 self.alphas[customer] = 0
                 self.betas[customer] = self.intensities[customer]
             elif self.parameters['replenishment'] == 'relative':
-                self.alphas[customer] = round((number_periods * self.intensities[customer] + self.starts[customer])**(1. / number_periods) - 1, 2)
+                self.alphas[customer] = round(((number_periods * self.intensities[customer] + self.starts[customer])/self.starts[customer])**(1. / number_periods) - 1, 2)
                 self.betas[customer] = 0
             else:
                 exit('Wrong value for replenishment parameter')
-            if self.parameters['absorption'] == 'complete':
-                self.gammas[customer] = 1
-                self.deltas[customer] = 0
-            elif self.parameters['absorption'] == 'constrained':
-                self.gammas[customer] = 0
-                self.deltas[customer] = np.ceil(0.5 * number_periods) * self.intensities[customer]
-            else:
-                exit('Wrong value for absorption parameter')
-            self.lowers[customer] = 0
-            self.uppers[customer] = number_periods * self.intensities[customer] + self.starts[customer]
-
-    def create_ML(self):
-
-        _, sed, lct, prd, rpl = self.keyword.split('-')
-
-        self.parameters['seed'] = int(sed)
-        self.parameters['locations'] = int(lct)
-        self.parameters['customers'] = int(lct)
-        self.parameters['periods'] = int(prd)
-        self.parameters['rewards'] = 'identical'
-        self.parameters['patronizing'] = 'medium'
-        self.parameters['replenishment'] = 'absolute' if rpl == 'abs' else 'relative'
-        self.parameters['character'] = 'homogeneous'
-        self.parameters['absorption'] = 'complete'
-
-        self.create_rnd()
-
-        # Resetting revenue to 1.
-
-        for period in self.periods:
-            for location in self.locations:
-                self.revenues[period][location] = 1.
 
     def create_spp(self, K = 5):
         # Create SPP instances
@@ -328,19 +163,11 @@ class instance:
 
         self.alphas = {}
         self.betas = {}
-        self.gammas = {}
-        self.deltas = {}
         self.starts = {}
-        self.uppers = {}
-        self.lowers = {}
         for customer in self.customers:
             self.alphas[customer] = 0
             self.betas[customer] = 0
-            self.gammas[customer] = 1
-            self.deltas[customer] = 0
             self.starts[customer] = 1
-            self.lowers[customer] = 0
-            self.uppers[customer] = 10
 
     def create_3sat(self, folder = 'instances/3sat'):
         # Create 3SAT instances
@@ -384,19 +211,11 @@ class instance:
 
         self.alphas = {}
         self.betas = {}
-        self.gammas = {}
-        self.deltas = {}
         self.starts = {}
-        self.uppers = {}
-        self.lowers = {}
         for customer in self.customers:
             self.starts[customer] = 1
-            self.betas[customer] = 0
-            self.deltas[customer] = 1
-            self.lowers[customer] = 0
-            self.uppers[customer] = 10**3
             self.alphas[customer] = 0
-            self.gammas[customer] = 0
+            self.betas[customer] = 0
 
     def create_rnd1(self):
         # Create RND1 instance
@@ -442,21 +261,12 @@ class instance:
         # Handle customers
         self.alphas = {}
         self.betas = {}
-        self.gammas = {}
-        self.deltas = {}
         self.starts = {}
-        self.lowers = {}
-        self.uppers = {}
 
         for customer in self.customers:
-            # Upper, lower and initial demand
-            self.lowers[customer] = 0
             self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
-            self.uppers[customer] = 10 * (self.parameters['T'] + 1)
             self.alphas[customer] = 0
-            self.gammas[customer] = 1 #0
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
-            self.deltas[customer] = 0 #4 * self.betas[customer] # 10 * (self.parameters['T'] + 1) # 4 * self.betas[customer]
 
     def create_rnd2(self):
         # Create RND2 instance
@@ -505,220 +315,12 @@ class instance:
         # Handle customers
         self.alphas = {}
         self.betas = {}
-        self.gammas = {}
-        self.deltas = {}
         self.starts = {}
-        self.lowers = {}
-        self.uppers = {}
 
         for customer in self.customers:
-            # Upper, lower and initial demand
-            self.lowers[customer] = 0
             self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
-            self.uppers[customer] = 10 ** 3
             self.alphas[customer] = 0
-            self.gammas[customer] = 1
             self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
-            self.deltas[customer] = 0. # rd.sample([1,2,3,4,5], 1)[0] * self.betas[customer]
-
-    def create_1toN(self):
-        # Create 1toN instance
-
-        self.parameters['seed'] = 0
-
-        self.parameters['S'] = 0
-        self.parameters['T'] = 20
-        self.parameters['I'] = 10
-        self.parameters['J'] = 10
-
-        rd.seed(self.parameters['S'])
-
-        # Set instance size
-        number_locations = int(self.parameters['I'])
-        number_customers = int(self.parameters['J'])
-        number_periods = int(self.parameters['T'])
-
-        self.locations = [str(i + 1) for i in range(number_locations)]
-        self.customers = [str(i + 1) for i in range(number_customers)]
-        self.periods = [str(i + 1) for i in range(number_periods)]
-
-        # Create catalogs
-        self.catalogs = {}
-        for location in self.locations:
-            self.catalogs[location] = {}
-            for customer in self.customers:
-                self.catalogs[location][customer] = 1. if location == customer else rd.sample([0.,1.], 1)[0]
-
-        # Create revenues
-        self.revenues = {}
-        for period in self.periods:
-            self.revenues[period] = {}
-            for location in self.locations:
-                self.revenues[period][location] = 1
-
-        # Handle customers
-        self.alphas = {}
-        self.betas = {}
-        self.gammas = {}
-        self.deltas = {}
-        self.starts = {}
-        self.lowers = {}
-        self.uppers = {}
-
-        for customer in self.customers:
-            # Upper, lower and initial demand
-            self.lowers[customer] = 0
-            self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
-            self.uppers[customer] = 10 ** 6 # infinity
-            self.alphas[customer] = 0.1
-            self.gammas[customer] = 0.1
-            self.betas[customer] = rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
-            self.deltas[customer] = rd.sample([1,2,3,4,5,6,7,8,9], 1)[0]
-
-    '''
-        Create instance used as worst-case scenario
-        (the greedy heuristic is as close to 50%)
-    '''
-    def create_gap1(self):
-        # Create GAP1 instance
-
-        crafted_t = 5
-        crafted_b1 = 5
-        crafted_b2 = 4.9
-
-        self.locations = ['1', '2']
-        self.customers = ['1', '2']
-        self.periods = [str(i) for i in range(1, crafted_t + 1)]
-
-        # Create catalogs
-        self.catalogs = {}
-        for location in self.locations:
-            self.catalogs[location] = {}
-            for customer in self.customers:
-                self.catalogs[location][customer] = 1 if location == customer else 0
-
-        # Create revenues
-        self.revenues = {}
-        for period in self.periods:
-            self.revenues[period] = {}
-            for location in self.locations:
-                self.revenues[period][location] = 1
-
-        # Create alphas
-        self.alphas = {}
-        self.betas = {}
-        self.gammas = {}
-        self.lowers = {}
-        self.uppers = {}
-        self.deltas = {}
-        self.starts = {}
-
-        self.alphas['1'] = 0.
-        self.betas['1'] = crafted_b1
-        self.gammas['1'] = 0.
-        self.lowers['1'] = 0.
-        self.uppers['1'] = 10 * crafted_t
-        self.deltas['1'] = crafted_b1 * crafted_t
-        self.starts['1'] = 0.
-
-        self.alphas['2'] = 0.
-        self.betas['2'] = crafted_b2
-        self.gammas['2'] = 0.
-        self.lowers['2'] = 0.
-        self.uppers['2'] = 10 * crafted_t
-        self.deltas['2'] = crafted_b2
-        self.starts['2'] = 0.
-    '''
-        Create instance used as a counter example
-        (here, forced postponing is not always optimal)
-    '''
-    def create_gap2(self):
-        # Create GAP2 instance
-
-        self.locations = ['1', '2']
-        self.customers = ['1', '2']
-        self.periods = ['1', '2']
-
-        self.catalogs = {}
-        for location in self.locations:
-            self.catalogs[location] = {}
-            for customer in self.customers:
-                self.catalogs[location][customer] = 1. if customer == location else 0.
-
-        self.revenues = {}
-        for period in self.periods:
-            self.revenues[period] = {}
-            for location in self.locations:
-                self.revenues[period][location] =  1
-
-        self.alphas = {}
-        self.betas = {}
-        self.gammas = {}
-        self.deltas = {}
-        self.starts = {}
-        self.uppers = {}
-        self.lowers = {}
-        for customer in self.customers:
-            self.starts[customer] = 0
-            self.lowers[customer] = 0
-            self.uppers[customer] = 10**3
-
-            self.alphas[customer] = 0
-            self.gammas[customer] = 0
-
-        self.betas['1'] = 1
-        self.deltas['1'] = 1.001
-        self.betas['2'] = 0.1
-        self.deltas['2'] = 0.1
-
-    '''
-        Create instance used as a case study for the paper
-        (this might not be in the paper after all though)
-    '''
-    def create_slovakia(self):
-        # Create slovakia instance
-
-        self.parameters['B'] = 10
-        self.parameters['T'] = 12
-
-        table = pd.read_csv('slovakia/csv/nodes.csv')
-
-        self.locations = table['id'].tolist()
-        self.locations = [str(location) for location in self.locations]
-        self.customers = table['id'].tolist()
-        self.customers = [str(customer) for customer in self.customers]
-        self.periods = [str(i) for i in range(1, self.parameters['T'] + 1)]
-
-        self.distances = {}
-        for location in self.locations:
-            self.distances[location] = {}
-            for customer in self.customers:
-                self.distances[location][customer] = 0.
-
-        with open('slovakia/csv/Dmatrix.txt') as content:
-
-            # Read number of rows and columns
-            rows = int(content.readline())
-            cols = int(content.readline())
-
-            # Store distances between points
-            for location in self.locations:
-                for customer in self.customers:
-                    self.distances[location][customer] = float(content.readline())
-
-        # Create catalogs
-        self.catalogs = {}
-        for location in self.locations:
-            self.catalogs[location] = {}
-            for customer in self.customers:
-                self.catalogs[location][customer] = 1. if self.distances[location][customer] <= self.parameters['B'] else 0.
-
-        avg_patronizable = 0
-        for customer in self.customers:
-            patronizable = sum([self.catalogs[location][customer] for location in self.locations])
-            print('Customer: {} -> {}'.format(customer, patronizable))
-            avg_patronizable += patronizable
-        print(avg_patronizable/len(self.customers))
 
     '''
         Create instance used for approximation proof
@@ -760,30 +362,10 @@ class instance:
         for customer in self.customers:
             self.betas[customer] = 0
 
-        # Create gammmas
-        self.gammas = {}
-        for customer in self.customers:
-            self.gammas[customer] = 1
-
-        # Create deltas
-        self.deltas = {}
-        for customer in self.customers:
-            self.deltas[customer] = 0
-
         # Create start values
         self.starts = {}
         for customer in self.customers:
             self.starts[customer] = 1
-
-        # Create lower bounds
-        self.lowers = {}
-        for customer in self.customers:
-            self.lowers[customer] = 0
-
-        # Create upper bounds
-        self.uppers = {}
-        for customer in self.customers:
-            self.uppers[customer] = 10 ** 3
 
     '''
         Create instance used for JOPT presentation
@@ -826,72 +408,11 @@ class instance:
         self.betas['B'] = 1
         self.betas['C'] = 1
 
-        # Create gammmas
-        self.gammas = {}
-        for customer in self.customers:
-            self.gammas[customer] = 1
-
-        # Create deltas
-        self.deltas = {}
-        for customer in self.customers:
-            self.deltas[customer] = 0
-
         # Create start values
         self.starts = {}
         self.starts['A'] = 0.
         self.starts['B'] = 0.
         self.starts['C'] = 0.
-
-        # Create lower bounds
-        self.lowers = {}
-        for customer in self.customers:
-            self.lowers[customer] = 0
-
-        # Create upper bounds
-        self.uppers = {}
-        for customer in self.customers:
-            self.uppers[customer] = 10**3
-
-    '''
-        Create instance used for drawing graphs for the paper
-    '''
-    def create_graph(self):
-        # Create graph instance
-
-        self.locations = ['1']
-        self.customers = ['A']
-        self.periods = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18']
-
-        # Create catalogs
-        self.catalogs = {}
-        for location in self.locations:
-            self.catalogs[location] = {}
-            for customer in self.customers:
-                self.catalogs[location][customer] = 1
-
-        # Create revenues
-        self.revenues = {}
-        for period in self.periods:
-            self.revenues[period] = {}
-            for location in self.locations:
-                self.revenues[period][location] =  1
-
-        # Handle customers
-        self.alphas = {}
-        self.betas = {}
-        self.gammas = {}
-        self.deltas = {}
-        self.starts = {}
-        self.lowers = {}
-        self.uppers = {}
-        for customer in self.customers:
-            self.alphas[customer] = 0.25
-            self.betas[customer] = 0
-            self.gammas[customer] = 0.25
-            self.deltas[customer] = 0
-            self.starts[customer] = 10
-            self.lowers[customer] = 0
-            self.uppers[customer] = 10
 
     def print_instance(self):
         # Print stored instance
@@ -899,24 +420,27 @@ class instance:
         print('Keyword: <{}>'.format(self.keyword))
 
         print('Customers: {}'.format(self.customers))
-        print('\t| j: a, b, g, d, l, u, s [M]')
+        print('\t| j: a, b, s, [L] (M) I')
         for customer in self.customers:
-            print('\t| {}: {}, {}, {}, {}, {}, {}, {} [{}]'.format(
+            print('\t| {}: {}, {}, {}, [{}] ({}) {}'.format(
                 customer,
                 self.alphas[customer],
                 self.betas[customer],
-                self.gammas[customer],
-                self.deltas[customer],
-                self.lowers[customer],
-                self.uppers[customer],
                 self.starts[customer],
-                self.bigM[customer]))
+                self.captured_locations(customer),
+                self.limits[customer],
+                self.intensities[customer]))
 
         print('Locations: {}'.format(self.locations))
         for location in self.locations:
-            print('\t| {} ({}) : {}'.format(location, self.revenues['1'][location], self.capturable_from(location)))
+            print('\t| {} ({}) : {}'.format(location, self.revenues['1'][location], self.captured_customers(location)))
 
-    def capturable_from(self, location):
-        # Retrieve capturable customers from some location
+    def captured_customers(self, location):
+        # Retrieve customers captured by some location
 
         return [customer for customer in self.customers if self.catalogs[location][customer] == 1]
+
+    def captured_locations(self, customer):
+        # Retrieve locations capturing some customer
+
+        return [location for location in self.locations if self.catalogs[location][customer] == 1]

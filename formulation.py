@@ -54,12 +54,7 @@ def build_linearized(instance):
         'w': vb.create_vrw(instance, mip),
         'd1': vb.create_vrd1(instance, mip),
         'd2': vb.create_vrd2(instance, mip),
-        'd3': vb.create_vrd3(instance, mip),
-        # Other decision variables
-        's': vb.create_vrs(instance, mip),
-        't': vb.create_vrt(instance, mip),
-        'u': vb.create_vru(instance, mip),
-        'v': vb.create_vrv(instance, mip)
+        'd3': vb.create_vrd3(instance, mip)
     }
 
     # Maximize the total revenue
@@ -76,23 +71,13 @@ def build_linearized(instance):
     # Create main constraints
     ct.create_c1(instance, mip, variable)
     ct.create_c2(instance, mip, variable)
-    ct.create_c3A(instance, mip, variable)
-    ct.create_c3B(instance, mip, variable)
-    ct.create_c3C(instance, mip, variable)
-    ct.create_c3D(instance, mip, variable)
+    ct.create_c3(instance, mip, variable)
     ct.create_c4(instance, mip, variable)
-    ct.create_c5A(instance, mip, variable)
-    ct.create_c5B(instance, mip, variable)
-    ct.create_c5C(instance, mip, variable)
-    ct.create_c5D(instance, mip, variable)
+    ct.create_c5(instance, mip, variable)
     ct.create_c6A(instance, mip, variable)
     ct.create_c6B(instance, mip, variable)
     ct.create_c6C(instance, mip, variable)
     ct.create_c6D(instance, mip, variable)
-    ct.create_c6E(instance, mip, variable)
-    ct.create_c6F(instance, mip, variable)
-    ct.create_c6G(instance, mip, variable)
-    ct.create_c6H(instance, mip, variable)
 
     return mip, variable
 
@@ -110,10 +95,7 @@ def build_nonlinear(instance):
         'd2': vb.create_vrd2(instance, mip),
         'd3': vb.create_vrd3(instance, mip),
         # Other decision variables
-        'o': vb.create_vro(instance, mip),
-        'p': vb.create_vrp(instance, mip),
-        'q': vb.create_vrq(instance, mip),
-        'r': vb.create_vrr(instance, mip)
+        'v': vb.create_vrv(instance, mip)
     }
 
     # Maximize the total revenue
@@ -130,9 +112,9 @@ def build_nonlinear(instance):
     # Create main constraints
     ct.create_c1(instance, mip, variable)
     ct.create_c2(instance, mip, variable)
-    ct.create_c3_NL(instance, mip, variable)
+    ct.create_c3(instance, mip, variable)
     ct.create_c4_NL(instance, mip, variable)
-    ct.create_c5_NL(instance, mip, variable)
+    ct.create_c5(instance, mip, variable)
     ct.create_c6_NL(instance, mip, variable)
 
     return mip, variable
@@ -217,7 +199,7 @@ def write_bar(instance, variable, customer = 'A'):
             if vd.is_equal(value, 1.):
                 solution[period] = location
         d1 = variable['d1'][period, customer].x
-        a = min(instance.gammas[customer] * d1 + instance.deltas[customer], d1)
+        a = d1
 
         xl = int(period) - 0.1
         xr = int(period) + 0.1
@@ -238,7 +220,7 @@ def write_bar(instance, variable, customer = 'A'):
             if vd.is_equal(value, 1.):
                 solution[period] = location
         d1 = variable['d1'][period, customer].x
-        a = min(instance.gammas[customer] * d1 + instance.deltas[customer], d1)
+        a = d1
 
         xl = int(period) - 0.1
         xr = int(period) + 0.1

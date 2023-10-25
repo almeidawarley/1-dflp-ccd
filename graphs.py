@@ -127,11 +127,7 @@ for beta in [1]:
             for customer in instance.customers:
                 instance.alphas[customer] = 0
                 instance.betas[customer] = beta
-                instance.gammas[customer] = gamma
-                instance.deltas[customer] = 0
                 instance.starts[customer] = 10
-                instance.lowers[customer] = 1
-                instance.uppers[customer] = 10
 
             mip, variable = fm.build_linearized(instance)
             fm.fix_solution(mip, variable, capture_all)
