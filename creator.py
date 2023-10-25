@@ -5,13 +5,12 @@ features = {
     'seed': [i for i in range(0, 10)],
     'points': [10],
     'patronizing': ['weak', 'medium', 'strong'],
-    'rewards': ['identical', 'inversely'],#, 'directly'],
+    'rewards': ['identical', 'inversely'],
     'replenishment': ['absolute', 'relative'],
-    'absorption': ['complete', 'constrained']
+    'character': ['homogeneous', 'heterogeneous']
 }
 
-character = 'homogeneous'
-project = 'paper1-{}'.format(character[:3])
+project = 'paper1'
 
 instance = {}
 
@@ -24,7 +23,7 @@ for seed in features['seed']:
         for patronizing in features['patronizing']:
             for rewards in features['rewards']:
                 for replenishment in features['replenishment']:
-                    for absorption in features['absorption']:
+                    for character in features['character']:
                         for periods in [int(points/2), int(points), int(2 * points)]:
 
                             instance['seed'] = seed
@@ -34,7 +33,6 @@ for seed in features['seed']:
                             instance['patronizing'] = patronizing
                             instance['rewards'] = rewards
                             instance['replenishment'] = replenishment
-                            instance['absorption'] = absorption
                             instance['character'] = character
 
                             keyword = '{}_{}'.format('rnd', '-'.join([str(value) for value in instance.values()]))
