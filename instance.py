@@ -51,7 +51,7 @@ class instance:
         for customer in self.customers:
             limit = self.starts[customer]
             for _ in self.periods:
-                limit += (1 + self.alphas[customer]) * limit + self.betas[customer]
+                limit = (1 + self.alphas[customer]) * limit + self.betas[customer]
             self.limits[customer] = np.ceil(limit)
 
     def create_rnd(self, folder = 'instances/synthetic'):

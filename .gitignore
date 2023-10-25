@@ -9,6 +9,7 @@ sarwesh_*
 *.txt
 
 # Experimental files
+sarwesh/
 archives/*.lp
 archives/*.sol
 archives/*.png
