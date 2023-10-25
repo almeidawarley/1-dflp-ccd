@@ -104,12 +104,12 @@ def create_c3B(instance, mip, variable, indicators, episodes):
 def create_c3C(instance, mip, variable, indicators, episodes):
     # Create constraint 3, part C
 
-    mip.addConstrs((variable['w'][episode, period, customer] >= indicators[episode][period][customer] * (variable['d'][customer] - instance.bigM[customer] * (1 - variable['u'][episode, period, customer])) for episode in range(episodes) for period in instance.periods for customer in instance.customers), name = 'c3C')
+    mip.addConstrs((variable['w'][episode, period, customer] >= indicators[episode][period][customer] * (variable['d'][customer] - instance.limits[customer] * (1 - variable['u'][episode, period, customer])) for episode in range(episodes) for period in instance.periods for customer in instance.customers), name = 'c3C')
 
 def create_c3D(instance, mip, variable, indicators, episodes):
     # Create constraint 3, part D
 
-    mip.addConstrs((variable['w'][episode, period, customer] >= indicators[episode][period][customer] * (variable['d3'][episode, previous(period), customer] + variable['b'][customer] - instance.bigM[customer] * variable['u'][episode, period, customer]) for episode in range(episodes) for period in instance.periods for customer in instance.customers), name = 'c3D')
+    mip.addConstrs((variable['w'][episode, period, customer] >= indicators[episode][period][customer] * (variable['d3'][episode, previous(period), customer] + variable['b'][customer] - instance.limits[customer] * variable['u'][episode, period, customer]) for episode in range(episodes) for period in instance.periods for customer in instance.customers), name = 'c3D')
 
 # ---------------------------------------------------------------------------
 
