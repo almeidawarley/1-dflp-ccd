@@ -220,6 +220,11 @@ def main():
     print('>>> BCW solution: {}'.format('-'.join(bcw_solution.values())))
     print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
 
+    mark_section('Debugging reformulation #1...')
+    ref1_mip, ref1_mip_variable = fm.build_reformulation1(instance)
+    ref1_mip.write('debug_ref1.lp')
+    ref1_mip.optimize()
+
 if __name__ == '__main__':
 
     main()

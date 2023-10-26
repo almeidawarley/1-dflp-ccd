@@ -92,6 +92,43 @@ def build_relaxation(instance):
 
     return mip, variable
 
+def build_reformulation1(instance):
+    # Build reformulation #1
+
+    mip = gp.Model('DSFLP-DAR')
+
+    # Create decision variables
+    variable = {
+        # Main decision variables
+        'y': vb.create_vry(instance, mip),
+        'z': vb.create_vrz_1(instance, mip)
+    }
+
+    # Maximize the total revenue
+    mip.setAttr('ModelSense', -1)
+
+    # Turn off GUROBI logs
+    # mip.setParam('OutputFlag', 0)
+    mip.setParam('Threads', 1)
+    mip.setParam('TimeLimit', 10 * 60 * 60)
+
+    def phi(period, customer):
+
+        period = int(period)
+
+        return instance.starts[customer] +  period * instance.betas[customer]
+
+    # Set objective function
+    # WARNING: forcing revenue equal to 10 (or some constant)!!!!!
+    mip.setObjective(sum([(10 * phi(period, customer)) * variable['z'][period, customer] for period in instance.periods for customer in instance.customers]))
+
+    # Create main constraints
+    ct.create_c1(instance, mip, variable)
+    ct.create_c7(instance, mip, variable)
+    ct.create_c8(instance, mip, variable)
+
+    return mip, variable
+
 def build_nonlinear(instance):
     # Build the (nonlinear) DSFLP-DAR
 

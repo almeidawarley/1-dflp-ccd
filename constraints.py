@@ -28,7 +28,7 @@ def create_c2(instance, mip, variable):
 # ---------------------------------------------------------------------------
 
 def create_c3(instance, mip, variable):
-    # Create constraint 3, linear
+    # Create constraint 3
 
     mip.addConstrs((variable['d1'][period, customer] == (1 + instance.alphas[customer]) * variable['d3'][previous(period), customer] + instance.betas[customer] for period in instance.periods for customer in instance.customers), name = 'c3')
 
@@ -49,7 +49,7 @@ def create_c4_NL(instance, mip, variable):
 # ---------------------------------------------------------------------------
 
 def create_c5(instance, mip, variable):
-    # Create constraint 5, linearized
+    # Create constraint 5
 
     mip.addConstrs((variable['d3'][period, customer] == variable['d2'][period, customer] for period in instance.periods for customer in instance.customers), name = 'c5')
 
@@ -87,3 +87,17 @@ def create_c6D(instance, mip, variable):
     # Create constraint 6, part D, linearized
 
     mip.addConstrs((variable['w'][period, location, customer] >= variable['d1'][period, customer] - 1 * instance.limits[customer] * (1 - instance.catalogs[location][customer] * variable['y'][period, location]) for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c6D')
+
+# ---------------------------------------------------------------------------
+
+def create_c7(instance, mip, variable):
+    # Create constraint 7
+
+    mip.addConstrs((variable['z'].sum('*', customer) <= 1 for customer in instance.customers), name = 'c7')
+
+# ---------------------------------------------------------------------------
+
+def create_c8(instance, mip, variable):
+    # Create constraint 8
+
+    mip.addConstrs((variable['z'][period, customer] <= sum(instance.catalogs[location][customer] * variable['y'][period, location] for location in instance.locations) for period in instance.periods for customer in instance.customers), name = 'c8')
