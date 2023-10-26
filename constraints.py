@@ -58,10 +58,7 @@ def create_c5(instance, mip, variable):
 def create_c6_NL(instance, mip, variable):
     # Create constraint 6, nonlinear
 
-    mip.addConstrs((variable['v'][period, customer] == sum([variable['y'][period, location] * instance.catalogs[location][customer] for location in instance.locations]) for period in instance.periods for customer in instance.customers), name = 'c6_p0')
-
-    mip.addConstrs(((variable['v'][period, customer] == 1) >> (variable['w'][period, customer] == variable['d1'][period, customer]) for period in instance.periods for customer in instance.customers), name = 'c6_p1')
-    mip.addConstrs(((variable['v'][period, customer] == 0) >> (variable['w'][period, customer] == 0) for period in instance.periods for customer in instance.customers), name = 'c6_p2')
+    mip.addConstrs((variable['w'][period, customer] == sum([variable['y'][period, location] * instance.catalogs[location][customer] for location in instance.locations]) * variable['d1'][period, customer] for period in instance.periods for customer in instance.customers), name = 'c6')
 
 # ---------------------------------------------------------------------------
 

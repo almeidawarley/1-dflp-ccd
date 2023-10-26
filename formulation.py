@@ -104,9 +104,7 @@ def build_nonlinear(instance):
         'w': vb.create_vrw_NL(instance, mip),
         'd1': vb.create_vrd1(instance, mip),
         'd2': vb.create_vrd2(instance, mip),
-        'd3': vb.create_vrd3(instance, mip),
-        # Other decision variables
-        'v': vb.create_vrv(instance, mip)
+        'd3': vb.create_vrd3(instance, mip)
     }
 
     # Maximize the total revenue

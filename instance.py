@@ -422,7 +422,7 @@ class instance:
         print('Customers: {}'.format(self.customers))
         print('\t| j: a\tb\ts\t[L]\t(M)')
         for customer in self.customers:
-            print('\t| {}: {}\t{}\t{}\t[{}]\t({})'.format(
+            print('\t| {}: {}\t{}\t{}\t{}\t({})'.format(
                 customer,
                 self.alphas[customer],
                 self.betas[customer],

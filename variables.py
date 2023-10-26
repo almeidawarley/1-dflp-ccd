@@ -100,20 +100,3 @@ def create_vrd2(instance, mip):
     ]
 
     return mip.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
-
-# ---------------------------------------------------------------------------
-
-def create_vrv(instance, mip):
-    # Create v^{t}_{ij} variables
-
-    lowers = [0. for _ in instance.periods for _ in instance.customers]
-    uppers = [1 for _ in instance.periods  for _ in instance.customers]
-    coefs = [0. for _ in instance.periods  for _ in instance.customers]
-    types = ['B' for _ in instance.periods  for _ in instance.customers]
-    names = [
-        'v~{}_{}'.format(period, customer)
-        for period in instance.periods
-        for customer in instance.customers
-    ]
-
-    return mip.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
