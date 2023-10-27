@@ -8,6 +8,7 @@ import pandas as pd
 class test_nonlinear_mip(unittest.TestCase):
 
     def test_objective(self):
+        # Warning: not sure if still working after refactoring
 
         reference = pd.read_csv('experiments/reference.csv')
 
@@ -35,6 +36,51 @@ class test_nonlinear_mip(unittest.TestCase):
             mip.optimize()
             mip_objective = round(mip.objVal, 2)
             self.assertEqual(mip_objective, row['mip_objective'])
+
+    def test_reformulation2(self):
+        # Warning: not sure if still working after refactoring
+
+        reference = pd.read_csv('experiments/paper1/summary.csv')
+
+        reference = reference[reference['replenishment'] == 'absolute']
+
+        for _, row in reference.iterrows():
+
+            instance = ic.instance(row['keyword'], 'testing')
+            instance.print_instance()
+
+            mip, _ = fm.build_linearized(instance)
+            mip.optimize()
+            mip_objective = round(mip.objVal, 2)
+            self.assertEqual(mip_objective, row['warm_mip_objective'])
+
+            ref, _ = fm.build_reformulation2(instance)
+            ref.optimize()
+            ref_objective = round(ref.objVal, 2)
+            self.assertEqual(ref_objective, row['warm_mip_objective'])
+
+    def test_reformulation1(self):
+        # Warning: not sure if still working after refactoring
+
+        reference = pd.read_csv('experiments/paper1/summary.csv')
+
+        reference = reference[reference['rewards'] == 'identical']
+        reference = reference[reference['replenishment'] == 'absolute']
+
+        for _, row in reference.iterrows():
+
+            instance = ic.instance(row['keyword'], 'testing')
+            instance.print_instance()
+
+            mip, _ = fm.build_linearized(instance)
+            mip.optimize()
+            mip_objective = round(mip.objVal, 2)
+            self.assertEqual(mip_objective, row['warm_mip_objective'])
+
+            ref, _ = fm.build_reformulation1(instance)
+            ref.optimize()
+            ref_objective = round(ref.objVal, 2)
+            self.assertEqual(ref_objective, row['warm_mip_objective'])
 
 if __name__ == '__main__':
 
