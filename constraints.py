@@ -4,6 +4,14 @@ def previous(period):
 
     return str(int(period) - 1)
 
+def is_before(period1, period2):
+
+    return int(period1) < int(period2)
+
+def is_after(period1, period2):
+
+    return int(period1) > int(period2)
+
 def map_catalog(instance, reference, customer):
     # Kind of deprecated, but may be useful
 
@@ -101,3 +109,31 @@ def create_c8(instance, mip, variable):
     # Create constraint 8
 
     mip.addConstrs((variable['z'][period, customer] <= sum(instance.catalogs[location][customer] * variable['y'][period, location] for location in instance.locations) for period in instance.periods for customer in instance.customers), name = 'c8')
+
+# ---------------------------------------------------------------------------
+
+def create_c9(instance, mip, variable):
+    # Create constraint 9
+
+    mip.addConstrs((sum(variable['z'][period1, period2, location, customer] for period1 in instance.periods_with_start if is_before(period1, period2)) == instance.catalogs[location][customer] * variable['y'][period2, location] for period2 in instance.periods for location in instance.locations for customer in instance.customers), name = 'c9')
+
+# ---------------------------------------------------------------------------
+
+def create_c10(instance, mip, variable):
+    # Create constraint 10
+
+    mip.addConstrs((sum(variable['z'].sum(period1, period2, '*', customer) for period1 in instance.periods_with_start if is_before(period1, period2)) == sum(variable['z'].sum(period2, period1, '*', customer) for period1 in instance.periods_with_end if is_after(period1, period2)) for period2 in instance.periods for customer in instance.customers), name = 'c10')
+
+# ---------------------------------------------------------------------------
+
+def create_c11(instance, mip, variable):
+    # Create constraint 11
+
+    mip.addConstrs((variable['z'].sum('0', '*', '*', customer) == 1 for customer in instance.customers), name = 'c11')
+
+# ---------------------------------------------------------------------------
+
+def create_c12(instance, mip, variable):
+    # Create constraint 12
+
+    mip.addConstrs((variable['z'].sum('*', str(len(instance.periods) + 1), '*', customer) == 1 for customer in instance.customers), name = 'c12')

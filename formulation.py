@@ -66,7 +66,13 @@ def build_linearized(instance):
     mip.setParam('TimeLimit', 10 * 60 * 60)
 
     # Set objective function
-    mip.setObjective(sum([instance.revenues[period][location] * instance.catalogs[location][customer] * variable['w'][period, location, customer] for period in instance.periods for location in instance.locations for customer in instance.customers]))
+    mip.setObjective(
+        sum([instance.revenues[period][location] *
+             instance.catalogs[location][customer] *
+             variable['w'][period, location, customer]
+             for period in instance.periods
+             for location in instance.locations
+             for customer in instance.customers]))
 
     # Create main constraints
     ct.create_c1(instance, mip, variable)
@@ -95,7 +101,7 @@ def build_relaxation(instance):
 def build_reformulation1(instance):
     # Build reformulation #1
 
-    mip = gp.Model('DSFLP-DAR')
+    mip = gp.Model('DSFLP-DAR-R1')
 
     # Create decision variables
     variable = {
@@ -112,20 +118,61 @@ def build_reformulation1(instance):
     mip.setParam('Threads', 1)
     mip.setParam('TimeLimit', 10 * 60 * 60)
 
-    def phi(period, customer):
-
-        period = int(period)
-
-        return instance.starts[customer] +  period * instance.betas[customer]
+    # WARNING: identical reward taken from first location at first period!
+    # No problem if they are equal anyways, but only a heuristic if different
+    common_reward = instance.revenues[instance.periods[0]][instance.locations[0]]
 
     # Set objective function
-    # WARNING: forcing revenue equal to 10 (or some constant)!!!!!
-    mip.setObjective(sum([(10 * phi(period, customer)) * variable['z'][period, customer] for period in instance.periods for customer in instance.customers]))
+    mip.setObjective(
+        sum([(common_reward *
+              instance.partial_demand('0', period, customer)) *
+              variable['z'][period, customer]
+              for period in instance.periods
+              for customer in instance.customers]))
 
     # Create main constraints
     ct.create_c1(instance, mip, variable)
     ct.create_c7(instance, mip, variable)
     ct.create_c8(instance, mip, variable)
+
+    return mip, variable
+
+def build_reformulation2(instance):
+    # Build reformulation #2
+
+    mip = gp.Model('DSFLP-DAR-R2')
+
+    # Create decision variables
+    variable = {
+        # Main decision variables
+        'y': vb.create_vry(instance, mip),
+        'z': vb.create_vrz_2(instance, mip)
+    }
+
+    # Maximize the total revenue
+    mip.setAttr('ModelSense', -1)
+
+    # Turn off GUROBI logs
+    # mip.setParam('OutputFlag', 0)
+    mip.setParam('Threads', 1)
+    mip.setParam('TimeLimit', 10 * 60 * 60)
+
+    # Set objective function
+    mip.setObjective(
+        sum([instance.revenues[period2][location] *
+         instance.partial_demand(period1, period2, customer) *
+         variable['z'][period1, period2, location, customer]
+         for period1 in instance.periods_with_start
+         for period2 in instance.periods
+         for location in instance.locations
+         for customer in instance.customers]))
+
+    # Create main constraints
+    ct.create_c1(instance, mip, variable)
+    ct.create_c9(instance, mip, variable)
+    ct.create_c10(instance, mip, variable)
+    ct.create_c11(instance, mip, variable)
+    ct.create_c12(instance, mip, variable)
 
     return mip, variable
 
@@ -153,7 +200,14 @@ def build_nonlinear(instance):
     mip.setParam('TimeLimit', 10 * 60 * 60)
 
     # Set objective function
-    mip.setObjective(sum([instance.revenues[period][location] * instance.catalogs[location][customer] * variable['w'][period, customer] * variable['y'][period, location] for period in instance.periods for location in instance.locations for customer in instance.customers]))
+    mip.setObjective(
+        sum([instance.revenues[period][location] *
+             instance.catalogs[location][customer] *
+             variable['w'][period, customer] *
+             variable['y'][period, location]
+             for period in instance.periods
+             for location in instance.locations
+             for customer in instance.customers]))
 
     # Create main constraints
     ct.create_c1(instance, mip, variable)

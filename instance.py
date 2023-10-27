@@ -54,6 +54,11 @@ class instance:
                 limit = (1 + self.alphas[customer]) * limit + self.betas[customer]
             self.limits[customer] = np.ceil(limit)
 
+        # Set start and end periods
+
+        self.periods_with_start = ['0'] + [period for period in self.periods]
+        self.periods_with_end = [period for period in self.periods] + [str(len(self.periods) + 1)]
+
     def create_rnd(self, folder = 'instances/synthetic'):
         # Create rnd-based instances
 
@@ -443,3 +448,15 @@ class instance:
         # Retrieve locations capturing some customer
 
         return [location for location in self.locations if self.catalogs[location][customer] == 1]
+
+    def partial_demand(self, lastly, current, customer):
+        # Compute phi function within formulations
+
+        lastly, current = int(lastly), int(current)
+
+        if current == len(self.periods) + 1:
+            exit('This should never happen!')
+        elif lastly == 0:
+            return self.starts[customer] +  current * self.betas[customer]
+        else:
+            return self.betas[customer] * (lastly - current)

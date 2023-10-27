@@ -35,11 +35,12 @@ def evaluate_location(instance, cumulative, period, location):
 
         if instance.catalogs[location][customer]:
 
-            partial = cumulative[customer]
+            partial_demand = cumulative[customer]
+            partial_reward = instance.revenues[period][location] * partial_demand
 
-            # print('| obtaning {} from customer {} at time period {}'.format(partial, customer, period))
+            # print('| obtaning {} from customer {} at time period {}'.format(partial_reward, customer, period))
 
-            score += instance.revenues[period][location] * partial
+            score += partial_reward
 
     return score
 
