@@ -1,9 +1,7 @@
-import matplotlib.pyplot as pt
-import math as mt
 import json as js
-import pandas as pd
 import random as rd
 import numpy as np
+import scipy.optimize as sp
 
 class instance:
 
@@ -138,6 +136,29 @@ class instance:
             elif self.parameters['replenishment'] == 'relative':
                 self.alphas[customer] = round(((number_periods * self.intensities[customer] + self.starts[customer])/self.starts[customer])**(1. / number_periods) - 1, 2)
                 self.betas[customer] = 0
+            elif self.parameters['replenishment'] == 'mixed':
+                def evaluate_combination(alpha, beta):
+                    result = self.starts[customer]
+                    for _ in self.periods:
+                        result += alpha * result + beta
+                    return abs((self.starts[customer] + self.intensities[customer] * len(self.periods)) - result)
+                def minimize_combination():
+                    best_alpha = 0.01
+                    best_beta = 0.1
+                    best_value = 10**4
+                    for alpha in range(1, 101):
+                        local_alpha = float(alpha/1000)
+                        for beta in range(1, 11):
+                            local_beta = float(beta)
+                            value = evaluate_combination(local_alpha, local_beta)
+                            if value < best_value:
+                                best_value = value
+                                best_alpha = local_alpha
+                                best_beta = local_beta
+                    return best_alpha, best_beta
+                alpha, beta = minimize_combination()
+                self.alphas[customer] = alpha
+                self.betas[customer] = beta
             else:
                 exit('Wrong value for replenishment parameter')
 
