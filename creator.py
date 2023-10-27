@@ -6,7 +6,7 @@ features = {
     'points': [10],
     'patronizing': ['weak', 'medium', 'strong'],
     'rewards': ['identical', 'inversely'],
-    'replenishment': ['absolute', 'relative'],
+    'replenishment': ['absolute', 'relative', 'mixed'],
     'character': ['homogeneous', 'heterogeneous']
 }
 
