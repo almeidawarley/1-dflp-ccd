@@ -460,3 +460,13 @@ class instance:
             return self.starts[customer] +  current * self.betas[customer]
         else:
             return self.betas[customer] * (lastly - current)
+
+    def has_identical_rewards(self):
+        # Verify if rewards are identical or not
+
+        for period in self.periods:
+            for location in self.locations:
+                if self.revenues[period][location] != self.revenues[self.periods[0]][self.locations[0]]:
+                    return False
+
+        return True

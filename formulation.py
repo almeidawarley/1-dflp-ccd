@@ -87,14 +87,13 @@ def build_linearized(instance):
 
     return mip, variable
 
-def build_relaxation(instance):
-    # Build the relaxation of DSFLP-DAR
+def build_relaxation(instance, builder):
+    # Build the relaxation of some model
 
-    mip, variable = build_linearized(instance)
+    mip, variable = builder(instance)
 
-    for period in instance.periods:
-        for location in instance.locations:
-            variable['y'][period, location].vtype = 'C'
+    for element in mip.getVars():
+        element.vtype = 'C'
 
     return mip, variable
 
