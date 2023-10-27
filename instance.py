@@ -89,7 +89,7 @@ class instance:
         else:
             exit('Wrong value for patronizing parameter')
 
-        consideration_size = int(patronizing * number_locations)
+        consideration_size = int(np.ceil(patronizing * number_locations))
 
         consideration_sets = {}
         for customer in self.customers:
