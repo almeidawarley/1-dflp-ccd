@@ -459,7 +459,7 @@ class instance:
         elif lastly == 0:
             return self.starts[customer] +  current * self.betas[customer]
         else:
-            return self.betas[customer] * (lastly - current)
+            return self.betas[customer] * (current - lastly)
 
     def has_identical_rewards(self):
         # Verify if rewards are identical or not
