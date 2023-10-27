@@ -73,17 +73,17 @@ def main():
     })
 
     mark_section('Building the DSFLP-DAR formulation...')
-    warm_mip, warm_mip_variable = fm.build_linearized(instance)
-    cold_mip, cold_mip_variable = fm.build_linearized(instance)
-    warm_nlr, warm_nlr_variable = fm.build_nonlinear(instance)
-    cold_nlr, cold_nlr_variable = fm.build_nonlinear(instance)
-    warm_rf1, warm_rf1_variable = fm.build_reformulation1(instance)
-    cold_rf1, cold_rf1_variable = fm.build_reformulation1(instance)
-    warm_rf2, warm_rf2_variable = fm.build_reformulation2(instance)
-    cold_rf2, cold_rf2_variable = fm.build_reformulation2(instance)
+    warm_mip, warm_mip_variable = fm.build_linearized_main(instance)
+    cold_mip, cold_mip_variable = fm.build_linearized_main(instance)
+    warm_nlr, warm_nlr_variable = fm.build_nonlinear_main(instance)
+    cold_nlr, cold_nlr_variable = fm.build_nonlinear_main(instance)
+    warm_rf1, warm_rf1_variable = fm.build_reformulated1_main(instance)
+    cold_rf1, cold_rf1_variable = fm.build_reformulated1_main(instance)
+    warm_rf2, warm_rf2_variable = fm.build_reformulated2_main(instance)
+    cold_rf2, cold_rf2_variable = fm.build_reformulated2_main(instance)
 
     mark_section('Solving the LPRX of the DSFLP-DAR model...')
-    lprx_mip, _ = fm.build_relaxation(instance, fm.build_linearized)
+    lprx_mip, _ = fm.build_linearized_lprx(instance)
     # lprx_mip.write('archives/{}-lprx_mip.lp'.format(instance.keyword))
     lprx_mip.optimize()
     lprx_mip_objective = round(lprx_mip.objVal, 2)
@@ -181,7 +181,7 @@ def main():
     })
 
     mark_section('Solving the LPRX of the DSFLP-DAR-R1 model...')
-    lprx_rf1, _ = fm.build_relaxation(instance, fm.build_reformulation1)
+    lprx_rf1, _ = fm.build_reformulated1_lprx(instance)
     # lprx_rf1.write('archives/{}-lprx_rf1.lp'.format(instance.keyword))
     lprx_rf1.optimize()
     lprx_rf1_objective = round(lprx_rf1.objVal, 2)
@@ -194,7 +194,7 @@ def main():
     })
 
     mark_section('Solving the LPRX of the DSFLP-DAR-R2 model...')
-    lprx_rf2, _ = fm.build_relaxation(instance, fm.build_reformulation1)
+    lprx_rf2, _ = fm.build_reformulated2_lprx(instance)
     # lprx_rf2.write('archives/{}-lprx_rf2.lp'.format(instance.keyword))
     lprx_rf2.optimize()
     lprx_rf2_objective = round(lprx_rf2.objVal, 2)
@@ -292,13 +292,13 @@ def main():
 
     assert(record['warm_mip_check'] == True)
     assert(record['warm_nlr_check'] == True)
-    assert(record['warm_rf2_check'] == True)
-    # assert(record['cold_mip_check'] == True)
-    # assert(record['cold_nlr_check'] == True)
 
     mark_section('Assessing meaning of DSFLP-DAR reformulations...')
 
-    if not instance.has_identical_rewards():
+    rf1_heuristic = (not instance.is_absolute_replenishment()) or (not instance.is_identical_rewards())
+    rf2_heuristic = (not instance.is_absolute_replenishment())
+
+    if rf1_heuristic:
         print('The DSFLP-DAR-R1 is only an heuristic, computing actual objective')
         cold_rf1_objective = vd.evaluate_solution(instance, cold_rf1_solution)
         warm_rf1_objective = vd.evaluate_solution(instance, warm_rf1_solution)
@@ -314,10 +314,26 @@ def main():
         print('The DSFLP-DAR-R1 should be exact, no need to recompute objective')
         assert(record['warm_rf1_check'] == True)
 
+    if rf2_heuristic:
+        print('The DSFLP-DAR-R2 is only an heuristic, computing actual objective')
+        cold_rf2_objective = vd.evaluate_solution(instance, cold_rf2_solution)
+        warm_rf2_objective = vd.evaluate_solution(instance, warm_rf2_solution)
+        record = rc.update_record(record, {
+            'cold_rf2_objective': cold_rf2_objective,
+            'cold_rf2_optgap': compute_gap(warm_mip_objective, cold_rf2_objective),
+            'cold_rf2_optgap': compute_gap(warm_mip_objective, cold_rf2_objective),
+            'warm_rf2_objective': warm_rf2_objective,
+            'warm_rf2_optgap': compute_gap(warm_mip_objective, warm_rf2_objective),
+            'warm_rf2_optgap': compute_gap(warm_mip_objective, warm_rf2_objective)
+        })
+    else:
+        print('The DSFLP-DAR-R2 should be exact, no need to recompute objective')
+        assert(record['warm_rf2_check'] == True)
+
     for method in ['1', '2']:
 
         mark_section('Emulating the DSFLP-DAR through DSFLP-{}...'.format(method))
-        eml, eml_variable = fm.build_simple(instance, method)
+        eml, eml_variable = fm.build_simplified_main(instance, method)
         eml.optimize()
         eml_solution = fm.format_solution(instance, eml, eml_variable)
         eml_objective = vd.evaluate_solution(instance, eml_solution)

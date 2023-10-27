@@ -3,8 +3,8 @@ import variables as vb
 import constraints as ct
 import validation as vd
 
-def build_simple(instance, method):
-    # Build the DSFLP
+def build_simplified_main(instance, method):
+    # Build the MIP of the simplified DSFLP-DAR (i.e., DSFLP)
 
     mip = gp.Model('DSFLP')
 
@@ -42,8 +42,8 @@ def build_simple(instance, method):
 
     return mip, variable
 
-def build_linearized(instance):
-    # Build the (linearized) DSFLP-DAR
+def build_linearized_main(instance):
+    # Build the MIP of the linearized DSFLP-DAR
 
     mip = gp.Model('DSFLP-DAR')
 
@@ -87,18 +87,19 @@ def build_linearized(instance):
 
     return mip, variable
 
-def build_relaxation(instance, builder):
-    # Build the relaxation of some model
+def build_linearized_lprx(instance):
+    # Build the LPRX of the linearized DSFLP-DAR
 
-    mip, variable = builder(instance)
+    mip, variable = build_linearized_main(instance)
 
-    for element in mip.getVars():
-        element.vtype = 'C'
+    for period in instance.periods:
+        for location in instance.locations:
+            variable['y'][period, location].vtype = 'C'
 
     return mip, variable
 
-def build_reformulation1(instance):
-    # Build reformulation #1
+def build_reformulated1_main(instance):
+    # Build the MIP of the reformulated DSFLP-DAR #1
 
     mip = gp.Model('DSFLP-DAR-R1')
 
@@ -136,8 +137,23 @@ def build_reformulation1(instance):
 
     return mip, variable
 
-def build_reformulation2(instance):
-    # Build reformulation #2
+def build_reformulated1_lprx(instance):
+    # Build the LPRX of the reformulated DSFLP-DAR #1
+
+    mip, variable = build_reformulated1_main(instance)
+
+    for period in instance.periods:
+        for location in instance.locations:
+            variable['y'][period, location].vtype = 'C'
+
+    for period in instance.periods:
+        for customer in instance.customers:
+            variable['z'][period, customer].vtype = 'C'
+
+    return mip, variable
+
+def build_reformulated2_main(instance):
+    # Build the MIP of the reformulated DSFLP-DAR #2
 
     mip = gp.Model('DSFLP-DAR-R2')
 
@@ -175,8 +191,25 @@ def build_reformulation2(instance):
 
     return mip, variable
 
-def build_nonlinear(instance):
-    # Build the (nonlinear) DSFLP-DAR
+def build_reformulated2_lprx(instance):
+    # Build the LPRX of the reformulated DSFLP-DAR #2
+
+    mip, variable = build_reformulated2_main(instance)
+
+    for period in instance.periods:
+        for location in instance.locations:
+            variable['y'][period, location].vtype = 'C'
+
+    for period1 in instance.periods_with_start:
+        for period2 in instance.periods_with_end:
+            for location in instance.locations:
+                for customer in instance.customers:
+                    variable['z'][period1, period2, location, customer].vtype = 'C'
+
+    return mip, variable
+
+def build_nonlinear_main(instance):
+    # Build the MIP of the nonlinear DSFLP-DAR
 
     mip = gp.Model('DSFLP-DAR')
 

@@ -461,12 +461,21 @@ class instance:
         else:
             return self.betas[customer] * (current - lastly)
 
-    def has_identical_rewards(self):
+    def is_identical_rewards(self):
         # Verify if rewards are identical or not
 
         for period in self.periods:
             for location in self.locations:
                 if self.revenues[period][location] != self.revenues[self.periods[0]][self.locations[0]]:
                     return False
+
+        return True
+
+    def is_absolute_replenishment(self):
+        # Verify if there is no relative replenishment
+
+        for customer in self.customers:
+            if self.alphas[customer] != 0:
+                return False
 
         return True

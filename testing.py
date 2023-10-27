@@ -5,7 +5,7 @@ import formulation as fm
 import validation as vd
 import pandas as pd
 
-class test_nonlinear_mip(unittest.TestCase):
+class test_nonlinear_main(unittest.TestCase):
 
     def test_objective(self):
         # Warning: not sure if still working after refactoring
@@ -32,7 +32,7 @@ class test_nonlinear_mip(unittest.TestCase):
             self.assertEqual(prg_objective, row['prg_objective'])
             self.assertEqual(rnd_objective, row['rnd_objective'])
 
-            mip, _ = fm.build_linearized(instance)
+            mip, _ = fm.build_linearized_main(instance)
             mip.optimize()
             mip_objective = round(mip.objVal, 2)
             self.assertEqual(mip_objective, row['mip_objective'])
@@ -49,12 +49,12 @@ class test_nonlinear_mip(unittest.TestCase):
             instance = ic.instance(row['keyword'], 'testing')
             instance.print_instance()
 
-            mip, _ = fm.build_linearized(instance)
+            mip, _ = fm.build_linearized_main(instance)
             mip.optimize()
             mip_objective = round(mip.objVal, 2)
             self.assertEqual(mip_objective, row['warm_mip_objective'])
 
-            ref, _ = fm.build_reformulation2(instance)
+            ref, _ = fm.build_reformulated2_main(instance)
             ref.optimize()
             ref_objective = round(ref.objVal, 2)
             self.assertEqual(ref_objective, row['warm_mip_objective'])
@@ -72,12 +72,12 @@ class test_nonlinear_mip(unittest.TestCase):
             instance = ic.instance(row['keyword'], 'testing')
             instance.print_instance()
 
-            mip, _ = fm.build_linearized(instance)
+            mip, _ = fm.build_linearized_main(instance)
             mip.optimize()
             mip_objective = round(mip.objVal, 2)
             self.assertEqual(mip_objective, row['warm_mip_objective'])
 
-            ref, _ = fm.build_reformulation1(instance)
+            ref, _ = fm.build_reformulated1_main(instance)
             ref.optimize()
             ref_objective = round(ref.objVal, 2)
             self.assertEqual(ref_objective, row['warm_mip_objective'])
