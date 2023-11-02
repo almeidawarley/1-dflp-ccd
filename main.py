@@ -26,7 +26,7 @@ def main():
     instance.print_instance()
 
     mark_section('Logging instance parameters read from file...')
-    record = rc.create_record(args.project, instance)
+    record = rc.load_record(args.project, instance)
 
     mark_section('Applying the random algorithm...')
     start = tm.time()
@@ -59,6 +59,17 @@ def main():
         'bcw_objective': bcw_objective,
         'bcw_solution': '-'.join(bcw_solution.values()),
         'bcw_runtime': round(end - start, 2)
+    })
+
+    mark_section('Applying the fixing algorithm...')
+    start = tm.time()
+    fix_solution, fix_objective = hr.fixing_algorithm(instance)
+    end = tm.time()
+    print('Fixing solution: [{}] {}'.format(fix_objective, fix_solution))
+    record = rc.update_record(record, {
+        'fix_objective': fix_objective,
+        'fix_solution': '-'.join(fix_solution.values()),
+        'fix_runtime': round(end - start, 2)
     })
 
     mark_section('Applying the progressive algorithm...')
@@ -126,29 +137,24 @@ def main():
     })
 
     mark_section('Identifying the warmest objective value...')
-    warm_objective = max(rnd_objective, frw_objective, bcw_objective, prg_objective)
+    warm_objective = max(rnd_objective, frw_objective, bcw_objective, fix_objective, prg_objective)
     if warm_objective == rnd_objective:
-        fm.warm_start(instance, warm_mip_variable, rnd_solution)
-        fm.warm_start(instance, warm_nlr_variable, rnd_solution)
-        fm.warm_start(instance, warm_rf1_variable, rnd_solution)
-        fm.warm_start(instance, warm_rf2_variable, rnd_solution)
+        warm_solution = rnd_solution
     elif warm_objective == frw_objective:
-        fm.warm_start(instance, warm_mip_variable, frw_solution)
-        fm.warm_start(instance, warm_nlr_variable, frw_solution)
-        fm.warm_start(instance, warm_rf1_variable, frw_solution)
-        fm.warm_start(instance, warm_rf2_variable, frw_solution)
+        warm_solution = frw_solution
     elif warm_objective == bcw_objective:
-        fm.warm_start(instance, warm_mip_variable, bcw_solution)
-        fm.warm_start(instance, warm_nlr_variable, bcw_solution)
-        fm.warm_start(instance, warm_rf1_variable, bcw_solution)
-        fm.warm_start(instance, warm_rf2_variable, bcw_solution)
+        warm_solution = bcw_solution
+    elif warm_objective == fix_objective:
+        warm_solution = fix_solution
     elif warm_objective == prg_objective:
-        fm.warm_start(instance, warm_mip_variable, prg_solution)
-        fm.warm_start(instance, warm_nlr_variable, prg_solution)
-        fm.warm_start(instance, warm_rf1_variable, prg_solution)
-        fm.warm_start(instance, warm_rf2_variable, prg_solution)
+        warm_solution = prg_solution
     else:
         raise Exception('No warm start solution found')
+
+    fm.warm_start(instance, warm_mip_variable, warm_solution)
+    fm.warm_start(instance, warm_nlr_variable, warm_solution)
+    fm.warm_start(instance, warm_rf1_variable, warm_solution)
+    fm.warm_start(instance, warm_rf2_variable, warm_solution)
 
     mark_section('Solving warm MIP of the DSFLP-DAR model...')
     # warm_mip.write('archives/{}-warm_mip.lp'.format(instance.keyword))
@@ -274,6 +280,7 @@ def main():
         'rnd_optgap': compute_gap(warm_mip_objective, rnd_objective),
         'frw_optgap': compute_gap(warm_mip_objective, frw_objective),
         'bcw_optgap': compute_gap(warm_mip_objective, bcw_objective),
+        'fix_optgap': compute_gap(warm_mip_objective, fix_objective),
         'prg_optgap': compute_gap(warm_mip_objective, prg_objective)
     })
 
@@ -347,16 +354,24 @@ def main():
             'em{}_optgap'.format(method): compute_gap(warm_mip_objective, eml_objective)
         })
 
-    mark_section('Wrapping up the execution with the following information...')
+    mark_section('Wrapping up the execution with the following objectives...')
     print('>>> MIP objective: {}'.format(record['warm_mip_objective']))
     print('>>> FRW objective: {}'.format(record['frw_objective']))
+    print('>>> BCW objective: {}'.format(record['bcw_objective']))
+    print('>>> FIX objective: {}'.format(record['fix_objective']))
+    print('>>> PRG objective: {}'.format(record['prg_objective']))
+
+    mark_section('Wrapping up the execution with the following optimality gaps...')
     print('>>> FRW optimality: {}'.format(record['frw_optgap']))
     print('>>> BCW optimality: {}'.format(record['bcw_optgap']))
-    print('>>> PRG objective: {}'.format(record['prg_objective']))
+    print('>>> FIX optimality: {}'.format(record['fix_optgap']))
     print('>>> PRG optimality: {}'.format(record['prg_optgap']))
+
+    mark_section('Wrapping up the execution with the following solutions...')
     print('>>> MIP solution: {}'.format('-'.join(warm_mip_solution.values())))
     print('>>> FRW solution: {}'.format('-'.join(frw_solution.values())))
     print('>>> BCW solution: {}'.format('-'.join(bcw_solution.values())))
+    print('>>> FIX solution: {}'.format('-'.join(fix_solution.values())))
     print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
 
 if __name__ == '__main__':
