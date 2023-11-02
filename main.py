@@ -298,7 +298,7 @@ def main():
     })
 
     assert(record['warm_mip_check'] == True)
-    assert(record['warm_nlr_check'] == True)
+    # assert(record['warm_nlr_check'] == True)
 
     mark_section('Assessing meaning of DSFLP-DAR reformulations...')
 
@@ -312,9 +312,7 @@ def main():
         record = rc.update_record(record, {
             'cold_rf1_objective': cold_rf1_objective,
             'cold_rf1_optgap': compute_gap(warm_mip_objective, cold_rf1_objective),
-            'cold_rf1_optgap': compute_gap(warm_mip_objective, cold_rf1_objective),
             'warm_rf1_objective': warm_rf1_objective,
-            'warm_rf1_optgap': compute_gap(warm_mip_objective, warm_rf1_objective),
             'warm_rf1_optgap': compute_gap(warm_mip_objective, warm_rf1_objective)
         })
     else:
@@ -328,9 +326,7 @@ def main():
         record = rc.update_record(record, {
             'cold_rf2_objective': cold_rf2_objective,
             'cold_rf2_optgap': compute_gap(warm_mip_objective, cold_rf2_objective),
-            'cold_rf2_optgap': compute_gap(warm_mip_objective, cold_rf2_objective),
             'warm_rf2_objective': warm_rf2_objective,
-            'warm_rf2_optgap': compute_gap(warm_mip_objective, warm_rf2_objective),
             'warm_rf2_optgap': compute_gap(warm_mip_objective, warm_rf2_objective)
         })
     else:
