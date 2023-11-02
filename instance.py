@@ -214,7 +214,7 @@ class instance:
                     coefficient = 1. / popularity
                 else:
                     exit('Wrong value for rewards parameter')
-                self.revenues[period][location] = np.ceil(coefficient * 100)
+                self.revenues[period][location] = np.ceil(coefficient * 10)
 
         # Create parameters
         self.alphas = {}
