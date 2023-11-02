@@ -1,7 +1,6 @@
 import json as js
 import random as rd
 import numpy as np
-import scipy.optimize as sp
 
 class instance:
 
