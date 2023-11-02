@@ -95,6 +95,8 @@ def build_linearized_lprx(instance):
         for location in instance.locations:
             variable['y'][period, location].vtype = 'C'
 
+    mip.setParam('OutputFlag', 0)
+
     return mip, variable
 
 def build_reformulated1_main(instance):
@@ -148,6 +150,8 @@ def build_reformulated1_lprx(instance):
     for period in instance.periods:
         for customer in instance.customers:
             variable['z'][period, customer].vtype = 'C'
+
+    mip.setParam('OutputFlag', 0)
 
     return mip, variable
 
@@ -204,6 +208,8 @@ def build_reformulated2_lprx(instance):
             for location in instance.locations:
                 for customer in instance.customers:
                     variable['z'][period1, period2, location, customer].vtype = 'C'
+
+    mip.setParam('OutputFlag', 0)
 
     return mip, variable
 
