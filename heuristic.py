@@ -1,3 +1,4 @@
+import formulation as fm
 import validation as vd
 import numpy as np
 
@@ -111,3 +112,41 @@ def random_algorithm(instance):
     best_objective = vd.evaluate_solution(instance, best_solution)
 
     return best_solution, round(best_objective, 2)
+
+def fixing_algorithm(instance):
+
+    # Create relaxation
+    relax, variable = fm.build_linearized_lprx(instance)
+
+    integral = False
+
+    while not integral:
+
+        # Solve relaxation
+        relax.optimize()
+
+        # Check integrality
+        integral = True
+        minimum_value = 1.
+        minimum_period = '0'
+        minimum_location = '0'
+        for period in instance.periods:
+            for location in instance.locations:
+                value = variable['y'][period, location].x
+                # If not integer
+                if not vd.is_equal(value, 0) and not vd.is_equal(value, 1):
+                    integral = False
+                    # Store smallest
+                    if value < minimum_value:
+                        minimum_value = value
+                        minimum_period = period
+                        minimum_location = location
+
+        # Fix variable
+        if not integral:
+            relax.addConstr(variable['y'][minimum_period, minimum_location] == 0)
+
+    solution = fm.format_solution(instance, relax, variable)
+    objective = vd.evaluate_solution(instance, solution)
+
+    return solution, round(objective, 2)
