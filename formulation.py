@@ -68,7 +68,6 @@ def build_linearized_main(instance):
     # Set objective function
     mip.setObjective(
         sum([instance.revenues[period][location] *
-             instance.catalogs[location][customer] *
              variable['w'][period, location, customer]
              for period in instance.periods
              for location in instance.locations
