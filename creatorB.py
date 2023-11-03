@@ -3,9 +3,9 @@ import instance as ic
 
 features = {
     'seed': [i for i in range(0, 20)],
-    'points': [30, 50], # 10
+    'points': [10, 30, 50],
     'periods': [5, 10],
-    'patronizing': ['mild', 'strong'],
+    'patronizing': ['small', 'medium', 'large'],
     'rewards': ['identical', 'inversely'],
     'replenishment': ['absolute', 'relative'], # mixed
     'character': ['homogeneous', 'heterogeneous']

@@ -182,14 +182,16 @@ class instance:
         self.customers = [str(i + 1) for i in range(number_customers)]
         self.periods = [str(i + 1) for i in range(number_periods)]
 
-        if self.parameters['patronizing'] == 'mild':
-            patronizing = 2
-        elif self.parameters['patronizing'] == 'strong':
+        if self.parameters['patronizing'] == 'small':
+            patronizing = 1 / 2.01
+        elif self.parameters['patronizing'] == 'medium':
             patronizing = 1
+        elif self.parameters['patronizing'] == 'large':
+            patronizing = 2.01
         else:
             exit('Wrong value for patronizing parameter')
 
-        consideration_size = int(np.ceil(number_locations/(patronizing * number_periods)))
+        consideration_size = int(np.ceil((patronizing *number_locations)/number_periods))
 
         consideration_sets = {}
         for customer in self.customers:
