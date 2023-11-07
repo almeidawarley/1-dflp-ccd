@@ -1,6 +1,6 @@
 import pandas as pd
 
-content = pd.read_csv('experiments/paper1/summary.csv')
+content = pd.read_csv('experiments/paper1-planA/summary.csv')
 
 dataset = 'Homogeneous'
 # dataset = 'Heterogeneous'
@@ -40,7 +40,7 @@ for characteristic, values in characteristics.items():
 
         filter = (content[characteristic] == value)
 
-        columns = ['mip_intgap', 'warm_nlr_runtime', 'warm_mip_runtime']
+        columns = ['mip_intgap', 'cold_mip_runtime', 'warm_mip_runtime']
 
         averages = {}
         deviations = {}

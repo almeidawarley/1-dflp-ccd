@@ -20,6 +20,7 @@ outputs/*.out
 records/*.csv
 ignorable/*
 episodes/*
+graphs/*.tex
 
 # Instance files
 instances/exploratory/*.json
