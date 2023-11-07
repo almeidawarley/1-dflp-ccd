@@ -137,3 +137,17 @@ def create_c12(instance, mip, variable):
     # Create constraint 12
 
     mip.addConstrs((variable['z'].sum('*', str(len(instance.periods) + 1), '*', customer) == 1 for customer in instance.customers), name = 'c12')
+
+# ---------------------------------------------------------------------------
+
+def create_si(instance, mip, variable):
+    # Create strong inequality
+
+    mip.addConstrs((variable['w'].sum(period, '*', '*') <= instance.frontiers[period] for period in instance.periods), name = 'si')
+
+# ---------------------------------------------------------------------------
+
+def create_si_NL(instance, mip, variable):
+    # Create strong inequality, nonlinear
+
+    mip.addConstrs((variable['w'].sum(period, '*') <= instance.frontiers[period] for period in instance.periods), name = 'si')
