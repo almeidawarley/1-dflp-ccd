@@ -91,8 +91,8 @@ def main():
     cold_rf2, cold_rf2_variable = fm.build_reformulated2_main(instance)
 
     mark_section('Solving the LPRX of the DSFLP-DAR model...')
-    lprx_mip, _ = fm.build_linearized_lprx(instance)
-    # lprx_mip.write('archives/{}-lprx_mip.lp'.format(instance.keyword))
+    lprx_mip, lprx_mip_variable = fm.build_linearized_lprx(instance)
+    lprx_mip.write('archives/{}-lprx_mip.lp'.format(instance.keyword))
     lprx_mip.optimize()
     lprx_mip_objective = round(lprx_mip.objVal, 2)
     lprx_mip_runtime = round(lprx_mip.runtime, 2)
@@ -180,7 +180,7 @@ def main():
     })
 
     mark_section('Solving the LPRX of the DSFLP-DAR-R2 model...')
-    lprx_rf2, _ = fm.build_reformulated2_lprx(instance)
+    lprx_rf2, lprx_rf2_variable = fm.build_reformulated2_lprx(instance)
     # lprx_rf2.write('archives/{}-lprx_rf2.lp'.format(instance.keyword))
     lprx_rf2.optimize()
     lprx_rf2_objective = round(lprx_rf2.objVal, 2)
@@ -310,6 +310,26 @@ def main():
     print('>>> BCW solution: {}'.format('-'.join(bcw_solution.values())))
     print('>>> FIX solution: {}'.format('-'.join(fix_solution.values())))
     print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
+
+    '''
+    if record['rf2_intgap'] < record['mip_intgap']:
+        print('Main formulation:')
+        for period in instance.periods:
+            for location in instance.locations:
+                print('y^{}{}{}_{}{}{} = {}'.format('{', period, '}', '{', location, '}', lprx_mip_variable['y'][period, location].x))
+        for period in instance.periods:
+            for customer in instance.customers:
+                print('w^{}{}{}_{}{}{}{} = {}'.format('{', period, '}', '{', customer, customer, '}', lprx_mip_variable['w'][period, customer, customer].x))
+        print('Reformulation #2:')
+        for period in instance.periods:
+            for location in instance.locations:
+                print('y^{}_{} = {}'.format(period, location, lprx_rf2_variable['y'][period, location].x))
+        print('yes')
+    else:
+        print('no')
+
+    print(record['mip_intgap'])
+    '''
 
 if __name__ == '__main__':
 
