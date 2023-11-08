@@ -113,13 +113,69 @@ def random_algorithm(instance):
 
     return best_solution, round(best_objective, 2)
 
+'''
 def fixing_algorithm(instance):
 
     # Create relaxation
     relax, variable = fm.build_linearized_lprx(instance)
 
-    # for location in reversed(instance.locations):
-    for location in instance.locations:
+    # Check integrality
+    integral = False
+
+    while not integral:
+
+        minimum_value = 1.
+        minimum_location = '0'
+        minimum_period = '0'
+
+        maximum_value = 0.
+        maximum_location = '0'
+        maximum_period = '0'
+
+        # Solve relaxation
+        relax.optimize()
+
+        # Parse solution
+        integral = True
+        for location in instance.locations:
+            for period in instance.periods:
+                value = variable['y'][period, location].x
+                # Check integrality
+                if not vd.is_equal(value, 0) and not vd.is_equal(value, 1):
+                    integral = False
+                    # Store closest to 0
+                    if value < minimum_value:
+                        minimum_value = value
+                        minimum_location = location
+                        minimum_period = period
+                    # Store closest to 1
+                    if value > maximum_value:
+                        maximum_value = value
+                        maximum_location = location
+                        maximum_period = period
+                    # print('Variable y^{}_{} = {}'.format(period, location, value))
+
+        # Fix variable
+        if not integral:
+            if abs(minimum_value - 0.) < abs(maximum_value - 1.):
+                # _ = input('Fixing y^{}_{} = 0 [{}]'.format(minimum_period, minimum_location, minimum_value))
+                relax.addConstr(variable['y'][minimum_period, minimum_location] == 0)
+            else:
+                #_ = input('Fixing y^{}_{} = 1 [{}]'.format(maximum_period, maximum_location, maximum_value))
+                relax.addConstr(variable['y'][maximum_period, maximum_location] == 1)
+
+    solution = fm.format_solution(instance, relax, variable)
+    objective = vd.evaluate_solution(instance, solution)
+
+    return solution, round(objective, 2)
+'''
+
+def fixing_algorithm(instance):
+
+    # Create relaxation
+    relax, variable = fm.build_linearized_lprx(instance)
+
+    for period in instance.periods:
 
         # Check integrality
         integral = False
@@ -127,15 +183,15 @@ def fixing_algorithm(instance):
         while not integral:
 
             minimum_value = 1.
-            minimum_period = '0'
+            minimum_location = '0'
             maximum_value = 0.
-            maximum_period = '0'
+            maximum_location = '0'
 
             # Solve relaxation
             relax.optimize()
 
             integral = True
-            for period in instance.periods:
+            for location in instance.locations:
                 value = variable['y'][period, location].x
                 # Check integrality
                 if not vd.is_equal(value, 0) and not vd.is_equal(value, 1):
@@ -143,20 +199,20 @@ def fixing_algorithm(instance):
                     # Store smallest
                     if value < minimum_value:
                         minimum_value = value
-                        minimum_period = period
+                        minimum_location = location
                     if value > maximum_value:
                         maximum_value = value
-                        maximum_period = period
+                        maximum_location = location
                     # print('Variable y^{}_{} = {}'.format(period, location, value))
 
             # Fix variable
             if not integral:
                 if abs(minimum_value - 0.) < abs(maximum_value - 1.):
                     # _ = input('Fixing y^{}_{} = 0 [{}]'.format(minimum_period, location, minimum_value))
-                    relax.addConstr(variable['y'][minimum_period, location] == 0)
+                    relax.addConstr(variable['y'][period, minimum_location] == 0)
                 else:
                     # _ = input('Fixing y^{}_{} = 1 [{}]'.format(minimum_period, location, minimum_value))
-                    relax.addConstr(variable['y'][maximum_period, location] == 1)
+                    relax.addConstr(variable['y'][period, maximum_location] == 1)
 
     solution = fm.format_solution(instance, relax, variable)
     objective = vd.evaluate_solution(instance, solution)
