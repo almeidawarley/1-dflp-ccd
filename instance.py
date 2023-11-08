@@ -546,15 +546,14 @@ class instance:
         print('Keyword: <{}>'.format(self.keyword))
 
         print('Customers: {}'.format(self.customers))
-        print('\t| j: a\tb\ts\t[L]\t(M)')
+        print('\t| j: a\tb\ts\t[L]')
         for customer in self.customers:
-            print('\t| {}: {}\t{}\t{}\t{}\t({})'.format(
+            print('\t| {}: {}\t{}\t{}\t{}'.format(
                 customer,
                 self.alphas[customer],
                 self.betas[customer],
                 self.starts[customer],
-                self.captured_locations(customer),
-                self.limits[customer]))
+                self.captured_locations(customer)))
 
         print('Locations: {}'.format(self.locations))
         for location in self.locations:
