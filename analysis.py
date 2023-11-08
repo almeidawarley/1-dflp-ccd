@@ -2,14 +2,12 @@ import pandas as pd
 
 content = pd.read_csv('experiments/paper1/summary.csv')
 
-benchmark = 'Homogeneous'
-# benchmark = 'Heterogeneous'
-
+content = content[content['locations'] != 30]
 # content = content[content['character'] == '{}'.format(benchmark.lower())]
 
 characteristics = {
     'project': ['paper1'],
-    'locations': [10, 30, 50],
+    'locations': [10, 50], #, 100],
     'periods': [5, 10],
     'patronizing': ['small', 'medium', 'large'],
     'rewards': ['identical', 'inversely'],
@@ -27,8 +25,8 @@ labels = {
     },
     'locations': {
         10: '10 locations/customers',
-        30: '30 locations/customers',
         50: '50 locations/customers',
+        100: '100 locations/customers',
     },
     'patronizing': {
         'small': 'Small patronizing',
@@ -256,7 +254,7 @@ def graph1(descriptor = 'paper'):
 
 
 table1('paper')
-table1('appendix')
+# table1('appendix')
 table2('paper')
 table3('paper')
 table4('paper')
