@@ -589,19 +589,8 @@ class instance:
 
         return [location for location in self.locations if self.catalogs[location][customer] == 1]
 
-    def partial_demand_1(self, lastly, current, customer):
-        # Compute phi function within formulations
-
-        lastly, current = int(lastly), int(current)
-
-        if current == len(self.periods) + 1:
-            exit('This should never happen!')
-        elif lastly == 0:
-            return self.starts[customer] +  current * self.betas[customer]
-        else:
-            return self.betas[customer] * (current - lastly)
-
     def partial_demand(self, lastly, current, customer):
+        # Compute phi function within formulations
 
         lastly, current = int(lastly), int(current)
 
@@ -615,6 +604,15 @@ class instance:
             if int(period) > lastly and int(period) <= current:
 
                 accumulated += self.alphas[customer] * accumulated + self.betas[customer]
+
+        '''
+        if current == len(self.periods) + 1:
+            exit('This should never happen!')
+        elif lastly == 0:
+            return self.starts[customer] +  current * self.betas[customer]
+        else:
+            return self.betas[customer] * (current - lastly)
+        '''
 
         return accumulated
 
