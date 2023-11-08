@@ -1,183 +1,263 @@
 import pandas as pd
 
-content = pd.read_csv('experiments/paper1-planA/summary.csv')
+content = pd.read_csv('experiments/paper1/summary.csv')
 
-dataset = 'Homogeneous'
-# dataset = 'Heterogeneous'
+benchmark = 'Homogeneous'
+# benchmark = 'Heterogeneous'
 
-content = content[content['character'] == '{}'.format(dataset.lower())]
+# content = content[content['character'] == '{}'.format(benchmark.lower())]
 
 characteristics = {
     'project': ['paper1'],
-    'periods': [5, 10, 20],
-    'patronizing': ['weak', 'medium', 'strong'],
+    'locations': [10, 30, 50],
+    'periods': [5, 10],
+    'patronizing': ['small', 'medium', 'large'],
     'rewards': ['identical', 'inversely'],
-    'replenishment': ['absolute', 'relative'],
     'character': ['homogeneous', 'heterogeneous'],
+    'replenishment': ['absolute', 'relative']
 }
 
 labels = {
-    'paper1': '{} dataset'.format(dataset),
-    5: '5 time periods',
-    10: '10 time periods',
-    20: '20 time periods',
-    'weak': 'Weak patronizing',
-    'medium': 'Medium patronizing',
-    'strong': 'Strong patronizing',
-    'identical': 'Identical rewards',
-    'inversely': 'Inversely rewards',
-    'absolute': 'Absolute replenishment',
-    'relative': 'Relative replenishment',
-    'homogeneous': 'Homogeneous customer',
-    'heterogeneous': 'Heterogeneous customer'
+    'project': {
+        'paper1': 'Complete benchmark'
+    },
+    'periods': {
+        5: '5 time periods',
+        10: '10 time periods',
+    },
+    'locations': {
+        10: '10 locations/customers',
+        30: '30 locations/customers',
+        50: '50 locations/customers',
+    },
+    'patronizing': {
+        'small': 'Small patronizing',
+        'medium': 'Medium patronizing',
+        'large': 'Large patronizing'
+    },
+    'rewards':{
+        'identical': 'Identical rewards',
+        'inversely': 'Inversely rewards'
+    },
+    'character': {
+        'homogeneous': 'Homogeneous customer',
+        'heterogeneous': 'Heterogeneous customer'
+    },
+    'replenishment': {
+        'absolute': 'Absolute replenishment',
+        'relative': 'Relative replenishment'
+    }
 }
 
-print('**************************************************************************************************')
+def table1(descriptor = 'paper'):
 
-for characteristic, values in characteristics.items():
+    for characteristic, values in characteristics.items():
 
-    for value in values:
+        for value in values:
 
-        filter = (content[characteristic] == value)
+            filter = (content[characteristic] == value)
 
-        columns = ['mip_intgap', 'cold_mip_runtime', 'warm_mip_runtime']
-
-        averages = {}
-        deviations = {}
-        maximums = {}
-
-        for column in columns:
-            averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1), 2)
-            deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1), 2)
-            # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1), 2)
-
-        count = len(content[filter].index)
-
-        print('{}&{}&{}{}{}'.
-        format(labels[value], count, '&'.join(['${}\pm{}\%$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
-
-    print('\\midrule')
-
-_ = input('table1')
-
-
-print('**************************************************************************************************')
-
-for characteristic, values in characteristics.items():
-
-    for value in values:
-
-        filter = (content[characteristic] == value)
-
-        columns = ['em2_optgap', 'rnd_optgap', 'frw_optgap']
-        columns = ['em1_optgap', 'em2_optgap', 'rnd_optgap', 'frw_optgap']
-
-        averages = {}
-        deviations = {}
-        maximums = {}
-
-        for column in columns:
-            averages[column] = round(content[filter][column].mean() * 100, 2)
-            deviations[column] = round(content[filter][column].std() * 100, 2)
-            # maximums[column] = round(content[filter][column].max() * 100, 2)
-
-        count = len(content[filter].index)
-
-        print('{}&{}&{}{}{}'.
-        format(labels[value], count, '&'.join(['${}\pm{}\%$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
-
-    print('\\midrule')
-
-_ = input('table2')
-
-print('**************************************************************************************************')
-
-for characteristic, values in characteristics.items():
-
-    for value in values:
-
-        filter = (content[characteristic] == value)
-
-        columns = ['frw_optgap', 'bcw_optgap', 'prg_optgap']
-
-        averages = {}
-        deviations = {}
-        maximums = {}
-
-        for column in columns:
-            averages[column] = round(content[filter][column].mean() * 100, 2)
-            deviations[column] = round(content[filter][column].std() * 100, 2)
-            # maximums[column] = round(content[filter][column].max() * 100, 2)
-
-        count = len(content[filter].index)
-
-        print('{}&{}&{}{}{}'.
-        format(labels[value], count, '&'.join(['${}\pm{}\%$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
-
-    print('\\midrule')
-
-_ = input('table3')
-
-print('**************************************************************************************************')
-
-filter = (content['project'] == 'paper1')
-
-methods = {
-    'rnd' : 'orange',
-    'frw' : 'red',
-    'bcw' : 'blue',
-    'prg' : 'olive',
-    'em2' : 'magenta',
-    'warm_mip' : 'gray'
-}
-
-with open ('coordinates.txt', 'w') as output:
-
-    output.write('\\begin{figure}[!ht]\n\centering\n')
-    output.write('\\begin{tikzpicture}[scale=.8 every node/.style={scale=.8}]\n')
-    output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
-    output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
-
-    output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-    output.write('\draw (10,0.5) node[anchor=mid] {optimality gap (\%)};\n')
-    output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
-
-    for x in range(1,11):
-        output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x, '{$', x * 10,'$}'))
-    for y in range(1,11):
-        output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
-
-
-    for method, color in methods.items():
-
-        prev_x = 0
-        prev_y = 0
-
-        for x in range(1,101):
-
-            if method == 'warm_mip':
-                prev_y = 100
-                y = 100
+            if descriptor == 'paper':
+                columns = ['mip_intgap', 'cold_mip_runtime']
+            elif descriptor == 'appendix':
+                columns = ['mip_intgap', 'cold_nlr_runtime', 'warm_nlr_runtime', 'warm_mip_runtime', 'cold_mip_runtime']
             else:
-                y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x/100)])/len(content[filter]))
-            output.write('\draw[color={}] ({},{})--({},{});'.format(color, prev_x/10, prev_y/10, x/10, y/10))
+                exit('Wrong descriptor for table 1')
 
-            prev_x = x
-            prev_y = y
+            averages = {}
+            deviations = {}
+            maximums = {}
 
-    output.write('\n')
+            for column in columns:
+                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1), 2)
+                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1), 2)
+                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1), 2)
 
-    output.write('\draw[color=gray!100] (10, 4) node[anchor=mid] {MIP reference};\n')
-    output.write('\draw[color=magenta!100] (10, 3.5) node[anchor=mid] {EML-$2$ heuristic};\n')
-    output.write('\draw[color=orange!100] (10, 3) node[anchor=mid] {RND heuristic};\n')
-    output.write('\draw[color=red!100] (10, 2.5) node[anchor=mid] {FRW heuristic};\n')
-    output.write('\draw[color=blue!100] (10, 2) node[anchor=mid] {BCW heuristic};\n')
-    output.write('\draw[color=olive!100] (10, 1.5) node[anchor=mid] {PRG heuristic};\n')
-    output.write('\draw (8.5,4.5)--(11.5,4.5)--(11.5,1)--(8.5,1)--(8.5,4.5);\n')
+            count = len(content[filter].index)
 
-    output.write('\end{tikzpicture}\n')
-    output.write('\caption{Performance comparison between proposed heuristics.}\n')
-    output.write('\label{fg:demand_growth}\n')
-    output.write('\end{figure}')
+            print('{}&{}&{}{}{}'.
+            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
-    print('Exported graph to coordinates.txt')
+        print('\\midrule')
+
+    _ = input('table1 {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
+def table2(descriptor = 'paper'):
+
+    for characteristic, values in characteristics.items():
+
+        for value in values:
+
+            filter = (content[characteristic] == value) & (content['replenishment'] == 'absolute')
+
+            if descriptor == 'paper':
+                columns = ['mip_intgap', 'rf2_intgap', 'cold_mip_runtime', 'cold_rf2_runtime']
+            else:
+                exit('Wrong descriptor for table 2')
+
+            averages = {}
+            deviations = {}
+            maximums = {}
+
+            for column in columns:
+                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1), 2)
+                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1), 2)
+                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1), 2)
+
+            count = len(content[filter].index)
+
+            print('{}&{}&{}{}{}'.
+            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+        print('\\midrule')
+
+    _ = input('table2 {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
+def table3(descriptor = 'paper'):
+
+    for characteristic, values in characteristics.items():
+
+        for value in values:
+
+            filter = (content[characteristic] == value)
+
+            if descriptor == 'paper':
+                columns = ['em1_optgap', 'em2_optgap', 'rnd_optgap', 'frw_optgap']
+            else:
+                exit('Wrong descriptor for table 3')
+
+            averages = {}
+            deviations = {}
+            maximums = {}
+
+            for column in columns:
+                averages[column] = round(content[filter][column].mean() * 100, 2)
+                deviations[column] = round(content[filter][column].std() * 100, 2)
+                # maximums[column] = round(content[filter][column].max() * 100, 2)
+
+            count = len(content[filter].index)
+
+            print('{}&{}&{}{}{}'.
+            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+        print('\\midrule')
+
+    _ = input('table3 {}'.format(descriptor))
+
+def table4(descriptor = 'paper'):
+
+    for characteristic, values in characteristics.items():
+
+        for value in values:
+
+            filter = (content[characteristic] == value)
+
+            if descriptor == 'paper':
+                columns = ['fix_optgap', 'frw_optgap', 'prg_optgap', 'bcw_optgap',]
+            else:
+                exit('Wrong descriptor for table 4')
+
+
+            averages = {}
+            deviations = {}
+            maximums = {}
+
+            for column in columns:
+                averages[column] = round(content[filter][column].mean() * 100, 2)
+                deviations[column] = round(content[filter][column].std() * 100, 2)
+                # maximums[column] = round(content[filter][column].max() * 100, 2)
+
+            count = len(content[filter].index)
+
+            print('{}&{}&{}{}{}'.
+            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+        print('\\midrule')
+
+    _ = input('table4 {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
+def graph1(descriptor = 'paper'):
+
+    methods = {
+        'rnd' : 'orange',
+        'frw' : 'red',
+        'bcw' : 'blue',
+        'prg' : 'olive',
+        'em1': 'pink',
+        'fix' : 'gray',
+        'em2' : 'magenta',
+        'warm_mip' : 'black'
+    }
+
+    for characteristic, values in characteristics.items():
+
+        for value in values:
+
+            # filter = (content['project'] == 'paper1')
+            filter = (content[characteristic] == value)
+
+            with open ('graphs/graph_{}_{}.tex'.format(characteristic, value), 'w') as output:
+
+                # output.write('\\begin{figure}[!ht]\n\centering\n')
+                output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
+                output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
+                output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
+
+                output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
+                output.write('\draw (10,0.5) node[anchor=mid] {optimality gap (\%)};\n')
+                output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
+
+                for x in range(1,11):
+                    output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x, '{$', x * 10,'$}'))
+                for y in range(1,11):
+                    output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
+
+
+                for method, color in methods.items():
+
+                    prev_x = 0
+                    prev_y = 0
+
+                    for x in range(1,101):
+
+                        if method == 'warm_mip':
+                            prev_y = 100
+                            y = 100
+                        else:
+                            y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x/100)])/len(content[filter]))
+                        output.write('\draw[color={}] ({},{})--({},{});'.format(color, prev_x/10, prev_y/10, x/10, y/10))
+
+                        prev_x = x
+                        prev_y = y
+
+                output.write('\n')
+
+                output.write('\draw[color=black!100] (10, 5.0) node[anchor=mid] {MIP};\n')
+                output.write('\draw[color=blue!100] (10, 4.5) node[anchor=mid] {BCW};\n')
+                output.write('\draw[color=olive!100] (10, 4.0) node[anchor=mid] {PRG};\n')
+                output.write('\draw[color=red!100] (10, 3.5) node[anchor=mid] {FRW};\n')
+                output.write('\draw[color=orange!100] (10, 3.0) node[anchor=mid] {RND};\n')
+                output.write('\draw[color=gray!100] (10, 2.5) node[anchor=mid] {FIX};\n')
+                output.write('\draw[color=magenta!100] (10, 2.0) node[anchor=mid] {EML-$2$};\n')
+                output.write('\draw[color=pink!100] (10, 1.5) node[anchor=mid] {EML-$1$};\n')
+                output.write('\draw (9,5.5)--(11,5.5)--(11,1.0)--(9,1.0)--(9,5.5);\n')
+
+                output.write('\end{tikzpicture}\n')
+                # output.write('\caption{}Performance overview in terms of optimality gap of proposed heuristics for {}.{}\n'.format('{', labels[characteristic][value].lower(), '}'))
+                # output.write('\end{figure}')
+
+                print('Exported graph to graphs/graph_{}_{}.tex'.format(characteristic, value))
+
+
+table1('paper')
+table1('appendix')
+table2('paper')
+table3('paper')
+table4('paper')
+graph1()
