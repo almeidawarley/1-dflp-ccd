@@ -2,12 +2,12 @@ import json as js
 import instance as ic
 
 features = {
-    'seed': [i for i in range(0, 20)],
-    'points': [10, 30, 50],
+    'seed': [i for i in range(0, 10)],
+    'points': [10, 50, 100],
     'periods': [5, 10],
     'patronizing': ['small', 'medium', 'large'],
     'rewards': ['identical', 'inversely'],
-    'replenishment': ['absolute', 'relative'], # mixed
+    'replenishment': ['absolute', 'relative', 'mixed'],
     'character': ['homogeneous', 'heterogeneous']
 }
 
