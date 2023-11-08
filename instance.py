@@ -260,13 +260,13 @@ class instance:
                     result = self.starts[customer]
                     for _ in self.periods:
                         result += alpha * result + beta
-                    return abs((self.starts[customer] + self.intensities[customer] * len(self.periods)) - result)
+                    return abs(2 * (self.starts[customer] + self.intensities[customer] * len(self.periods)) - result)
                 def minimize_combination():
-                    best_alpha = 0.01
-                    best_beta = 0.1
+                    best_alpha = .0
+                    best_beta = .0
                     best_value = 10**4
                     for alpha in range(1, 101):
-                        local_alpha = float(alpha/1000)
+                        local_alpha = float(alpha/100)
                         for beta in range(1, 11):
                             local_beta = float(beta)
                             value = evaluate_combination(local_alpha, local_beta)
@@ -589,7 +589,7 @@ class instance:
 
         return [location for location in self.locations if self.catalogs[location][customer] == 1]
 
-    def partial_demand(self, lastly, current, customer):
+    def partial_demand_1(self, lastly, current, customer):
         # Compute phi function within formulations
 
         lastly, current = int(lastly), int(current)
@@ -600,6 +600,23 @@ class instance:
             return self.starts[customer] +  current * self.betas[customer]
         else:
             return self.betas[customer] * (current - lastly)
+
+    def partial_demand(self, lastly, current, customer):
+
+        lastly, current = int(lastly), int(current)
+
+        accumulated = .0
+
+        if lastly == 0:
+            accumulated += self.starts[customer]
+
+        for period in self.periods:
+
+            if int(period) > lastly and int(period) <= current:
+
+                accumulated += self.alphas[customer] * accumulated + self.betas[customer]
+
+        return accumulated
 
     def is_identical_rewards(self):
         # Verify if rewards are identical or not
