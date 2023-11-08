@@ -14,6 +14,12 @@ def mark_section(title):
 def compute_gap(major, minor):
     return round((major - minor) / major, 4)
 
+def compare_obj(objective1, objective2, tolerance = 0.0001):
+    if objective1 < objective2:
+      objective1, objective2 = objective2, objective1
+    gap = compute_gap(objective1, objective2)
+    return gap <= tolerance
+
 def main():
 
     parser = ap.ArgumentParser(description = 'Run all approaches to solve the DSFLP-DAR for some instance')
@@ -205,10 +211,10 @@ def main():
     mark_section('Validating the solution of the DSFLP-DAR analytically...')
     reference = vd.evaluate_solution(instance, warm_mip_solution)
     record = rc.update_record(record, {
-        'warm_mip_check': vd.is_equal(warm_mip_objective, reference, 0.1),
-        'cold_mip_check': vd.is_equal(cold_mip_objective, reference, 0.1),
-        'warm_rf2_check': vd.is_equal(warm_rf2_objective, reference, 0.1),
-        'cold_rf2_check': vd.is_equal(cold_rf2_objective, reference, 0.1)
+        'warm_mip_check': compare_obj(warm_mip_objective, reference),
+        'cold_mip_check': compare_obj(cold_mip_objective, reference),
+        'warm_rf2_check': compare_obj(warm_rf2_objective, reference),
+        'cold_rf2_check': compare_obj(cold_rf2_objective, reference)
     })
 
     assert(record['warm_mip_check'] == True or record['warm_mip_status'] != 2)
