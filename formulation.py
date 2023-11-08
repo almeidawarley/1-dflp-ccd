@@ -3,6 +3,8 @@ import variables as vb
 import constraints as ct
 import validation as vd
 
+time_limit = 5 * 60 * 60
+
 def build_simplified_main(instance, method):
     # Build the MIP of the simplified DSFLP-DAR (i.e., DSFLP)
 
@@ -19,7 +21,7 @@ def build_simplified_main(instance, method):
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
     mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', 1 * 60 * 60)
+    mip.setParam('TimeLimit', time_limit)
 
     # Create main constraints
     ct.create_c1(instance, mip, variable)
@@ -63,7 +65,7 @@ def build_linearized_main(instance):
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
     mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', 10 * 60 * 60)
+    mip.setParam('TimeLimit', TIME_LIMIT)
 
     # Set objective function
     mip.setObjective(
@@ -118,7 +120,7 @@ def build_reformulated1_main(instance):
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
     mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', 10 * 60 * 60)
+    mip.setParam('TimeLimit', TIME_LIMIT)
 
     # WARNING: identical reward taken from first location at first period!
     # No problem if they are equal anyways, but only a heuristic if different
@@ -174,7 +176,7 @@ def build_reformulated2_main(instance):
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
     mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', 10 * 60 * 60)
+    mip.setParam('TimeLimit', TIME_LIMIT)
 
     # Set objective function
     mip.setObjective(
@@ -235,7 +237,7 @@ def build_nonlinear_main(instance):
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
     mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', 10 * 60 * 60)
+    mip.setParam('TimeLimit', TIME_LIMIT)
 
     # Set objective function
     mip.setObjective(
