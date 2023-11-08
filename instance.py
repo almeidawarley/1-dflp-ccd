@@ -31,15 +31,9 @@ class instance:
         elif '.cnf' in keyword:
             # Create 3SAT instance
             self.create_3sat()
-        elif 'rnd1' in keyword:
-            # Create RND1 instance
-            self.create_rnd1()
-        elif 'rnd2' in keyword:
-            # Create RND2 instance
-            self.create_rnd2()
         elif 'rnd' in keyword:
             # Create rnd-based instance
-            self.create_planB()
+            self.create_rnd()
         else:
             exit('Invalid instance keyword')
 
@@ -57,111 +51,6 @@ class instance:
         self.periods_with_end = [period for period in self.periods] + [str(len(self.periods) + 1)]
 
     def create_rnd(self, folder = 'instances/synthetic'):
-        # Create rnd-based instances
-
-        try:
-            # Read specifications from file
-            with open ('{}/{}.json'.format(folder, self.keyword), 'r') as content:
-                self.parameters = js.load(content)
-        except:
-            print('No file found for keyword {}'.format(self.keyword))
-
-        np.random.seed(self.parameters['seed'])
-
-        # Set instance information
-        number_locations = int(self.parameters['locations'])
-        number_customers = int(self.parameters['customers'])
-        number_periods = int(self.parameters['periods'])
-
-        self.locations = [str(i + 1) for i in range(number_locations)]
-        self.customers = [str(i + 1) for i in range(number_customers)]
-        self.periods = [str(i + 1) for i in range(number_periods)]
-
-        if self.parameters['patronizing'] == 'none':
-            patronizing = 0.00
-        elif self.parameters['patronizing'] == 'weak':
-            patronizing = 0.10
-        elif self.parameters['patronizing'] == 'medium':
-            patronizing = 0.30
-        elif self.parameters['patronizing'] == 'strong':
-            patronizing = 0.50
-        else:
-            exit('Wrong value for patronizing parameter')
-
-        consideration_size = int(np.ceil(patronizing * number_locations))
-
-        consideration_sets = {}
-        for customer in self.customers:
-            consideration_sets[customer] = np.random.choice(self.locations, consideration_size)
-
-        # Create catalogs
-        self.catalogs = {}
-        for location in self.locations:
-            self.catalogs[location] = {}
-            for customer in self.customers:
-                self.catalogs[location][customer] = 1. if location in consideration_sets[customer] or location == customer else 0.
-
-        # Create revenues
-        self.revenues = {}
-        for period in self.periods:
-            self.revenues[period] = {}
-            for location in self.locations:
-                popularity = sum([self.catalogs[location][customer] for customer in self.customers])
-                if self.parameters['rewards'] == 'identical':
-                    coefficient = 1.
-                elif self.parameters['rewards'] == 'inversely':
-                    coefficient = 1. / popularity
-                elif self.parameters['rewards'] == 'directly':
-                    coefficient = 1. - 1. / popularity
-                else:
-                    exit('Wrong value for rewards parameter')
-                self.revenues[period][location] = np.ceil(coefficient * 10)
-
-        # Create parameters
-        self.alphas = {}
-        self.betas = {}
-        self.starts = {}
-        self.intensities = {}
-
-        for customer in self.customers:
-            self.starts[customer] = 1 if self.parameters['character'] == 'homogeneous' else np.random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-            self.intensities[customer] = 1 if self.parameters['character'] == 'homogeneous' else np.random.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-            if self.parameters['replenishment'] == 'none':
-                self.alphas[customer] = 0
-                self.betas[customer] = 0
-            elif self.parameters['replenishment'] == 'absolute':
-                self.alphas[customer] = 0
-                self.betas[customer] = self.intensities[customer]
-            elif self.parameters['replenishment'] == 'relative':
-                self.alphas[customer] = round(((number_periods * self.intensities[customer] + self.starts[customer])/self.starts[customer])**(1. / number_periods) - 1, 2)
-                self.betas[customer] = 0
-            elif self.parameters['replenishment'] == 'mixed':
-                def evaluate_combination(alpha, beta):
-                    result = self.starts[customer]
-                    for _ in self.periods:
-                        result += alpha * result + beta
-                    return abs((self.starts[customer] + self.intensities[customer] * len(self.periods)) - result)
-                def minimize_combination():
-                    best_alpha = 0.01
-                    best_beta = 0.1
-                    best_value = 10**4
-                    for alpha in range(1, 101):
-                        local_alpha = float(alpha/1000)
-                        for beta in range(1, 11):
-                            local_beta = float(beta)
-                            value = evaluate_combination(local_alpha, local_beta)
-                            if value < best_value:
-                                best_value = value
-                                best_alpha = local_alpha
-                                best_beta = local_beta
-                    return best_alpha, best_beta
-                alpha, beta = minimize_combination()
-                self.alphas[customer] = alpha
-                self.betas[customer] = beta
-            else:
-                exit('Wrong value for replenishment parameter')
-
-    def create_planB(self, folder = 'instances/synthetic'):
         # Create rnd-based instances
 
         try:
@@ -216,7 +105,7 @@ class instance:
                     coefficient = 1. / popularity
                 else:
                     exit('Wrong value for rewards parameter')
-                self.revenues[period][location] = np.ceil(coefficient * 10)
+                self.revenues[period][location] = np.ceil(coefficient * len(self.locations))
 
         # Create parameters
         self.alphas = {}
@@ -342,111 +231,6 @@ class instance:
             self.starts[customer] = 1
             self.alphas[customer] = 0
             self.betas[customer] = 0
-
-    def create_rnd1(self):
-        # Create RND1 instance
-
-        '''
-            Previous key RND1 example could be fixed with a tie breaking rule.
-            Here are the configurations: S = 1, T = 4, I = J = 10, delta = 4 * beta
-        '''
-
-        seed = int(self.keyword.replace('rnd1', ''))
-        self.parameters['seed'] = seed
-
-        self.parameters['S'] = seed
-        self.parameters['T'] = 5
-        self.parameters['I'] = 10
-        self.parameters['J'] = 10
-
-        rd.seed(self.parameters['S'])
-
-        # Set instance size
-        number_locations = int(self.parameters['I'])
-        number_customers = int(self.parameters['J'])
-        number_periods = int(self.parameters['T'])
-
-        self.locations = [str(i + 1) for i in range(number_locations)]
-        self.customers = [str(i + 1) for i in range(number_customers)]
-        self.periods = [str(i + 1) for i in range(number_periods)]
-
-        # Create catalogs
-        self.catalogs = {}
-        for location in self.locations:
-            self.catalogs[location] = {}
-            for customer in self.customers:
-                self.catalogs[location][customer] = 1. if location == customer else 0.
-
-        # Create revenues
-        self.revenues = {}
-        for period in self.periods:
-            self.revenues[period] = {}
-            for location in self.locations:
-                self.revenues[period][location] = 1
-
-        # Handle customers
-        self.alphas = {}
-        self.betas = {}
-        self.starts = {}
-
-        for customer in self.customers:
-            self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
-            self.alphas[customer] = 0
-            self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
-
-    def create_rnd2(self):
-        # Create RND2 instance
-
-        seed = int(self.keyword.replace('rnd2', ''))
-        self.parameters['seed'] = seed
-
-        self.parameters['S'] = seed
-        try:
-            self.parameters['T']
-        except:
-            self.parameters['T'] = 3
-        self.parameters['I'] = 5
-        self.parameters['J'] = 5
-
-        rd.seed(self.parameters['S'])
-
-        # Set instance size
-        number_locations = int(self.parameters['I'])
-        number_customers = int(self.parameters['J'])
-        number_periods = int(self.parameters['T'])
-
-        self.locations = [str(i + 1) for i in range(number_locations)]
-        self.customers = [str(i + 1) for i in range(number_customers)]
-        self.periods = [str(i + 1) for i in range(number_periods)]
-
-        # Create catalogs
-        self.catalogs = {}
-        for location in self.locations:
-            self.catalogs[location] = {}
-            maximum = rd.sample([0.1 * self.parameters['J'], 0.3 * self.parameters['J'], 0.5 * self.parameters['J']], 1)[0]
-            assigned = 0
-            for customer in self.customers:
-                self.catalogs[location][customer] = 1. if location == customer else rd.sample([0.,1.], 1)[0]
-                assigned += self.catalogs[location][customer]
-                if location != customer and assigned > maximum:
-                    self.catalogs[location][customer] = 0.
-
-        # Create revenues
-        self.revenues = {}
-        for period in self.periods:
-            self.revenues[period] = {}
-            for location in self.locations:
-                self.revenues[period][location] = 1
-
-        # Handle customers
-        self.alphas = {}
-        self.betas = {}
-        self.starts = {}
-
-        for customer in self.customers:
-            self.starts[customer] = rd.sample([1,2,3,4,5,6,7,8,9,10], 1)[0]
-            self.alphas[customer] = 0
-            self.betas[customer] = rd.sample([0,1,2,3,4,5,7,8,9], 1)[0]
 
     '''
         Create instance used for approximation proof
@@ -595,22 +379,3 @@ class instance:
         '''
 
         return accumulated
-
-    def is_identical_rewards(self):
-        # Verify if rewards are identical or not
-
-        for period in self.periods:
-            for location in self.locations:
-                if self.revenues[period][location] != self.revenues[self.periods[0]][self.locations[0]]:
-                    return False
-
-        return True
-
-    def is_absolute_replenishment(self):
-        # Verify if there is no relative replenishment
-
-        for customer in self.customers:
-            if self.alphas[customer] != 0:
-                return False
-
-        return True
