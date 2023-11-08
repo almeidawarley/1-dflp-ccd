@@ -3,7 +3,7 @@ import variables as vb
 import constraints as ct
 import validation as vd
 
-time_limit = 5 * 60 * 60
+TIME_LIMIT = 5 * 60 * 60
 
 def build_simplified_main(instance, method):
     # Build the MIP of the simplified DSFLP-DAR (i.e., DSFLP)
@@ -21,7 +21,7 @@ def build_simplified_main(instance, method):
     # Turn off GUROBI logs
     # mip.setParam('OutputFlag', 0)
     mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', time_limit)
+    mip.setParam('TimeLimit', TIME_LIMIT)
 
     # Create main constraints
     ct.create_c1(instance, mip, variable)
