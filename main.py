@@ -39,6 +39,17 @@ def main():
         'rnd_runtime': round(end - start, 2)
     })
 
+    mark_section('Applying the fixing algorithm...')
+    start = tm.time()
+    fix_solution, fix_objective = hr.fixing_algorithm(instance)
+    end = tm.time()
+    print('Fixing solution: [{}] {}'.format(fix_objective, fix_solution))
+    record = rc.update_record(record, {
+        'fix_objective': fix_objective,
+        'fix_solution': '-'.join(fix_solution.values()),
+        'fix_runtime': round(end - start, 2)
+    })
+
     mark_section('Applying the forward (greedy) algorithm ...')
     start = tm.time()
     frw_solution, frw_objective = hr.forward_algorithm(instance)
@@ -72,13 +83,15 @@ def main():
         'prg_runtime': round(end - start, 2)
     })
 
-    warm_objective = max(rnd_objective, frw_objective, bcw_objective, prg_objective)
+    warm_objective = max(rnd_objective, frw_objective, bcw_objective, fix_objective, prg_objective)
     if warm_objective == rnd_objective:
         warm_solution = rnd_solution
     elif warm_objective == frw_objective:
         warm_solution = frw_solution
     elif warm_objective == bcw_objective:
         warm_solution = bcw_solution
+    elif warm_objective == fix_objective:
+        warm_solution = fix_solution
     elif warm_objective == prg_objective:
         warm_solution = prg_solution
     else:
@@ -185,6 +198,7 @@ def main():
         'rnd_optgap': compute_gap(warm_mip_objective, rnd_objective),
         'frw_optgap': compute_gap(warm_mip_objective, frw_objective),
         'bcw_optgap': compute_gap(warm_mip_objective, bcw_objective),
+        'fix_optgap': compute_gap(warm_mip_objective, fix_objective),
         'prg_optgap': compute_gap(warm_mip_objective, prg_objective)
     })
 
@@ -223,17 +237,20 @@ def main():
     print('>>> MIP objective: {}'.format(record['warm_mip_objective']))
     print('>>> FRW objective: {}'.format(record['frw_objective']))
     print('>>> BCW objective: {}'.format(record['bcw_objective']))
+    print('>>> FIX objective: {}'.format(record['fix_objective']))
     print('>>> PRG objective: {}'.format(record['prg_objective']))
 
     mark_section('Wrapping up the execution with the following optimality gaps...')
     print('>>> FRW optimality: {}'.format(record['frw_optgap']))
     print('>>> BCW optimality: {}'.format(record['bcw_optgap']))
+    print('>>> FIX optimality: {}'.format(record['fix_optgap']))
     print('>>> PRG optimality: {}'.format(record['prg_optgap']))
 
     mark_section('Wrapping up the execution with the following solutions...')
     print('>>> MIP solution: {}'.format('-'.join(warm_mip_solution.values())))
     print('>>> FRW solution: {}'.format('-'.join(frw_solution.values())))
     print('>>> BCW solution: {}'.format('-'.join(bcw_solution.values())))
+    print('>>> FIX solution: {}'.format('-'.join(fix_solution.values())))
     print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
 
     '''
