@@ -85,7 +85,6 @@ def build_linearized_main(instance):
     ct.create_c6B(instance, mip, variable)
     ct.create_c6C(instance, mip, variable)
     ct.create_c6D(instance, mip, variable)
-    ct.create_si(instance, mip, variable)
 
     return mip, variable
 
@@ -256,7 +255,6 @@ def build_nonlinear_main(instance):
     ct.create_c4_NL(instance, mip, variable)
     ct.create_c5(instance, mip, variable)
     ct.create_c6_NL(instance, mip, variable)
-    ct.create_si_NL(instance, mip, variable)
 
     return mip, variable
 

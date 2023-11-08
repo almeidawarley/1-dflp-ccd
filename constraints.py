@@ -73,28 +73,28 @@ def create_c6_NL(instance, mip, variable):
 def create_c6A(instance, mip, variable):
     # Create constraint 6, part A, linearized
 
-    mip.addConstrs((variable['w'][period, location, customer] <= instance.limits[customer] * instance.catalogs[location][customer] * variable['y'][period, location] for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c6A')
+    mip.addConstrs((variable['w'][period, location, customer] <= instance.limits[period][customer] * instance.catalogs[location][customer] * variable['y'][period, location] for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c6A')
 
 # ---------------------------------------------------------------------------
 
 def create_c6B(instance, mip, variable):
     # Create constraint 6, part B, linearized
 
-    mip.addConstrs((variable['w'][period, location, customer] <= variable['d1'][period, customer] + instance.limits[customer] * (1 - instance.catalogs[location][customer] * variable['y'][period, location]) for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c6B')
+    mip.addConstrs((variable['w'][period, location, customer] <= variable['d1'][period, customer] + instance.limits[period][customer] * (1 - instance.catalogs[location][customer] * variable['y'][period, location]) for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c6B')
 
 # ---------------------------------------------------------------------------
 
 def create_c6C(instance, mip, variable):
     # Create constraint 6, part C, linearized
 
-    mip.addConstrs((variable['w'][period, location, customer] >=  -1 * instance.limits[customer] * instance.catalogs[location][customer] * variable['y'][period, location] for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c6C')
+    mip.addConstrs((variable['w'][period, location, customer] >=  -1 * instance.limits[period][customer] * instance.catalogs[location][customer] * variable['y'][period, location] for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c6C')
 
 # ---------------------------------------------------------------------------
 
 def create_c6D(instance, mip, variable):
     # Create constraint 6, part D, linearized
 
-    mip.addConstrs((variable['w'][period, location, customer] >= variable['d1'][period, customer] - 1 * instance.limits[customer] * (1 - instance.catalogs[location][customer] * variable['y'][period, location]) for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c6D')
+    mip.addConstrs((variable['w'][period, location, customer] >= variable['d1'][period, customer] - 1 * instance.limits[period][customer] * (1 - instance.catalogs[location][customer] * variable['y'][period, location]) for period in instance.periods for location in instance.locations for customer in instance.customers), name = 'c6D')
 
 # ---------------------------------------------------------------------------
 
@@ -137,17 +137,3 @@ def create_c12(instance, mip, variable):
     # Create constraint 12
 
     mip.addConstrs((variable['z'].sum('*', str(len(instance.periods) + 1), '*', customer) == 1 for customer in instance.customers), name = 'c12')
-
-# ---------------------------------------------------------------------------
-
-def create_si(instance, mip, variable):
-    # Create strong inequality
-
-    mip.addConstrs((variable['w'].sum(period, '*', '*') <= instance.frontiers[period] for period in instance.periods), name = 'si')
-
-# ---------------------------------------------------------------------------
-
-def create_si_NL(instance, mip, variable):
-    # Create strong inequality, nonlinear
-
-    mip.addConstrs((variable['w'].sum(period, '*') <= instance.frontiers[period] for period in instance.periods), name = 'si')

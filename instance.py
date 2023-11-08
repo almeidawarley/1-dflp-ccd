@@ -45,30 +45,11 @@ class instance:
 
         # Set proper big M values
         self.limits = {}
-        for customer in self.customers:
-            limit = self.starts[customer]
-            for _ in self.periods:
-                limit = (1 + self.alphas[customer]) * limit + self.betas[customer]
-            self.limits[customer] = np.ceil(limit)
-
-        # Set proper big M values (2nd)
-        cumulatives = {}
-        for customer in self.customers:
-            cumulatives[customer] = {}
-            limit = self.starts[customer]
-            for period in self.periods:
-                limit = (1 + self.alphas[customer]) * limit + self.betas[customer]
-                cumulatives[customer][period] = limit
-
-        self.frontiers = {}
         for period in self.periods:
-            self.frontiers[period] = 0.
-            for location in self.locations:
-                frontier = 0.
-                for customer in self.customers:
-                    frontier += self.catalogs[location][customer] * cumulatives[customer][period]
-                if frontier > self.frontiers[period]:
-                    self.frontiers[period] = frontier
+            self.limits[period] = {}
+            for customer in self.customers:
+                limit = self.partial_demand('0', period, customer)
+                self.limits[period][customer] = np.ceil(limit)
 
         # Set start and end periods
 
