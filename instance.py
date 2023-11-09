@@ -404,13 +404,4 @@ class instance:
 
                 accumulated += self.alphas[customer] * accumulated + self.betas[customer]
 
-        '''
-        if current == len(self.periods) + 1:
-            exit('This should never happen!')
-        elif lastly == 0:
-            return self.starts[customer] +  current * self.betas[customer]
-        else:
-            return self.betas[customer] * (current - lastly)
-        '''
-
-        return round(accumulated, 3)
+        return round(accumulated, 4)
