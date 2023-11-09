@@ -28,6 +28,9 @@ class instance:
         elif keyword == 'spp':
             # Create SPP instance
             self.create_spp()
+        elif keyword == 'proof':
+            # Create proof instance
+            self.create_proof()
         elif '.cnf' in keyword:
             # Create 3SAT instance
             self.create_3sat()
@@ -181,6 +184,39 @@ class instance:
         for customer in self.customers:
             self.alphas[customer] = 0
             self.betas[customer] = 0
+            self.starts[customer] = 1
+
+    def create_proof(self, K = 2):
+        # Create proof instance
+
+        elements = ['1', '2']
+        collections = [['1'], ['2'], ['1', '2']]
+
+        self.locations = [str(i + 1) for i in range(0, len(collections))]
+        self.customers = [e for e in elements]
+        self.periods = [str(i + 1) for i in range(0, K)]
+
+        self.catalogs = {}
+        for location in self.locations:
+            self.catalogs[location] = {}
+            for customer in self.customers:
+                self.catalogs[location][customer] = 1. if customer in collections[int(location)-1] else 0.
+
+        self.revenues = {}
+        for period in self.periods:
+            self.revenues[period] = {}
+            for location in self.locations:
+                self.revenues[period][location] =  1/len(collections[int(location)-1])
+                if location == '3':
+                    # Avoid ambiguity for heuristic
+                    self.revenues[period][location] = 0.51
+
+        self.alphas = {}
+        self.betas = {}
+        self.starts = {}
+        for customer in self.customers:
+            self.alphas[customer] = 0
+            self.betas[customer] = 1
             self.starts[customer] = 1
 
     def create_3sat(self, folder = 'instances/3sat'):
