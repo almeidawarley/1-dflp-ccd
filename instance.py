@@ -377,4 +377,4 @@ class instance:
             return self.betas[customer] * (current - lastly)
         '''
 
-        return round(accumulated, 2)
+        return round(accumulated, 3)
