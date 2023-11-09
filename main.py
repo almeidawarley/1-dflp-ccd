@@ -115,7 +115,7 @@ def main():
 
     mark_section('Solving the LPRX of the DSFLP-DAR model...')
     lprx_mip, lprx_mip_variable = fm.build_linearized_lprx(instance)
-    lprx_mip.write('archives/{}-lprx_mip.lp'.format(instance.keyword))
+    # lprx_mip.write('archives/{}-lprx_mip.lp'.format(instance.keyword))
     lprx_mip.optimize()
     lprx_mip_objective = round(lprx_mip.objVal, 2)
     lprx_mip_runtime = round(lprx_mip.runtime, 2)
@@ -125,8 +125,6 @@ def main():
         'lprx_mip_runtime': lprx_mip_runtime,
         'lprx_mip_status': lprx_mip.status
     })
-
-    _ = input('wait...')
 
     mark_section('Solving cold MIP of the DSFLP-DAR model...')
     # cold_mip.write('archives/{}-cold_mip.lp'.format(instance.keyword))
