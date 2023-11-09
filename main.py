@@ -117,6 +117,7 @@ def main():
     lprx_mip, lprx_mip_variable = fm.build_linearized_lprx(instance)
     # lprx_mip.write('archives/{}-lprx_mip.lp'.format(instance.keyword))
     lprx_mip.optimize()
+    # lprx_mip.write('archives/{}-lprx_mip.sol'.format(instance.keyword))
     lprx_mip_objective = round(lprx_mip.objVal, 2)
     lprx_mip_runtime = round(lprx_mip.runtime, 2)
     print('Optimal LPRX MIP solution: [{}] no interpretable solution'.format(round(lprx_mip.objVal, 2)))
@@ -125,6 +126,8 @@ def main():
         'lprx_mip_runtime': lprx_mip_runtime,
         'lprx_mip_status': lprx_mip.status
     })
+
+    # _ = input('wait...')
 
     mark_section('Solving cold MIP of the DSFLP-DAR model...')
     # cold_mip.write('archives/{}-cold_mip.lp'.format(instance.keyword))
@@ -161,6 +164,7 @@ def main():
     lprx_rf2, lprx_rf2_variable = fm.build_reformulated2_lprx(instance)
     # lprx_rf2.write('archives/{}-lprx_rf2.lp'.format(instance.keyword))
     lprx_rf2.optimize()
+    # lprx_rf2.write('archives/{}-lprx_rf2.sol'.format(instance.keyword))
     lprx_rf2_objective = round(lprx_rf2.objVal, 2)
     lprx_rf2_runtime = round(lprx_rf2.runtime, 2)
     print('Optimal LPRX R2 solution: [{}] no interpretable solution'.format(round(lprx_rf2.objVal, 2)))
@@ -169,6 +173,8 @@ def main():
         'lprx_rf2_runtime': lprx_rf2_runtime,
         'lprx_rf2_status': lprx_rf2.status
     })
+
+    # _ = input('wait...')
 
     mark_section('Solving cold MIP of the DSFLP-DAR-R2 model...')
     # cold_rf2.write('archives/{}-cold_rf2.lp'.format(instance.keyword))
@@ -262,18 +268,17 @@ def main():
     })
 
     mark_section('Validating the solution of the DSFLP-DAR analytically...')
-    reference = vd.evaluate_solution(instance, warm_mip_solution)
     record = rc.update_record(record, {
-        'warm_mip_check': compare_obj(warm_mip_objective, reference),
-        'cold_mip_check': compare_obj(cold_mip_objective, reference),
-        'warm_rf2_check': compare_obj(warm_rf2_objective, reference),
-        'cold_rf2_check': compare_obj(cold_rf2_objective, reference)
+        'warm_mip_check': compare_obj(warm_mip_objective, vd.evaluate_solution(instance, warm_mip_solution)),
+        'cold_mip_check': compare_obj(cold_mip_objective, vd.evaluate_solution(instance, cold_mip_solution)),
+        'warm_rf2_check': compare_obj(warm_rf2_objective, vd.evaluate_solution(instance, warm_rf2_solution)),
+        'cold_rf2_check': compare_obj(cold_rf2_objective, vd.evaluate_solution(instance, cold_rf2_solution))
     })
 
-    assert(record['warm_mip_check'] == True or record['warm_mip_status'] != 2)
-    assert(record['cold_mip_check'] == True or record['cold_mip_status'] != 2)
-    assert(record['warm_rf2_check'] == True or record['warm_rf2_status'] != 2)
-    assert(record['cold_rf2_check'] == True or record['cold_rf2_status'] != 2)
+    assert(record['warm_mip_check'] == True)
+    assert(record['cold_mip_check'] == True)
+    assert(record['warm_rf2_check'] == True)
+    assert(record['cold_rf2_check'] == True)
 
     for method in ['1', '2']:
 
