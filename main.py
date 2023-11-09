@@ -45,6 +45,7 @@ def main():
         'rnd_runtime': round(end - start, 2)
     })
 
+    '''
     mark_section('Applying the fixing algorithm...')
     start = tm.time()
     fix_solution, fix_objective = hr.fixing_algorithm(instance)
@@ -55,6 +56,7 @@ def main():
         'fix_solution': '-'.join(fix_solution.values()),
         'fix_runtime': round(end - start, 2)
     })
+    '''
 
     mark_section('Applying the forward (greedy) algorithm ...')
     start = tm.time()
@@ -89,15 +91,15 @@ def main():
         'prg_runtime': round(end - start, 2)
     })
 
-    warm_objective = max(rnd_objective, frw_objective, bcw_objective, fix_objective, prg_objective)
+    warm_objective = max(rnd_objective, frw_objective, bcw_objective, prg_objective) #fix_objective, prg_objective)
     if warm_objective == rnd_objective:
         warm_solution = rnd_solution
     elif warm_objective == frw_objective:
         warm_solution = frw_solution
     elif warm_objective == bcw_objective:
         warm_solution = bcw_solution
-    elif warm_objective == fix_objective:
-        warm_solution = fix_solution
+    #elif warm_objective == fix_objective:
+    #    warm_solution = fix_solution
     elif warm_objective == prg_objective:
         warm_solution = prg_solution
     else:
@@ -108,10 +110,12 @@ def main():
     cold_mip, cold_mip_variable = fm.build_linearized_main(instance)
     warm_rf2, warm_rf2_variable = fm.build_reformulated2_main(instance)
     cold_rf2, cold_rf2_variable = fm.build_reformulated2_main(instance)
+    # warm_rf3, warm_rf3_variable = fm.build_reformulated3_main(instance)
+    # cold_rf3, cold_rf3_variable = fm.build_reformulated3_main(instance)
 
     mark_section('Solving the LPRX of the DSFLP-DAR model...')
     lprx_mip, lprx_mip_variable = fm.build_linearized_lprx(instance)
-    # lprx_mip.write('archives/{}-lprx_mip.lp'.format(instance.keyword))
+    lprx_mip.write('archives/{}-lprx_mip.lp'.format(instance.keyword))
     lprx_mip.optimize()
     lprx_mip_objective = round(lprx_mip.objVal, 2)
     lprx_mip_runtime = round(lprx_mip.runtime, 2)
@@ -121,6 +125,8 @@ def main():
         'lprx_mip_runtime': lprx_mip_runtime,
         'lprx_mip_status': lprx_mip.status
     })
+
+    _ = input('wait...')
 
     mark_section('Solving cold MIP of the DSFLP-DAR model...')
     # cold_mip.write('archives/{}-cold_mip.lp'.format(instance.keyword))
@@ -198,13 +204,62 @@ def main():
         'warm_rf2_optgap': warm_rf2.MIPGap
     })
 
+    '''
+    mark_section('Solving the LPRX of the DSFLP-DAR-R3 model...')
+    lprx_rf3, lprx_rf3_variable = fm.build_reformulated3_lprx(instance)
+    # lprx_rf3.write('archives/{}-lprx_rf3.lp'.format(instance.keyword))
+    lprx_rf3.optimize()
+    lprx_rf3.write('archives/{}-lprx_rf3.sol'.format(instance.keyword))
+    lprx_rf3_objective = round(lprx_rf3.objVal, 2)
+    lprx_rf3_runtime = round(lprx_rf3.runtime, 2)
+    print('Optimal LPRX R3 solution: [{}] no interpretable solution'.format(round(lprx_rf3.objVal, 2)))
+    record = rc.update_record(record, {
+        'lprx_rf3_objective': lprx_rf3_objective,
+        'lprx_rf3_runtime': lprx_rf3_runtime,
+        'lprx_rf3_status': lprx_rf3.status
+    })
+
+    mark_section('Solving cold MIP of the DSFLP-DAR-R3 model...')
+    # cold_rf3.write('archives/{}-cold_rf3.lp'.format(instance.keyword))
+    cold_rf3.optimize()
+    cold_rf3_solution = fm.format_solution(instance, cold_rf3, cold_rf3_variable)
+    cold_rf3_objective = round(cold_rf3.objVal, 2)
+    cold_rf3_runtime = round(cold_rf3.runtime, 2)
+    print('Optimal cold RF3 solution: [{}] {}'.format(cold_rf3_objective, cold_rf3_solution))
+    record = rc.update_record(record,{
+        'cold_rf3_objective': cold_rf3_objective,
+        'cold_rf3_solution': '-'.join(cold_rf3_solution.values()),
+        'cold_rf3_runtime': cold_rf3_runtime,
+        'cold_rf3_status': cold_rf3.status,
+        'cold_rf3_optgap': cold_rf3.MIPGap
+    })
+
+    fm.warm_start(instance, warm_rf3_variable, warm_solution)
+
+    mark_section('Solving warm MIP of the DSFLP-DAR-R3 model...')
+    # warm_rf3.write('archives/{}-warm_rf3.lp'.format(instance.keyword))
+    warm_rf3.optimize()
+    warm_rf3.write('archives/{}-warm_rf3.sol'.format(instance.keyword))
+    warm_rf3_solution = fm.format_solution(instance, warm_rf3, warm_rf3_variable)
+    warm_rf3_objective = round(warm_rf3.objVal, 2)
+    warm_rf3_runtime = round(warm_rf3.runtime, 2)
+    print('Optimal warm RF3 solution: [{}] {}'.format(warm_rf3_objective, warm_rf3_solution))
+    record = rc.update_record(record,{
+        'warm_rf3_objective': warm_rf3_objective,
+        'warm_rf3_solution': '-'.join(warm_rf3_solution.values()),
+        'warm_rf3_runtime': warm_rf3_runtime,
+        'warm_rf3_status': warm_rf3.status,
+        'warm_rf3_optgap': warm_rf3.MIPGap
+    })
+    '''
+
     record = rc.update_record(record, {
         'rf2_intgap': compute_gap(lprx_rf2_objective, cold_rf2_objective),
         'mip_intgap': compute_gap(lprx_mip_objective, warm_mip_objective),
         'rnd_optgap': compute_gap(warm_mip_objective, rnd_objective),
         'frw_optgap': compute_gap(warm_mip_objective, frw_objective),
         'bcw_optgap': compute_gap(warm_mip_objective, bcw_objective),
-        'fix_optgap': compute_gap(warm_mip_objective, fix_objective),
+        #'fix_optgap': compute_gap(warm_mip_objective, fix_objective),
         'prg_optgap': compute_gap(warm_mip_objective, prg_objective)
     })
 
@@ -243,41 +298,21 @@ def main():
     print('>>> MIP objective: {}'.format(record['warm_mip_objective']))
     print('>>> FRW objective: {}'.format(record['frw_objective']))
     print('>>> BCW objective: {}'.format(record['bcw_objective']))
-    print('>>> FIX objective: {}'.format(record['fix_objective']))
+    # print('>>> FIX objective: {}'.format(record['fix_objective']))
     print('>>> PRG objective: {}'.format(record['prg_objective']))
 
     mark_section('Wrapping up the execution with the following optimality gaps...')
     print('>>> FRW optimality: {}'.format(record['frw_optgap']))
     print('>>> BCW optimality: {}'.format(record['bcw_optgap']))
-    print('>>> FIX optimality: {}'.format(record['fix_optgap']))
+    # print('>>> FIX optimality: {}'.format(record['fix_optgap']))
     print('>>> PRG optimality: {}'.format(record['prg_optgap']))
 
     mark_section('Wrapping up the execution with the following solutions...')
     print('>>> MIP solution: {}'.format('-'.join(warm_mip_solution.values())))
     print('>>> FRW solution: {}'.format('-'.join(frw_solution.values())))
     print('>>> BCW solution: {}'.format('-'.join(bcw_solution.values())))
-    print('>>> FIX solution: {}'.format('-'.join(fix_solution.values())))
+    # print('>>> FIX solution: {}'.format('-'.join(fix_solution.values())))
     print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
-
-    '''
-    if record['rf2_intgap'] < record['mip_intgap']:
-        print('Main formulation:')
-        for period in instance.periods:
-            for location in instance.locations:
-                print('y^{}{}{}_{}{}{} = {}'.format('{', period, '}', '{', location, '}', lprx_mip_variable['y'][period, location].x))
-        for period in instance.periods:
-            for customer in instance.customers:
-                print('w^{}{}{}_{}{}{}{} = {}'.format('{', period, '}', '{', customer, customer, '}', lprx_mip_variable['w'][period, customer, customer].x))
-        print('Reformulation #2:')
-        for period in instance.periods:
-            for location in instance.locations:
-                print('y^{}_{} = {}'.format(period, location, lprx_rf2_variable['y'][period, location].x))
-        print('yes')
-    else:
-        print('no')
-
-    print(record['mip_intgap'])
-    '''
 
 if __name__ == '__main__':
 

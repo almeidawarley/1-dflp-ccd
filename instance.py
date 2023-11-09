@@ -46,7 +46,6 @@ class instance:
                 self.limits[period][customer] = np.ceil(limit)
 
         # Set start and end periods
-
         self.periods_with_start = ['0'] + [period for period in self.periods]
         self.periods_with_end = [period for period in self.periods] + [str(len(self.periods) + 1)]
 

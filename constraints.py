@@ -66,7 +66,7 @@ def create_c5(instance, mip, variable):
 def create_c6_NL(instance, mip, variable):
     # Create constraint 6, nonlinear
 
-    mip.addConstrs((variable['w'][period, customer] == sum([variable['y'][period, location] * instance.catalogs[location][customer] for location in instance.locations]) * variable['d1'][period, customer] for period in instance.periods for customer in instance.customers), name = 'c6')
+    mip.addConstrs((variable['w'][period, customer] == sum(variable['y'][period, location] * instance.catalogs[location][customer] for location in instance.locations) * variable['d1'][period, customer] for period in instance.periods for customer in instance.customers), name = 'c6')
 
 # ---------------------------------------------------------------------------
 
@@ -137,3 +137,33 @@ def create_c12(instance, mip, variable):
     # Create constraint 12
 
     mip.addConstrs((variable['z'].sum('*', str(len(instance.periods) + 1), '*', customer) == 1 for customer in instance.customers), name = 'c12')
+
+# ---------------------------------------------------------------------------
+
+def create_c13(instance, mip, variable):
+    # Create constraint 13
+
+    mip.addConstrs((sum(variable['y'][period2, location] * instance.catalogs[location][customer] for location in instance.locations) == sum(variable['z'][period1, period2, customer] for period1 in instance.periods_with_start if is_before(period1, period2)) for period2 in instance.periods for customer in instance.customers), name = 'c13a')
+    mip.addConstrs((variable['w'][period2, location, customer] <= sum(variable['z'][period1, period2, customer] * instance.partial_demand(period1, period2, customer) for period1 in instance.periods_with_start if is_before(period1, period2)) for period2 in instance.periods for location in instance.locations for customer in instance.customers), name = 'c13b')
+    mip.addConstrs((variable['w'][period2, location, customer] <= instance.partial_demand('0', period2, customer) * instance.catalogs[location][customer] * variable['y'][period2, location] for period2 in instance.periods for location in instance.locations for customer in instance.customers), name = 'c13c')
+
+# ---------------------------------------------------------------------------
+
+def create_c14(instance, mip, variable):
+    # Create constraint 14
+
+    mip.addConstrs((sum(variable['z'][period1, period2, customer] for period1 in instance.periods_with_start if is_before(period1, period2)) == sum(variable['z'][period2, period1, customer] for period1 in instance.periods_with_end if is_after(period1, period2)) for period2 in instance.periods for customer in instance.customers), name = 'c14')
+
+# ---------------------------------------------------------------------------
+
+def create_c15(instance, mip, variable):
+    # Create constraint 15
+
+    mip.addConstrs((variable['z'].sum('0', '*', customer) == 1 for customer in instance.customers), name = 'c15')
+
+# ---------------------------------------------------------------------------
+
+def create_c16(instance, mip, variable):
+    # Create constraint 16
+
+    mip.addConstrs((variable['z'].sum('*', str(len(instance.periods) + 1), customer) == 1 for customer in instance.customers), name = 'c16')

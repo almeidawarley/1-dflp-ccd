@@ -215,6 +215,63 @@ def build_reformulated2_lprx(instance):
 
     return mip, variable
 
+def build_reformulated3_main(instance):
+    # Build the MIP of the reformulated DSFLP-DAR #3
+
+    mip = gp.Model('DSFLP-DAR-R2')
+
+    # Create decision variables
+    variable = {
+        # Main decision variables
+        'y': vb.create_vry(instance, mip),
+        'z': vb.create_vrz_3(instance, mip),
+        'w': vb.create_vrw(instance, mip)
+    }
+
+    # Maximize the total revenue
+    mip.setAttr('ModelSense', -1)
+
+    # Turn off GUROBI logs
+    # mip.setParam('OutputFlag', 0)
+    mip.setParam('Threads', 1)
+    mip.setParam('TimeLimit', TIME_LIMIT)
+
+    # Set objective function
+    # Warning: update accordingly
+    mip.setObjective(
+        sum([instance.revenues[period][location] *
+         variable['w'][period, location, customer]
+         for period in instance.periods
+         for location in instance.locations
+         for customer in instance.customers]))
+
+    # Create main constraints
+    ct.create_c1(instance, mip, variable)
+    ct.create_c13(instance, mip, variable)
+    ct.create_c14(instance, mip, variable)
+    ct.create_c15(instance, mip, variable)
+    ct.create_c16(instance, mip, variable)
+
+    return mip, variable
+
+def build_reformulated3_lprx(instance):
+    # Build the LPRX of the reformulated DSFLP-DAR #3
+
+    mip, variable = build_reformulated3_main(instance)
+
+    for period in instance.periods:
+        for location in instance.locations:
+            variable['y'][period, location].vtype = 'C'
+
+    for period1 in instance.periods_with_start:
+        for period2 in instance.periods_with_end:
+            for customer in instance.customers:
+                variable['z'][period1, period2, customer].vtype = 'C'
+
+    # mip.setParam('OutputFlag', 0)
+
+    return mip, variable
+
 def build_nonlinear_main(instance):
     # Build the MIP of the nonlinear DSFLP-DAR
 
