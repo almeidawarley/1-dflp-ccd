@@ -300,6 +300,7 @@ def main():
 
     mark_section('Wrapping up the execution with the following objectives...')
     print('>>> MIP objective: {}'.format(record['warm_mip_objective']))
+    print('>>> RF2 objective: {}'.format(record['warm_rf2_objective']))
     print('>>> FRW objective: {}'.format(record['frw_objective']))
     print('>>> BCW objective: {}'.format(record['bcw_objective']))
     # print('>>> FIX objective: {}'.format(record['fix_objective']))
@@ -313,6 +314,7 @@ def main():
 
     mark_section('Wrapping up the execution with the following solutions...')
     print('>>> MIP solution: {}'.format('-'.join(warm_mip_solution.values())))
+    print('>>> RF2 solution: {}'.format('-'.join(warm_rf2_solution.values())))
     print('>>> FRW solution: {}'.format('-'.join(frw_solution.values())))
     print('>>> BCW solution: {}'.format('-'.join(bcw_solution.values())))
     # print('>>> FIX solution: {}'.format('-'.join(fix_solution.values())))
