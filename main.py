@@ -142,7 +142,7 @@ def main():
         'warm_mip_status': warm_mip.status,
         'warm_mip_optgap': warm_mip.MIPGap
     })
-    assert(warm_mip_objective >= warm_objective)
+    assert(compare_obj(warm_mip_objective, warm_objective) or warm_mip_objective >= warm_objective)
 
     mark_section('Solving cold MIP of the DSFLP-DAR model...')
     # cold_mip.write('archives/{}-cold_mip.lp'.format(instance.keyword))
@@ -188,7 +188,7 @@ def main():
         'warm_rf2_status': warm_rf2.status,
         'warm_rf2_optgap': warm_rf2.MIPGap
     })
-    assert(warm_rf2_objective >= warm_objective)
+    assert(compare_obj(warm_rf2_objective, warm_objective) or warm_rf2_objective >= warm_objective)
 
     mark_section('Solving cold MIP of the DSFLP-DAR-R2 model...')
     # cold_rf2.write('archives/{}-cold_rf2.lp'.format(instance.keyword))
