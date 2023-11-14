@@ -1,18 +1,21 @@
 import pandas as pd
+import main as mn
 
 content = pd.read_csv('experiments/paper1/summary.csv')
 
-content = content[content['locations'] != 30]
-# content = content[content['character'] == '{}'.format(benchmark.lower())]
+content['cold_mip_optimal'] = content.apply(lambda row: mn.compare_obj(row['upper_bound'], row['cold_mip_objective']) and (row['cold_mip_status'] == 2 or row['warm_mip_status'] == 2 or row['warm_rf2_status'] == 2 or row['cold_rf2_status'] == 2), axis = 1)
+content['cold_rf2_optimal'] = content.apply(lambda row: mn.compare_obj(row['upper_bound'], row['cold_rf2_objective']) and (row['cold_mip_status'] == 2 or row['warm_mip_status'] == 2 or row['warm_rf2_status'] == 2 or row['cold_rf2_status'] == 2), axis = 1)
+
+# content.to_csv('debugging.csv')
 
 characteristics = {
     'project': ['paper1'],
-    'locations': [10, 50], #, 100],
+    'locations': [10, 50, 100],
     'periods': [5, 10],
     'patronizing': ['small', 'medium', 'large'],
     'rewards': ['identical', 'inversely'],
     'character': ['homogeneous', 'heterogeneous'],
-    'replenishment': ['absolute', 'relative']
+    'replenishment': ['absolute', 'relative', 'mixed']
 }
 
 labels = {
@@ -43,7 +46,8 @@ labels = {
     },
     'replenishment': {
         'absolute': 'Absolute replenishment',
-        'relative': 'Relative replenishment'
+        'relative': 'Relative replenishment',
+        'mixed': 'Mixed replenishment'
     }
 }
 
@@ -53,23 +57,21 @@ def table1(descriptor = 'paper'):
 
         for value in values:
 
-            filter = (content[characteristic] == value)
+            filter = (content[characteristic] == value) & (content['cold_mip_optimal'] == True) & (content['cold_rf2_optimal'] == True)
 
             if descriptor == 'paper':
-                columns = ['mip_intgap', 'cold_mip_runtime']
-            elif descriptor == 'appendix':
-                columns = ['mip_intgap', 'cold_nlr_runtime', 'warm_nlr_runtime', 'warm_mip_runtime', 'cold_mip_runtime']
+                columns = ['mip_intgap', 'rf2_intgap', 'cold_mip_runtime', 'cold_rf2_runtime'] # 'cold_nlr_runtime', 'warm_nlr_runtime'
             else:
-                exit('Wrong descriptor for table 1')
+                exit('Wrong descriptor for table 2')
 
             averages = {}
             deviations = {}
             maximums = {}
 
             for column in columns:
-                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1), 2)
-                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1), 2)
-                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1), 2)
+                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
 
             count = len(content[filter].index)
 
@@ -88,40 +90,7 @@ def table2(descriptor = 'paper'):
 
         for value in values:
 
-            filter = (content[characteristic] == value) & (content['replenishment'] == 'absolute')
-
-            if descriptor == 'paper':
-                columns = ['mip_intgap', 'rf2_intgap', 'cold_mip_runtime', 'cold_rf2_runtime']
-            else:
-                exit('Wrong descriptor for table 2')
-
-            averages = {}
-            deviations = {}
-            maximums = {}
-
-            for column in columns:
-                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1), 2)
-                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1), 2)
-                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1), 2)
-
-            count = len(content[filter].index)
-
-            print('{}&{}&{}{}{}'.
-            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
-
-        print('\\midrule')
-
-    _ = input('table2 {}'.format(descriptor))
-
-    print('**************************************************************************************************')
-
-def table3(descriptor = 'paper'):
-
-    for characteristic, values in characteristics.items():
-
-        for value in values:
-
-            filter = (content[characteristic] == value)
+            filter = (content[characteristic] == value) & (content['cold_mip_optimal'] == True) & (content['cold_rf2_optimal'] == True)
 
             if descriptor == 'paper':
                 columns = ['em1_optgap', 'em2_optgap', 'rnd_optgap', 'frw_optgap']
@@ -144,18 +113,21 @@ def table3(descriptor = 'paper'):
 
         print('\\midrule')
 
-    _ = input('table3 {}'.format(descriptor))
+    _ = input('table2 {}'.format(descriptor))
 
-def table4(descriptor = 'paper'):
+    print('**************************************************************************************************')
+
+def table3(descriptor = 'paper'):
 
     for characteristic, values in characteristics.items():
 
         for value in values:
 
-            filter = (content[characteristic] == value)
+            filter = (content[characteristic] == value) & (content['cold_mip_optimal'] == True) & (content['cold_rf2_optimal'] == True)
 
             if descriptor == 'paper':
-                columns = ['fix_optgap', 'frw_optgap', 'prg_optgap', 'bcw_optgap',]
+                # columns = ['fix_optgap', 'frw_optgap', 'prg_optgap', 'bcw_optgap',]
+                columns = ['frw_optgap', 'prg_optgap', 'bcw_optgap',]
             else:
                 exit('Wrong descriptor for table 4')
 
@@ -176,7 +148,7 @@ def table4(descriptor = 'paper'):
 
         print('\\midrule')
 
-    _ = input('table4 {}'.format(descriptor))
+    _ = input('table3 {}'.format(descriptor))
 
     print('**************************************************************************************************')
 
@@ -188,7 +160,7 @@ def graph1(descriptor = 'paper'):
         'bcw' : 'blue',
         'prg' : 'olive',
         'em1': 'pink',
-        'fix' : 'gray',
+        #'fix' : 'gray',
         'em2' : 'magenta',
         'warm_mip' : 'black'
     }
@@ -200,7 +172,7 @@ def graph1(descriptor = 'paper'):
             # filter = (content['project'] == 'paper1')
             filter = (content[characteristic] == value)
 
-            with open ('graphs/graph_{}_{}.tex'.format(characteristic, value), 'w') as output:
+            with open ('graphs/graph1_{}_{}.tex'.format(characteristic, value), 'w') as output:
 
                 # output.write('\\begin{figure}[!ht]\n\centering\n')
                 output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
@@ -252,10 +224,7 @@ def graph1(descriptor = 'paper'):
 
                 print('Exported graph to graphs/graph_{}_{}.tex'.format(characteristic, value))
 
-
 table1('paper')
-# table1('appendix')
 table2('paper')
 table3('paper')
-table4('paper')
-graph1()
+graph1('paper')
