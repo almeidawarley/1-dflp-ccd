@@ -7,6 +7,7 @@ bckp
 ML*
 sarwesh_*
 *.txt
+*.sh
 
 # Experimental files
 sarwesh/
