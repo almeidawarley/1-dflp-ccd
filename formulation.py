@@ -88,16 +88,14 @@ def build_linearized_mip(instance):
 
     return mip, variable
 
-def build_linearized_lpr(instance):
+def relax_linearized_mip(instance, mip, variable):
     # Build the LPR of the linearized DSFLP-DAR
-
-    mip, variable = build_linearized_mip(instance)
 
     for period in instance.periods:
         for location in instance.locations:
             variable['y'][period, location].vtype = 'C'
 
-    mip.setParam('OutputFlag', 0)
+    # mip.setParam('OutputFlag', 0)
 
     return mip, variable
 
@@ -140,22 +138,22 @@ def build_networked_mip(instance):
 
     return mip, variable
 
-def build_networked_lpr(instance):
+def relax_networked_mip(instance, mip, variable):
     # Build the LPR of the networked DSFLP-DAR
-
-    mip, variable = build_networked_mip(instance)
 
     for period in instance.periods:
         for location in instance.locations:
             variable['y'][period, location].vtype = 'C'
 
+    '''
     for period1 in instance.periods_with_start:
         for period2 in instance.periods_with_end:
             for location in instance.locations:
                 for customer in instance.customers:
                     variable['z'][period1, period2, location, customer].vtype = 'C'
+    '''
 
-    mip.setParam('OutputFlag', 0)
+    # mip.setParam('OutputFlag', 0)
 
     return mip, variable
 

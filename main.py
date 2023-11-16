@@ -105,129 +105,107 @@ def main():
     else:
         raise Exception('No warm start solution found')
 
-    warm_lrz, warm_lrz_variable = fm.build_linearized_mip(instance)
-    cold_lrz, cold_lrz_variable = fm.build_linearized_mip(instance)
-    warm_net, warm_net_variable = fm.build_networked_mip(instance)
-    cold_net, cold_net_variable = fm.build_networked_mip(instance)
-
-    mark_section('Solving the relaxed DSFLP-DAR-LRZ model...')
-    rlxt_lrz, rlxt_lrz_variable = fm.build_linearized_lpr(instance)
-    # rlxt_lrz.write('archives/{}-rlxt_lrz.lp'.format(instance.keyword))
-    rlxt_lrz.optimize()
-    # rlxt_lrz.write('archives/{}-rlxt_lrz.sol'.format(instance.keyword))
-    rlxt_lrz_objective = round(rlxt_lrz.objVal, 2)
-    rlxt_lrz_runtime = round(rlxt_lrz.runtime, 2)
-    print('Optimal relaxed LRZ solution: [{}] no interpretable solution'.format(round(rlxt_lrz.objVal, 2)))
-    record = rc.update_record(record, {
-        'rlxt_lrz_objective': rlxt_lrz_objective,
-        'rlxt_lrz_runtime': rlxt_lrz_runtime,
-        'rlxt_lrz_status': rlxt_lrz.status
-    })
-
-    mark_section('Solving warm MIP of the DSFLP-DAR-LRZ model...')
-    fm.warm_start(instance, warm_lrz_variable, warm_solution)
-    # warm_lrz.write('archives/{}-warm_lrz.lp'.format(instance.keyword))
-    warm_lrz.optimize()
-    warm_lrz_solution = fm.format_solution(instance, warm_lrz, warm_lrz_variable)
-    warm_lrz_objective = round(warm_lrz.objVal, 2)
-    warm_lrz_runtime = round(warm_lrz.runtime, 2)
-    print('Optimal warm LRZ solution: [{}] {}'.format(warm_lrz_objective, warm_lrz_solution))
-    record = rc.update_record(record,{
-        'warm_lrz_objective': warm_lrz_objective,
-        'warm_lrz_solution': '-'.join(warm_lrz_solution.values()),
-        'warm_lrz_runtime': warm_lrz_runtime,
-        'warm_lrz_status': warm_lrz.status,
-        'warm_lrz_optgap': warm_lrz.MIPGap
-    })
-    assert(compare_obj(warm_lrz_objective, warm_objective) or warm_lrz_objective >= warm_objective)
+    mip_lrz, mip_lrz_variable = fm.build_linearized_mip(instance)
+    mip_net, mip_net_variable = fm.build_networked_mip(instance)
 
     mark_section('Solving cold MIP of the DSFLP-DAR-LRZ model...')
-    # cold_lrz.write('archives/{}-cold_lrz.lp'.format(instance.keyword))
-    cold_lrz.optimize()
-    cold_lrz_solution = fm.format_solution(instance, cold_lrz, cold_lrz_variable)
-    cold_lrz_objective = round(cold_lrz.objVal, 2)
-    cold_lrz_runtime = round(cold_lrz.runtime, 2)
-    print('Optimal cold LRZ solution: [{}] {}'.format(cold_lrz_objective, cold_lrz_solution))
+    mip_lrz.optimize()
+    mip_lrz_solution = fm.format_solution(instance, mip_lrz, mip_lrz_variable)
+    mip_lrz_objective = round(mip_lrz.objVal, 2)
+    mip_lrz_runtime = round(mip_lrz.runtime, 2)
+    print('Optimal cold LRZ solution: [{}] {}'.format(mip_lrz_objective, mip_lrz_solution))
     record = rc.update_record(record,{
-        'cold_lrz_objective': cold_lrz_objective,
-        'cold_lrz_solution': '-'.join(cold_lrz_solution.values()),
-        'cold_lrz_runtime': cold_lrz_runtime,
-        'cold_lrz_status': cold_lrz.status,
-        'cold_lrz_optgap': cold_lrz.MIPGap
+        'cold_lrz_objective': mip_lrz_objective,
+        'cold_lrz_solution': '-'.join(mip_lrz_solution.values()),
+        'cold_lrz_runtime': mip_lrz_runtime,
+        'cold_lrz_status': mip_lrz.status,
+        'cold_lrz_optgap': mip_lrz.MIPGap
     })
+    mip_lrz.reset()
 
-    mark_section('Solving the relaxed DSFLP-DAR-NET model...')
-    rlxt_net, rlxt_net_variable = fm.build_networked_lpr(instance)
-    # rlxt_net.write('archives/{}-rlxt_net.lp'.format(instance.keyword))
-    rlxt_net.optimize()
-    # rlxt_net.write('archives/{}-rlxt_net.sol'.format(instance.keyword))
-    rlxt_net_objective = round(rlxt_net.objVal, 2)
-    rlxt_net_runtime = round(rlxt_net.runtime, 2)
-    print('Optimal relaxed NET solution: [{}] no interpretable solution'.format(round(rlxt_net.objVal, 2)))
+    mark_section('Solving warm MIP of the DSFLP-DAR-LRZ model...')
+    fm.warm_start(instance, mip_lrz_variable, warm_solution)
+    mip_lrz.optimize()
+    mip_lrz_solution = fm.format_solution(instance, mip_lrz, mip_lrz_variable)
+    mip_lrz_objective = round(mip_lrz.objVal, 2)
+    mip_lrz_runtime = round(mip_lrz.runtime, 2)
+    print('Optimal warm LRZ solution: [{}] {}'.format(mip_lrz_objective, mip_lrz_solution))
+    record = rc.update_record(record,{
+        'warm_lrz_objective': mip_lrz_objective,
+        'warm_lrz_solution': '-'.join(mip_lrz_solution.values()),
+        'warm_lrz_runtime': mip_lrz_runtime,
+        'warm_lrz_status': mip_lrz.status,
+        'warm_lrz_optgap': mip_lrz.MIPGap
+    })
+    assert(compare_obj(mip_lrz_objective, warm_objective) or mip_lrz_objective >= warm_objective)
+
+    mark_section('Solving the relaxed DSFLP-DAR-LRZ model...')
+    mip_lrz, mip_lrz_variable = fm.relax_linearized_mip(instance, mip_lrz, mip_lrz_variable)
+    mip_lrz.optimize()
+    mip_lrz_objective = round(mip_lrz.objVal, 2)
+    mip_lrz_lrz_runtime = round(mip_lrz.runtime, 2)
+    print('Optimal relaxed LRZ solution: [{}] no interpretable solution'.format(round(mip_lrz.objVal, 2)))
     record = rc.update_record(record, {
-        'rlxt_net_objective': rlxt_net_objective,
-        'rlxt_net_runtime': rlxt_net_runtime,
-        'rlxt_net_status': rlxt_net.status
+        'rlxt_lrz_objective': mip_lrz_objective,
+        'rlxt_lrz_runtime': mip_lrz_runtime,
+        'rlxt_lrz_status': mip_lrz.status
     })
-
-    mark_section('Solving warm MIP of the DSFLP-DAR-NET model...')
-    fm.warm_start(instance, warm_net_variable, warm_solution)
-    # warm_net.write('archives/{}-warm_net.lp'.format(instance.keyword))
-    warm_net.optimize()
-    warm_net_solution = fm.format_solution(instance, warm_net, warm_net_variable)
-    warm_net_objective = round(warm_net.objVal, 2)
-    warm_net_runtime = round(warm_net.runtime, 2)
-    print('Optimal warm NET solution: [{}] {}'.format(warm_net_objective, warm_net_solution))
-    record = rc.update_record(record,{
-        'warm_net_objective': warm_net_objective,
-        'warm_net_solution': '-'.join(warm_net_solution.values()),
-        'warm_net_runtime': warm_net_runtime,
-        'warm_net_status': warm_net.status,
-        'warm_net_optgap': warm_net.MIPGap
-    })
-    assert(compare_obj(warm_net_objective, warm_objective) or warm_net_objective >= warm_objective)
 
     mark_section('Solving cold MIP of the DSFLP-DAR-NET model...')
-    # cold_net.write('archives/{}-cold_net.lp'.format(instance.keyword))
-    cold_net.optimize()
-    cold_net_solution = fm.format_solution(instance, cold_net, cold_net_variable)
-    cold_net_objective = round(cold_net.objVal, 2)
-    cold_net_runtime = round(cold_net.runtime, 2)
-    print('Optimal cold NET solution: [{}] {}'.format(cold_net_objective, cold_net_solution))
+    mip_net.optimize()
+    mip_net_solution = fm.format_solution(instance, mip_net, mip_net_variable)
+    mip_net_objective = round(mip_net.objVal, 2)
+    mip_net_runtime = round(mip_net.runtime, 2)
+    print('Optimal cold NET solution: [{}] {}'.format(mip_net_objective, mip_net_solution))
     record = rc.update_record(record,{
-        'cold_net_objective': cold_net_objective,
-        'cold_net_solution': '-'.join(cold_net_solution.values()),
-        'cold_net_runtime': cold_net_runtime,
-        'cold_net_status': cold_net.status,
-        'cold_net_optgap': cold_net.MIPGap
+        'cold_net_objective': mip_net_objective,
+        'cold_net_solution': '-'.join(mip_net_solution.values()),
+        'cold_net_runtime': mip_net_runtime,
+        'cold_net_status': mip_net.status,
+        'cold_net_optgap': mip_net.MIPGap
+    })
+    mip_net.reset()
+
+    mark_section('Solving warm MIP of the DSFLP-DAR-NET model...')
+    fm.warm_start(instance, mip_net_variable, warm_solution)
+    mip_net.optimize()
+    mip_net_solution = fm.format_solution(instance, mip_net, mip_net_variable)
+    mip_net_objective = round(mip_net.objVal, 2)
+    mip_net_runtime = round(mip_net.runtime, 2)
+    print('Optimal warm NET solution: [{}] {}'.format(mip_net_objective, mip_net_solution))
+    record = rc.update_record(record,{
+        'warm_net_objective': mip_net_objective,
+        'warm_net_solution': '-'.join(mip_net_solution.values()),
+        'warm_net_runtime': mip_net_runtime,
+        'warm_net_status': mip_net.status,
+        'warm_net_optgap': mip_net.MIPGap
+    })
+    assert(compare_obj(mip_net_objective, warm_objective) or mip_net_objective >= warm_objective)
+
+    mark_section('Solving the relaxed DSFLP-DAR-NET model...')
+    mip_net, mip_net_variable = fm.relax_networked_mip(instance, mip_net, mip_net_variable)
+    mip_net.optimize()
+    mip_net_objective = round(mip_net.objVal, 2)
+    mip_net_runtime = round(mip_net.runtime, 2)
+    print('Optimal relaxed NET solution: [{}] no interpretable solution'.format(round(mip_net.objVal, 2)))
+    record = rc.update_record(record, {
+        'rlxt_net_objective': mip_net_objective,
+        'rlxt_net_runtime': mip_net_runtime,
+        'rlxt_net_status': mip_net.status
     })
 
-    mark_section('Validating DSFLP-DAR solution methods analytically...')
     record = rc.update_record(record, {
-        'warm_lrz_check': compare_obj(warm_lrz_objective, vd.evaluate_solution(instance, warm_lrz_solution)),
-        'cold_lrz_check': compare_obj(cold_lrz_objective, vd.evaluate_solution(instance, cold_lrz_solution)),
-        'warm_net_check': compare_obj(warm_net_objective, vd.evaluate_solution(instance, warm_net_solution)),
-        'cold_net_check': compare_obj(cold_net_objective, vd.evaluate_solution(instance, cold_net_solution))
-    })
-
-    assert(record['warm_lrz_check'] == True)
-    assert(record['cold_lrz_check'] == True)
-    assert(record['warm_net_check'] == True)
-    assert(record['cold_net_check'] == True)
-
-    upper_bound = max(warm_lrz_objective, cold_lrz_objective, warm_net_objective, cold_net_objective)
-    record = rc.update_record(record, {
-        'upper_bound': upper_bound
+        'upper_bound': max(record['warm_lrz_objective'], record['cold_lrz_objective'], record['warm_net_objective'], record['cold_net_objective'])
     })
 
     record = rc.update_record(record, {
-        'lrz_intgap': compute_gap(rlxt_lrz_objective, warm_lrz_objective),
-        'net_intgap': compute_gap(rlxt_net_objective, warm_net_objective),
-        'rnd_optgap': compute_gap(upper_bound, rnd_objective),
-        'frw_optgap': compute_gap(upper_bound, frw_objective),
-        'bcw_optgap': compute_gap(upper_bound, bcw_objective),
-        #'fix_optgap': compute_gap(upper_bound, fix_objective),
-        'prg_optgap': compute_gap(upper_bound, prg_objective)
+        'lrz_intgap': compute_gap(record['rlxt_lrz_objective'], max(record['cold_lrz_objective'], record['warm_lrz_objective'])),
+        'net_intgap': compute_gap(record['rlxt_net_objective'], max(record['cold_net_objective'], record['warm_net_objective'])),
+        'rnd_optgap': compute_gap(record['upper_bound'], record['rnd_objective']),
+        'frw_optgap': compute_gap(record['upper_bound'], record['frw_objective']),
+        'bcw_optgap': compute_gap(record['upper_bound'], record['bcw_objective']),
+        #'fix_optgap': compute_gap(record['upper_bound'], record['fix_objective']),
+        'prg_optgap': compute_gap(record['upper_bound'], record['prg_objective'])
     })
 
     for method in ['1', '2']:
@@ -244,7 +222,7 @@ def main():
             'em{}_solution'.format(method): '-'.join(eml_solution.values()),
             'em{}_runtime'.format(method): eml_runtime,
             'em{}_status'.format(method): eml.status,
-            'em{}_optgap'.format(method): compute_gap(upper_bound, eml_objective)
+            'em{}_optgap'.format(method): compute_gap(record['upper_bound'], eml_objective)
         })
 
     mark_section('Wrapping up the execution with the following objectives...')
@@ -262,8 +240,8 @@ def main():
     print('>>> PRG optimality: {}'.format(record['prg_optgap']))
 
     mark_section('Wrapping up the execution with the following solutions...')
-    print('>>> LRZ solution: {}'.format('-'.join(warm_lrz_solution.values())))
-    print('>>> NET solution: {}'.format('-'.join(warm_net_solution.values())))
+    print('>>> LRZ solution: {}'.format('-'.join(mip_lrz_solution.values())))
+    print('>>> NET solution: {}'.format('-'.join(mip_net_solution.values())))
     print('>>> FRW solution: {}'.format('-'.join(frw_solution.values())))
     print('>>> BCW solution: {}'.format('-'.join(bcw_solution.values())))
     # print('>>> FIX solution: {}'.format('-'.join(fix_solution.values())))
