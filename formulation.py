@@ -133,10 +133,10 @@ def build_networked_mip(instance):
 
     # Create main constraints
     ct.create_c1(instance, mip, variable)
+    ct.create_c7(instance, mip, variable)
+    ct.create_c8(instance, mip, variable)
     ct.create_c9(instance, mip, variable)
     ct.create_c10(instance, mip, variable)
-    ct.create_c11(instance, mip, variable)
-    ct.create_c12(instance, mip, variable)
 
     return mip, variable
 

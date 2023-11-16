@@ -3,8 +3,8 @@ import main as mn
 
 content = pd.read_csv('experiments/paper1/summary.csv')
 
-content['cold_mip_optimal'] = content.apply(lambda row: mn.compare_obj(row['upper_bound'], row['cold_mip_objective']) and (row['cold_mip_status'] == 2 or row['warm_mip_status'] == 2 or row['warm_rf2_status'] == 2 or row['cold_rf2_status'] == 2), axis = 1)
-content['cold_rf2_optimal'] = content.apply(lambda row: mn.compare_obj(row['upper_bound'], row['cold_rf2_objective']) and (row['cold_mip_status'] == 2 or row['warm_mip_status'] == 2 or row['warm_rf2_status'] == 2 or row['cold_rf2_status'] == 2), axis = 1)
+content['cold_lrz_optimal'] = content.apply(lambda row: mn.compare_obj(row['upper_bound'], row['cold_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
+content['cold_net_optimal'] = content.apply(lambda row: mn.compare_obj(row['upper_bound'], row['cold_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
 
 # content.to_csv('debugging.csv')
 
@@ -57,10 +57,10 @@ def table1(descriptor = 'paper'):
 
         for value in values:
 
-            filter = (content[characteristic] == value) & (content['cold_mip_optimal'] == True) & (content['cold_rf2_optimal'] == True)
+            filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
 
             if descriptor == 'paper':
-                columns = ['mip_intgap', 'rf2_intgap', 'cold_mip_runtime', 'cold_rf2_runtime'] # 'cold_nlr_runtime', 'warm_nlr_runtime'
+                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'cold_net_runtime'] # 'cold_nlr_runtime', 'warm_nlr_runtime'
             else:
                 exit('Wrong descriptor for table 2')
 
@@ -90,7 +90,7 @@ def table2(descriptor = 'paper'):
 
         for value in values:
 
-            filter = (content[characteristic] == value) & (content['cold_mip_optimal'] == True) & (content['cold_rf2_optimal'] == True)
+            filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
 
             if descriptor == 'paper':
                 columns = ['em1_optgap', 'em2_optgap', 'rnd_optgap', 'frw_optgap']
@@ -123,7 +123,7 @@ def table3(descriptor = 'paper'):
 
         for value in values:
 
-            filter = (content[characteristic] == value) & (content['cold_mip_optimal'] == True) & (content['cold_rf2_optimal'] == True)
+            filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
 
             if descriptor == 'paper':
                 # columns = ['fix_optgap', 'frw_optgap', 'prg_optgap', 'bcw_optgap',]
@@ -162,7 +162,7 @@ def graph1(descriptor = 'paper'):
         'em1': 'pink',
         #'fix' : 'gray',
         'em2' : 'magenta',
-        'warm_mip' : 'black'
+        'warm_lrz' : 'black'
     }
 
     for characteristic, values in characteristics.items():
@@ -196,7 +196,7 @@ def graph1(descriptor = 'paper'):
 
                     for x in range(1,101):
 
-                        if method == 'warm_mip':
+                        if method == 'warm_lrz':
                             prev_y = 100
                             y = 100
                         else:
