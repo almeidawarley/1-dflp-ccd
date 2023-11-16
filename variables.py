@@ -126,7 +126,7 @@ def create_vrz_2(instance, mip):
     lowers = [0. for _ in instance.periods_with_start for _ in instance.periods_with_end for _ in instance.locations for _ in instance.customers]
     uppers = [1. for _ in instance.periods_with_start for _ in instance.periods_with_end for _ in instance.locations for _ in instance.customers]
     coefs = [0. for _ in instance.periods_with_start for _ in instance.periods_with_end for _ in instance.locations for _ in instance.customers]
-    types = ['B' for _ in instance.periods_with_start for _ in instance.periods_with_end for _ in instance.locations for _ in instance.customers]
+    types = ['C' for _ in instance.periods_with_start for _ in instance.periods_with_end for _ in instance.locations for _ in instance.customers]
     names = [
         'z~{}_{}_{}_{}'.format(period1, period2, location, customer)
         for period1 in instance.periods_with_start
