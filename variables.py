@@ -35,7 +35,7 @@ def create_vrw(instance, mip):
 
 # ---------------------------------------------------------------------------
 
-def create_vrw_NL(instance, mip):
+def create_vrw_2(instance, mip):
     # Create w^{t}_{j} variables
 
     lowers = [0 for _ in instance.periods for _ in instance.customers]
@@ -103,24 +103,7 @@ def create_vrd2(instance, mip):
 
 # ---------------------------------------------------------------------------
 
-def create_vrz_1(instance, mip):
-    # Create z^{t}_{j} variables
-
-    lowers = [0. for _ in instance.periods for _ in instance.customers]
-    uppers = [1. for _ in instance.periods for _ in instance.customers]
-    coefs = [0. for _ in instance.periods for _ in instance.customers]
-    types = ['C' for _ in instance.periods for _ in instance.customers]
-    names = [
-        'z~{}_{}'.format(period, customer)
-        for period in instance.periods
-        for customer in instance.customers
-    ]
-
-    return mip.addVars(instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
-
-# ---------------------------------------------------------------------------
-
-def create_vrz_2(instance, mip):
+def create_vrz_4(instance, mip):
     # Create z^{kt}_{ij} variables
 
     lowers = [0. for _ in instance.periods_with_start for _ in instance.periods_with_end for _ in instance.locations for _ in instance.customers]
@@ -136,21 +119,3 @@ def create_vrz_2(instance, mip):
     ]
 
     return mip.addVars(instance.periods_with_start, instance.periods_with_end, instance.locations, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
-
-# ---------------------------------------------------------------------------
-
-def create_vrz_3(instance, mip):
-    # Create z^{kt}_{j} variables
-
-    lowers = [0. for _ in instance.periods_with_start for _ in instance.periods_with_end for _ in instance.customers]
-    uppers = [1. for _ in instance.periods_with_start for _ in instance.periods_with_end for _ in instance.customers]
-    coefs = [0. for _ in instance.periods_with_start for _ in instance.periods_with_end for _ in instance.customers]
-    types = ['B' for _ in instance.periods_with_start for _ in instance.periods_with_end for _ in instance.customers]
-    names = [
-        'z~{}_{}_{}'.format(period1, period2, customer)
-        for period1 in instance.periods_with_start
-        for period2 in instance.periods_with_end
-        for customer in instance.customers
-    ]
-
-    return mip.addVars(instance.periods_with_start, instance.periods_with_end, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)

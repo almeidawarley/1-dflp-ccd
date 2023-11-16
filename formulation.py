@@ -5,7 +5,7 @@ import validation as vd
 
 TIME_LIMIT = 5 * 60 * 60
 
-def build_simplified_main(instance, method):
+def build_simplified_mip(instance, method):
     # Build the MIP of the simplified DSFLP-DAR (i.e., DSFLP)
 
     mip = gp.Model('DSFLP')
@@ -44,10 +44,10 @@ def build_simplified_main(instance, method):
 
     return mip, variable
 
-def build_linearized_main(instance):
+def build_linearized_mip(instance):
     # Build the MIP of the linearized DSFLP-DAR
 
-    mip = gp.Model('DSFLP-DAR')
+    mip = gp.Model('DSFLP-DAR-LRZ')
 
     # Create decision variables
     variable = {
@@ -88,10 +88,10 @@ def build_linearized_main(instance):
 
     return mip, variable
 
-def build_linearized_lprx(instance):
-    # Build the LPRX of the linearized DSFLP-DAR
+def build_linearized_lpr(instance):
+    # Build the LPR of the linearized DSFLP-DAR
 
-    mip, variable = build_linearized_main(instance)
+    mip, variable = build_linearized_mip(instance)
 
     for period in instance.periods:
         for location in instance.locations:
@@ -101,72 +101,16 @@ def build_linearized_lprx(instance):
 
     return mip, variable
 
-def build_reformulated1_main(instance):
-    # Build the MIP of the reformulated DSFLP-DAR #1
+def build_networked_mip(instance):
+    # Build the MIP of the networked DSFLP-DAR
 
-    mip = gp.Model('DSFLP-DAR-R1')
-
-    # Create decision variables
-    variable = {
-        # Main decision variables
-        'y': vb.create_vry(instance, mip),
-        'z': vb.create_vrz_1(instance, mip)
-    }
-
-    # Maximize the total revenue
-    mip.setAttr('ModelSense', -1)
-
-    # Turn off GUROBI logs
-    # mip.setParam('OutputFlag', 0)
-    mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', TIME_LIMIT)
-
-    # WARNING: identical reward taken from first location at first period!
-    # No problem if they are equal anyways, but only a heuristic if different
-    common_reward = instance.revenues[instance.periods[0]][instance.locations[0]]
-
-    # Set objective function
-    mip.setObjective(
-        sum([(common_reward *
-              instance.partial_demand('0', period, customer)) *
-              variable['z'][period, customer]
-              for period in instance.periods
-              for customer in instance.customers]))
-
-    # Create main constraints
-    ct.create_c1(instance, mip, variable)
-    ct.create_c7(instance, mip, variable)
-    ct.create_c8(instance, mip, variable)
-
-    return mip, variable
-
-def build_reformulated1_lprx(instance):
-    # Build the LPRX of the reformulated DSFLP-DAR #1
-
-    mip, variable = build_reformulated1_main(instance)
-
-    for period in instance.periods:
-        for location in instance.locations:
-            variable['y'][period, location].vtype = 'C'
-
-    for period in instance.periods:
-        for customer in instance.customers:
-            variable['z'][period, customer].vtype = 'C'
-
-    mip.setParam('OutputFlag', 0)
-
-    return mip, variable
-
-def build_reformulated2_main(instance):
-    # Build the MIP of the reformulated DSFLP-DAR #2
-
-    mip = gp.Model('DSFLP-DAR-R2')
+    mip = gp.Model('DSFLP-DAR-NET')
 
     # Create decision variables
     variable = {
         # Main decision variables
         'y': vb.create_vry(instance, mip),
-        'z': vb.create_vrz_2(instance, mip)
+        'z': vb.create_vrz_4(instance, mip)
     }
 
     # Maximize the total revenue
@@ -196,10 +140,10 @@ def build_reformulated2_main(instance):
 
     return mip, variable
 
-def build_reformulated2_lprx(instance):
-    # Build the LPRX of the reformulated DSFLP-DAR #2
+def build_networked_lpr(instance):
+    # Build the LPR of the networked DSFLP-DAR
 
-    mip, variable = build_reformulated2_main(instance)
+    mip, variable = build_networked_mip(instance)
 
     for period in instance.periods:
         for location in instance.locations:
@@ -215,73 +159,16 @@ def build_reformulated2_lprx(instance):
 
     return mip, variable
 
-def build_reformulated3_main(instance):
-    # Build the MIP of the reformulated DSFLP-DAR #3
-
-    mip = gp.Model('DSFLP-DAR-R2')
-
-    # Create decision variables
-    variable = {
-        # Main decision variables
-        'y': vb.create_vry(instance, mip),
-        'z': vb.create_vrz_3(instance, mip),
-        'w': vb.create_vrw(instance, mip)
-    }
-
-    # Maximize the total revenue
-    mip.setAttr('ModelSense', -1)
-
-    # Turn off GUROBI logs
-    # mip.setParam('OutputFlag', 0)
-    mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', TIME_LIMIT)
-
-    # Set objective function
-    # Warning: update accordingly
-    mip.setObjective(
-        sum([instance.revenues[period][location] *
-         variable['w'][period, location, customer]
-         for period in instance.periods
-         for location in instance.locations
-         for customer in instance.customers]))
-
-    # Create main constraints
-    ct.create_c1(instance, mip, variable)
-    ct.create_c13(instance, mip, variable)
-    ct.create_c14(instance, mip, variable)
-    ct.create_c15(instance, mip, variable)
-    ct.create_c16(instance, mip, variable)
-
-    return mip, variable
-
-def build_reformulated3_lprx(instance):
-    # Build the LPRX of the reformulated DSFLP-DAR #3
-
-    mip, variable = build_reformulated3_main(instance)
-
-    for period in instance.periods:
-        for location in instance.locations:
-            variable['y'][period, location].vtype = 'C'
-
-    for period1 in instance.periods_with_start:
-        for period2 in instance.periods_with_end:
-            for customer in instance.customers:
-                variable['z'][period1, period2, customer].vtype = 'C'
-
-    # mip.setParam('OutputFlag', 0)
-
-    return mip, variable
-
-def build_nonlinear_main(instance):
+def build_nonlinear_mip(instance):
     # Build the MIP of the nonlinear DSFLP-DAR
 
-    mip = gp.Model('DSFLP-DAR')
+    mip = gp.Model('DSFLP-DAR-NLR')
 
     # Create decision variables
     variable = {
         # Main decision variables
         'y': vb.create_vry(instance, mip),
-        'w': vb.create_vrw_NL(instance, mip),
+        'w': vb.create_vrw_2(instance, mip),
         'd1': vb.create_vrd1(instance, mip),
         'd2': vb.create_vrd2(instance, mip),
         'd3': vb.create_vrd3(instance, mip)

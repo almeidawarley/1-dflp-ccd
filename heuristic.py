@@ -117,7 +117,7 @@ def random_algorithm(instance):
 def fixing_algorithm(instance):
 
     # Create relaxation
-    relax, variable = fm.build_linearized_lprx(instance)
+    relax, variable = fm.build_linearized_lpr(instance)
 
     # Check integrality
     integral = False
@@ -173,7 +173,7 @@ def fixing_algorithm(instance):
 def fixing_algorithm(instance):
 
     # Create relaxation
-    relax, variable = fm.build_linearized_lprx(instance)
+    relax, variable = fm.build_linearized_lpr(instance)
 
     for period in instance.periods:
 
