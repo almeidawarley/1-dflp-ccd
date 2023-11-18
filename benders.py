@@ -5,7 +5,7 @@ import formulation as fm
 import heuristic as hr
 import main as mn
 
-TIME_LIMIT = 5 * 60 * 60
+TIME_LIMIT = 20 * 60 * 60
 
 '''
 def build_master(instance):
