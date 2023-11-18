@@ -5,7 +5,7 @@ import formulation as fm
 import heuristic as hr
 import main as mn
 
-TIME_LIMIT = 20 * 60 * 60
+TIME_LIMIT = 5 * 60 * 60
 
 '''
 def build_master(instance):
@@ -56,6 +56,8 @@ def benders_decomposition(instance):
     for customer in instance.customers:
         slaves[customer] = {}
 
+        # print('Creating slave customer {}'.format(customer))
+
         slave_mip = gp.Model('DSFLP-DAR-S{}'.format(customer))
         slave_var = {
             # Main decision variables
@@ -88,6 +90,7 @@ def benders_decomposition(instance):
             reference = hr.empty_solution(instance)
         else:
             fm.warm_start(instance, master_var, best_solution)
+            master_mip.setParam('TimeLimit', TIME_LIMIT - metadata['bds_runtime'])
             master_mip.optimize()
             metadata['bds_runtime'] += round(master_mip.runtime, 2)
             upper_bound = round(master_mip.objVal, 2)
@@ -96,6 +99,7 @@ def benders_decomposition(instance):
         current_bound = 0.
 
         for customer in instance.customers:
+
             # Update slave programs
             slaves[customer]['mip'].setObjective(
                 sum([slaves[customer]['var']['p'][period, location] *
@@ -106,6 +110,7 @@ def benders_decomposition(instance):
                     slaves[customer]['var']['q'][instance.start] +
                     slaves[customer]['var']['q'][instance.end])
             # slaves[customer]['mip'].write('slave_{}.lp'.format(customer))
+            # print('Solving slave customer {}'.format(customer))
             slaves[customer]['mip'].optimize()
             metadata['bds_runtime'] += round(slaves[customer]['mip'].runtime, 2)
             current_bound += slaves[customer]['mip'].objVal
