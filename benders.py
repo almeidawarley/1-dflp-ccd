@@ -26,6 +26,7 @@ def benders_decomposition(instance):
     metadata = {}
     metadata['bds_runtime'] = 0.
 
+    # Creater master program
     master_mip = gp.Model('DSFLP-DAR-M')
 
     # Create decision variables
