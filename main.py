@@ -143,7 +143,7 @@ def main():
     mip_lrz, mip_lrz_variable = fm.relax_linearized_mip(instance, mip_lrz, mip_lrz_variable)
     mip_lrz.optimize()
     mip_lrz_objective = round(mip_lrz.objVal, 2)
-    mip_lrz_lrz_runtime = round(mip_lrz.runtime, 2)
+    mip_lrz_runtime = round(mip_lrz.runtime, 2)
     print('Optimal relaxed LRZ solution: [{}] no interpretable solution'.format(round(mip_lrz.objVal, 2)))
     record = rc.update_record(record, {
         'rlxt_lrz_objective': mip_lrz_objective,

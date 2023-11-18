@@ -1,5 +1,7 @@
 import gurobipy as gp
 
+# ---------------------------------------------------------------------------
+
 def create_vry(instance, mip):
     # Create y^{t}_{i} variables
 
@@ -119,3 +121,52 @@ def create_vrz_4(instance, mip):
     ]
 
     return mip.addVars(instance.periods_with_start, instance.periods_with_end, instance.locations, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+
+# ---------------------------------------------------------------------------
+
+def create_vrv(instance, mip):
+    # Create v_{j} variables
+
+    lowers = [0. for _ in instance.customers]
+    uppers = [gp.GRB.INFINITY for _ in instance.customers]
+    coefs = [0. for _ in instance.customers]
+    types = ['C' for _ in instance.customers]
+    names = [
+        'v~{}'.format(customer)
+        for customer in instance.customers
+    ]
+
+    return mip.addVars(instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+
+# ---------------------------------------------------------------------------
+
+def create_vrp(instance, mip):
+    # Create p^{t}_{i} variables
+
+    lowers = [-gp.GRB.INFINITY for _ in instance.periods for _ in instance.locations]
+    uppers = [gp.GRB.INFINITY for _ in instance.periods for _ in instance.locations]
+    coefs = [0. for _ in instance.periods for _ in instance.locations]
+    types = ['C' for _ in instance.periods for _ in instance.locations]
+    names = [
+        'p~{}_{}'.format(period, location)
+        for period in instance.periods
+        for location in instance.locations
+    ]
+
+    return mip.addVars(instance.periods, instance.locations, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+
+# ---------------------------------------------------------------------------
+
+def create_vrq(instance, mip):
+    # Create q^{t} variables
+
+    lowers = [-gp.GRB.INFINITY for _ in instance.periods_extended]
+    uppers = [gp.GRB.INFINITY for _ in instance.periods_extended]
+    coefs = [0. for _ in instance.periods_extended]
+    types = ['C' for _ in instance.periods_extended]
+    names = [
+        'q~{}'.format(period)
+        for period in instance.periods_extended
+    ]
+
+    return mip.addVars(instance.periods_extended, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)

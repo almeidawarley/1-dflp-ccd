@@ -52,9 +52,13 @@ class instance:
                 limit = self.partial_demand('0', period, customer)
                 self.limits[period][customer] = np.ceil(limit)
 
+        self.start = '0'
+        self.end = str(len(self.periods) + 1)
+
         # Set start and end periods
-        self.periods_with_start = ['0'] + [period for period in self.periods]
-        self.periods_with_end = [period for period in self.periods] + [str(len(self.periods) + 1)]
+        self.periods_with_start = [self.start] + [period for period in self.periods]
+        self.periods_with_end = [period for period in self.periods] + [self.end]
+        self.periods_extended = [self.start] + [period for period in self.periods] + [self.end]
 
     def create_slovakia(self, folder = 'instances/slovakia'):
         # Create slovakia instances
@@ -469,6 +473,9 @@ class instance:
         lastly, current = int(lastly), int(current)
 
         accumulated = .0
+
+        if current == len(self.periods) + 1:
+            exit('This should never happen!')
 
         if lastly == 0:
             accumulated += self.starts[customer]
