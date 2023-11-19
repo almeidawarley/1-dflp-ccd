@@ -91,11 +91,11 @@ def benders_decomposition(instance):
             reference = hr.empty_solution(instance)
         else:
             fm.warm_start(instance, master_var, best_solution)
-            master_mip.setParam('TimeLimit', TIME_LIMIT - metadata['bds_runtime'])
+            master_mip.setParam('TimeLimit', max(TIME_LIMIT - metadata['bds_runtime'], 0.1))
             master_mip.optimize()
             metadata['bds_runtime'] += round(master_mip.runtime, 2)
             upper_bound = round(master_mip.objVal, 2)
-            reference =  fm.format_solution(instance, master_mip, master_var)
+            reference = fm.format_solution(instance, master_mip, master_var)
 
         current_bound = 0.
 
