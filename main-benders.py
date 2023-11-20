@@ -8,15 +8,6 @@ def mark_section(title):
     print(title)
     print('\n-----------------------------------------------------------------------------------\n')
 
-def compute_gap(major, minor):
-    return round((major - minor) / major, 4)
-
-def compare_obj(objective1, objective2, tolerance = 1/10**4):
-    if objective1 < objective2:
-      objective1, objective2 = objective2, objective1
-    gap = compute_gap(objective1, objective2)
-    return gap <= tolerance
-
 def main():
 
     parser = ap.ArgumentParser(description = 'Run relevant solution methods for some DSFLP-DAR instance')

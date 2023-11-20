@@ -11,15 +11,6 @@ def mark_section(title):
     print(title)
     print('\n-----------------------------------------------------------------------------------\n')
 
-def compute_gap(major, minor):
-    return round((major - minor) / major, 4)
-
-def compare_obj(objective1, objective2, tolerance = 1/10**4):
-    if objective1 < objective2:
-      objective1, objective2 = objective2, objective1
-    gap = compute_gap(objective1, objective2)
-    return gap <= tolerance
-
 def main():
 
     parser = ap.ArgumentParser(description = 'Run relevant solution methods for some DSFLP-DAR instance')
@@ -137,7 +128,7 @@ def main():
         'warm_lrz_status': mip_lrz.status,
         'warm_lrz_optgap': mip_lrz.MIPGap
     })
-    assert(compare_obj(mip_lrz_objective, warm_objective) or mip_lrz_objective >= warm_objective)
+    assert(vd.compare_obj(mip_lrz_objective, warm_objective) or mip_lrz_objective >= warm_objective)
 
     mark_section('Solving the relaxed DSFLP-DAR-LRZ model...')
     mip_lrz, mip_lrz_variable = fm.relax_linearized_mip(instance, mip_lrz, mip_lrz_variable)
@@ -180,7 +171,7 @@ def main():
         'warm_net_status': mip_net.status,
         'warm_net_optgap': mip_net.MIPGap
     })
-    assert(compare_obj(mip_net_objective, warm_objective) or mip_net_objective >= warm_objective)
+    assert(vd.compare_obj(mip_net_objective, warm_objective) or mip_net_objective >= warm_objective)
 
     mark_section('Solving the relaxed DSFLP-DAR-NET model...')
     mip_net, mip_net_variable = fm.relax_networked_mip(instance, mip_net, mip_net_variable)
@@ -199,13 +190,13 @@ def main():
     })
 
     record = rc.update_record(record, {
-        'lrz_intgap': compute_gap(record['rlxt_lrz_objective'], max(record['cold_lrz_objective'], record['warm_lrz_objective'])),
-        'net_intgap': compute_gap(record['rlxt_net_objective'], max(record['cold_net_objective'], record['warm_net_objective'])),
-        'rnd_optgap': compute_gap(record['upper_bound'], record['rnd_objective']),
-        'frw_optgap': compute_gap(record['upper_bound'], record['frw_objective']),
-        'bcw_optgap': compute_gap(record['upper_bound'], record['bcw_objective']),
-        #'fix_optgap': compute_gap(record['upper_bound'], record['fix_objective']),
-        'prg_optgap': compute_gap(record['upper_bound'], record['prg_objective'])
+        'lrz_intgap': vd.compute_gap(record['rlxt_lrz_objective'], max(record['cold_lrz_objective'], record['warm_lrz_objective'])),
+        'net_intgap': vd.compute_gap(record['rlxt_net_objective'], max(record['cold_net_objective'], record['warm_net_objective'])),
+        'rnd_optgap': vd.compute_gap(record['upper_bound'], record['rnd_objective']),
+        'frw_optgap': vd.compute_gap(record['upper_bound'], record['frw_objective']),
+        'bcw_optgap': vd.compute_gap(record['upper_bound'], record['bcw_objective']),
+        #'fix_optgap': vd.compute_gap(record['upper_bound'], record['fix_objective']),
+        'prg_optgap': vd.compute_gap(record['upper_bound'], record['prg_objective'])
     })
 
     for method in ['1', '2']:
@@ -222,7 +213,7 @@ def main():
             'em{}_solution'.format(method): '-'.join(eml_solution.values()),
             'em{}_runtime'.format(method): eml_runtime,
             'em{}_status'.format(method): eml.status,
-            'em{}_optgap'.format(method): compute_gap(record['upper_bound'], eml_objective)
+            'em{}_optgap'.format(method): vd.compute_gap(record['upper_bound'], eml_objective)
         })
 
     mark_section('Wrapping up the execution with the following objectives...')

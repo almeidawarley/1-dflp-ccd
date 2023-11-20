@@ -1,12 +1,20 @@
 import pandas as pd
-import main as mn
+import validation as vd
 
 content = pd.read_csv('experiments/paper1/summary.csv')
 
-content['cold_lrz_optimal'] = content.apply(lambda row: mn.compare_obj(row['upper_bound'], row['cold_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
-content['cold_net_optimal'] = content.apply(lambda row: mn.compare_obj(row['upper_bound'], row['cold_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
+content['cold_lrz_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['cold_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
+content['cold_net_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['cold_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
 
-# content.to_csv('debugging.csv')
+'''
+content = content.set_index('keyword')
+
+benders = pd.read_csv('experiments/paper1/benders.csv')
+benders = benders.set_index('keyword')
+benders = benders.drop(['project', 'created', 'seed', 'locations', 'customers', 'periods', 'patronizing', 'rewards', 'replenishment', 'character', 'updated', 'commit', 'branch'], axis = 1)
+
+content = pd.concat([content, benders], axis = 1, join = 'inner')
+'''
 
 characteristics = {
     'project': ['paper1'],
@@ -60,7 +68,7 @@ def table1(descriptor = 'paper'):
             filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
 
             if descriptor == 'paper':
-                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'cold_net_runtime'] # 'cold_nlr_runtime', 'warm_nlr_runtime'
+                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'cold_net_runtime'] #, 'bds_runtime']  # 'cold_nlr_runtime', 'warm_nlr_runtime'
             else:
                 exit('Wrong descriptor for table 2')
 

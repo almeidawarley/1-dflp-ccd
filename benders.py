@@ -1,9 +1,9 @@
 import gurobipy as gp
+import validation as vd
 import variables as vb
 import constraints as ct
 import formulation as fm
 import heuristic as hr
-import main as mn
 
 TIME_LIMIT = 5 * 60 * 60
 
@@ -84,7 +84,7 @@ def benders_decomposition(instance):
     it_counter = 0
     best_solution = hr.empty_solution(instance)
 
-    while not mn.compare_obj(upper_bound, lower_bound):
+    while not vd.compare_obj(upper_bound, lower_bound):
 
         if it_counter == 0:
             # Create empty solution
@@ -93,6 +93,12 @@ def benders_decomposition(instance):
             fm.warm_start(instance, master_var, best_solution)
             master_mip.setParam('TimeLimit', max(TIME_LIMIT - metadata['bds_runtime'], 0.1))
             master_mip.optimize()
+            metadata['bds_optgap'] = master_mip.MIPGap
+            # Code for branching on customers
+            # relaxed = master_mip.relax()
+            # relaxed.optimize()
+            # relaxed.write('relaxed.sol')
+            # relaxed.write('relaxed.lp')
             metadata['bds_runtime'] += round(master_mip.runtime, 2)
             upper_bound = round(master_mip.objVal, 2)
             reference = fm.format_solution(instance, master_mip, master_var)
@@ -152,6 +158,5 @@ def benders_decomposition(instance):
     metadata['bds_iterations'] = it_counter
     metadata['bds_objective'] = lower_bound
     metadata['bds_solution'] = '-'.join(best_solution.values())
-    metadata['bds_optgap'] = mn.compute_gap(upper_bound, lower_bound)
 
     return best_solution, lower_bound, metadata
