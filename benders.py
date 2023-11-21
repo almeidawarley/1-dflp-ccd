@@ -5,7 +5,9 @@ import constraints as ct
 import formulation as fm
 import heuristic as hr
 
-TIME_LIMIT = 5 * 60 * 60
+B_TIME_LIMIT = 5 * 60 * 60
+M_TIME_LIMIT = 1 * 1 * 60
+S_TIME_LIMIT = 1 * 10 * 60
 
 '''
 def build_master(instance):
@@ -42,7 +44,7 @@ def benders_decomposition(instance):
     # Turn off GUROBI logs
     # master_mip.setParam('OutputFlag', 0)
     master_mip.setParam('Threads', 1)
-    master_mip.setParam('TimeLimit', TIME_LIMIT)
+    master_mip.setParam('TimeLimit', M_TIME_LIMIT)
 
     # Set objective function
     master_mip.setObjective(
@@ -72,7 +74,7 @@ def benders_decomposition(instance):
         # Turn off GUROBI logs
         slave_mip.setParam('OutputFlag', 0)
         slave_mip.setParam('Threads', 1)
-        slave_mip.setParam('TimeLimit', TIME_LIMIT)
+        slave_mip.setParam('TimeLimit', S_TIME_LIMIT)
 
         ct.create_c11(instance, slave_mip, slave_var, customer)
 
@@ -91,14 +93,9 @@ def benders_decomposition(instance):
             reference = hr.empty_solution(instance)
         else:
             fm.warm_start(instance, master_var, best_solution)
-            master_mip.setParam('TimeLimit', max(TIME_LIMIT - metadata['bds_runtime'], 0.1))
+            master_mip.setParam('TimeLimit', min(M_TIME_LIMIT, max(B_TIME_LIMIT - metadata['bds_runtime'], 0.1)))
             master_mip.optimize()
             metadata['bds_optgap'] = master_mip.MIPGap
-            # Code for branching on customers
-            # relaxed = master_mip.relax()
-            # relaxed.optimize()
-            # relaxed.write('relaxed.sol')
-            # relaxed.write('relaxed.lp')
             metadata['bds_runtime'] += round(master_mip.runtime, 2)
             upper_bound = round(master_mip.objVal, 2)
             reference = fm.format_solution(instance, master_mip, master_var)
