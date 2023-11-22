@@ -5,28 +5,14 @@ import constraints as ct
 import formulation as fm
 import heuristic as hr
 
-B_TIME_LIMIT = 5 * 60 * 60
-M_TIME_LIMIT = 1 * 1 * 60
-S_TIME_LIMIT = 1 * 10 * 60
+def benders_decomposition(instance, time):
 
-'''
-def build_master(instance):
-
-    pass
-
-def build_slave(instance, customer):
-
-    pass
-
-def add_cuts(instance, master, variable, slaves, reference):
-
-    pass
-'''
-
-def benders_decomposition(instance):
+    B_TIME_LIMIT = 5 * 60 * 60
+    M_TIME_LIMIT = 1 * time * 60
+    S_TIME_LIMIT = 1 * time * 60
 
     metadata = {}
-    metadata['bds_runtime'] = 0.
+    metadata['bd{}_runtime'.format(time)] = 0.
 
     # Creater master program
     master_mip = gp.Model('DSFLP-DAR-M')
@@ -93,10 +79,10 @@ def benders_decomposition(instance):
             reference = hr.empty_solution(instance)
         else:
             fm.warm_start(instance, master_var, best_solution)
-            master_mip.setParam('TimeLimit', min(M_TIME_LIMIT, max(B_TIME_LIMIT - metadata['bds_runtime'], 0.1)))
+            master_mip.setParam('TimeLimit', min(M_TIME_LIMIT, max(B_TIME_LIMIT - metadata['bd{}_runtime'.format(time)], 0.1)))
             master_mip.optimize()
-            metadata['bds_optgap'] = master_mip.MIPGap
-            metadata['bds_runtime'] += round(master_mip.runtime, 2)
+            metadata['bd{}_optgap'.format(time)] = master_mip.MIPGap
+            metadata['bd{}_runtime'.format(time)] += round(master_mip.runtime, 2)
             upper_bound = round(master_mip.objVal, 2)
             reference = fm.format_solution(instance, master_mip, master_var)
 
@@ -116,7 +102,7 @@ def benders_decomposition(instance):
             # slaves[customer]['mip'].write('slave_{}.lp'.format(customer))
             # print('Solving slave customer {}'.format(customer))
             slaves[customer]['mip'].optimize()
-            metadata['bds_runtime'] += round(slaves[customer]['mip'].runtime, 2)
+            metadata['bd{}_runtime'.format(time)] += round(slaves[customer]['mip'].runtime, 2)
             current_bound += slaves[customer]['mip'].objVal
 
             # Build cut for some customer
@@ -152,8 +138,8 @@ def benders_decomposition(instance):
         print('Upper bound: {}'.format(upper_bound))
         print('\n\n--------------------------------------------')
 
-    metadata['bds_iterations'] = it_counter
-    metadata['bds_objective'] = lower_bound
-    metadata['bds_solution'] = '-'.join(best_solution.values())
+    metadata['bd{}_iterations'.format(time)] = it_counter
+    metadata['bd{}_objective'.format(time)] = lower_bound
+    metadata['bd{}_solution'.format(time)] = '-'.join(best_solution.values())
 
     return best_solution, lower_bound, metadata
