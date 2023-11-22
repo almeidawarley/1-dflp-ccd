@@ -1,6 +1,7 @@
 import instance as ic
 import argparse as ap
-import benders as bd
+import benders1 as b1
+import benders2 as b2
 import recording as rc
 
 def mark_section(title):
@@ -22,8 +23,11 @@ def main():
     mark_section('Logging instance parameters read from file...')
     record = rc.load_record(args.project, instance)
 
-    bds_solution, bds_objective, bds_metadata = bd.benders_decomposition(instance)
-
+    _, _, bds_metadata = b2.benders_decomposition(instance)
+    record = rc.update_record(record, bds_metadata)
+    _, _, bds_metadata = b1.benders_decomposition(instance, 5)
+    record = rc.update_record(record, bds_metadata)
+    _, _, bds_metadata = b1.benders_decomposition(instance, 's')
     record = rc.update_record(record, bds_metadata)
 
 if __name__ == '__main__':

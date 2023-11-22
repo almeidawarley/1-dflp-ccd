@@ -8,8 +8,13 @@ import heuristic as hr
 def benders_decomposition(instance, time):
 
     B_TIME_LIMIT = 5 * 60 * 60
-    M_TIME_LIMIT = 1 * time * 60
-    S_TIME_LIMIT = 1 * time * 60
+
+    if time == 's':
+        M_TIME_LIMIT = B_TIME_LIMIT
+        S_TIME_LIMIT = B_TIME_LIMIT
+    else:
+        M_TIME_LIMIT = 1 * time * 60
+        S_TIME_LIMIT = 1 * time * 60
 
     metadata = {}
     metadata['bd{}_runtime'.format(time)] = 0.
@@ -83,7 +88,7 @@ def benders_decomposition(instance, time):
             master_mip.optimize()
             metadata['bd{}_optgap'.format(time)] = master_mip.MIPGap
             metadata['bd{}_runtime'.format(time)] += round(master_mip.runtime, 2)
-            upper_bound = round(master_mip.objVal, 2)
+            upper_bound = round(master_mip.objBound, 2)
             reference = fm.format_solution(instance, master_mip, master_var)
 
         current_bound = 0.
@@ -117,10 +122,10 @@ def benders_decomposition(instance, time):
                 inequality['q'][period] = slaves[customer]['var']['q'][period].x
 
             # Add inequality for some customer
-            master_mip.addConstr(master_var['v'][customer] <= 
+            master_mip.addConstr(master_var['v'][customer] <=
                                     sum(inequality['p'][period][location] *
-                                    instance.catalogs[location][customer] * 
-                                    master_var['y'][period, location] 
+                                    instance.catalogs[location][customer] *
+                                    master_var['y'][period, location]
                                 for period in instance.periods for location in instance.locations)
                                 - inequality['q'][instance.start] +
                                 inequality['q'][instance.end])
