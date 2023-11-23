@@ -117,16 +117,16 @@ xs = [x[i].x for i in range(0, cols)]
 model2 = gp.Model('model2')
 model2.setAttr('ModelSense', -1)
 
-u = model2.addVars([i for i in range(0, rows + 1)], lb = 0, ub = gp.GRB.INFINITY, obj = 0, vtype = 'C')
-v = model2.addVars([i for i in range(0, rows + 1)], lb = 0, ub = gp.GRB.INFINITY, obj = 0, vtype = 'C')
-g = model2.addVars([i for i in range(0, cols + 1)], lb = -gp.GRB.INFINITY, ub = gp.GRB.INFINITY, obj = 0, vtype = 'C')
+u = model2.addVars([i for i in range(0, rows + 1)], lb = 0, ub = gp.GRB.INFINITY, obj = 0, vtype = 'C', name = ['ut~1', 'ut~2', 'ucj~0_1', 'ucj~0_2', 'ucj~1_1', 'ucj~1_2', 'uub~1_1', 'uub~1_2', 'uub~1_3', 'uub~2_1', 'uub~2_2', 'uub~2_3', 'ulb~1_1', 'ulb~1_2', 'ulb~1_3', 'ulb~2_1', 'ulb~2_2', 'ulb~2_3', 'u~0'])
+v = model2.addVars([i for i in range(0, rows + 1)], lb = 0, ub = gp.GRB.INFINITY, obj = 0, vtype = 'C', name = ['vt~1', 'vt~2', 'vcj~0_1', 'vcj~0_2', 'vcj~1_1', 'vcj~1_2', 'vub~1_1', 'vub~1_2', 'vub~1_3', 'vub~2_1', 'vub~2_2', 'vub~2_3', 'vlb~1_1', 'vlb~1_2', 'vlb~1_3', 'vlb~2_1', 'vlb~2_2', 'vlb~2_3', 'v~0'])
+g = model2.addVars([i for i in range(0, cols + 1)], lb = -gp.GRB.INFINITY, ub = gp.GRB.INFINITY, obj = 0, vtype = 'C', name = ['gti~1_1', 'gti~1_2', 'gti~1_3', 'gti~2_1', 'gti~2_2', 'gti~2_3', 'gv~1', 'gv~2', 'g~0'])
 
 for j in range(0, cols):
-    model2.addConstr(sum(u[i] * A[i][j] for i in range(0, rows)) + u[rows] * p[j]- g[j] == 0)
-    model2.addConstr(sum(v[i] * A[i][j] for i in range(0, rows)) - v[rows] * p[j]- g[j] == 0)
+    model2.addConstr(sum(u[i] * A[i][j] for i in range(0, rows)) + u[rows] * p[j] - g[j] == 0)
+    model2.addConstr(sum(v[i] * A[i][j] for i in range(0, rows)) - v[rows] * p[j] - g[j] == 0)
 
-model2.addConstr(sum(u[i] * b[i] + u[rows] * p[cols] - g[cols] for i in range(0, rows)) <= 0)
-model2.addConstr(sum(v[i] * b[i] - u[rows] * (p[cols] + 1) - g[cols] for i in range(0, rows)) <= 0)
+model2.addConstr(sum(u[i] * b[i] for i in range(0, rows)) + u[rows] * p[cols] - g[cols] <= 0)
+model2.addConstr(sum(v[i] * b[i] for i in range(0, rows)) - v[rows] * (p[cols] + 1) - g[cols] <= 0)
 model2.addConstr(g[cols] >= -1)
 model2.addConstr(g[cols] <= 1)
 
