@@ -16,6 +16,8 @@ def benders_decomposition(instance, time):
         M_TIME_LIMIT = 1 * time * 60
         S_TIME_LIMIT = 1 * time * 60
 
+    TIME_LEFT = B_TIME_LIMIT
+
     metadata = {}
     metadata['bd{}_runtime'.format(time)] = 0.
 
@@ -79,18 +81,20 @@ def benders_decomposition(instance, time):
 
     bds_inequalities = {}
 
-    while not vd.compare_obj(upper_bound, lower_bound):
+    while not vd.compare_obj(upper_bound, lower_bound) and TIME_LEFT > 1:
 
         if it_counter == 0:
             # Create empty solution
             reference = hr.empty_solution(instance)
         else:
             fm.warm_start(instance, master_var, best_solution)
-            master_mip.setParam('TimeLimit', min(M_TIME_LIMIT, max(B_TIME_LIMIT - metadata['bd{}_runtime'.format(time)], 0.1)))
+            TIME_LEFT = min(M_TIME_LIMIT, B_TIME_LIMIT - metadata['bd{}_runtime'.format(time)])
+            TIME_LEFT = max(TIME_LEFT, 1) # Give one extra second to solver
+            master_mip.setParam('TimeLimit', TIME_LEFT)
             master_mip.optimize()
             metadata['bd{}_optgap'.format(time)] = master_mip.MIPGap
             metadata['bd{}_runtime'.format(time)] += round(master_mip.runtime, 2)
-            upper_bound = round(master_mip.objBound, 2)
+            upper_bound = min(upper_bound, round(master_mip.objBound, 2))
             reference = fm.format_solution(instance, master_mip, master_var)
 
         current_bound = 0.
