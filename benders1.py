@@ -77,7 +77,7 @@ def benders_decomposition(instance, time):
     it_counter = 0
     best_solution = hr.empty_solution(instance)
 
-    inequalities = {}
+    bds_inequalities = {}
 
     while not vd.compare_obj(upper_bound, lower_bound):
 
@@ -95,7 +95,7 @@ def benders_decomposition(instance, time):
 
         current_bound = 0.
 
-        inequalities[it_counter] = {}
+        bds_inequalities[it_counter] = {}
 
         for customer in instance.customers:
 
@@ -115,26 +115,24 @@ def benders_decomposition(instance, time):
             current_bound += slaves[customer]['mip'].objVal
 
             # Build cut for some customer
-            inequality = {}
-            inequality['p'] = {}
-            inequality['q'] = {}
+            bds_inequality = {}
+            bds_inequality['y'] = {}
             for period in instance.periods_extended:
                 if period != instance.start and period != instance.end:
-                    inequality['p'][period] = {}
+                    bds_inequality['y'][period] = {}
                     for location in instance.locations:
-                        inequality['p'][period][location] = slaves[customer]['var']['p'][period, location].x
-                inequality['q'][period] = slaves[customer]['var']['q'][period].x
+                        bds_inequality['y'][period][location] = slaves[customer]['var']['p'][period, location].x
+            bds_inequality['b'] = - slaves[customer]['var']['q'][instance.start].x + slaves[customer]['var']['q'][instance.end].x
 
             # Add inequality for some customer
             master_mip.addConstr(master_var['v'][customer] <=
-                                    sum(inequality['p'][period][location] *
+                                    sum(bds_inequality['y'][period][location] *
                                     instance.catalogs[location][customer] *
                                     master_var['y'][period, location]
                                 for period in instance.periods for location in instance.locations)
-                                - inequality['q'][instance.start] +
-                                inequality['q'][instance.end])
+                                + bds_inequality['b'])
 
-            inequalities[it_counter][customer] = inequality
+            bds_inequalities[it_counter][customer] = bds_inequality
 
         current_bound = round(current_bound, 2)
         if current_bound > lower_bound:
@@ -148,8 +146,6 @@ def benders_decomposition(instance, time):
         print('Current bound: {}'.format(current_bound))
         print('Upper bound: {}'.format(upper_bound))
         print('\n\n--------------------------------------------')
-
-    print(inequalities)
 
     metadata['bd{}_iterations'.format(time)] = it_counter
     metadata['bd{}_objective'.format(time)] = lower_bound
