@@ -77,6 +77,8 @@ def benders_decomposition(instance, time):
     it_counter = 0
     best_solution = hr.empty_solution(instance)
 
+    inequalities = {}
+
     while not vd.compare_obj(upper_bound, lower_bound):
 
         if it_counter == 0:
@@ -92,6 +94,8 @@ def benders_decomposition(instance, time):
             reference = fm.format_solution(instance, master_mip, master_var)
 
         current_bound = 0.
+
+        inequalities[it_counter] = {}
 
         for customer in instance.customers:
 
@@ -130,6 +134,8 @@ def benders_decomposition(instance, time):
                                 - inequality['q'][instance.start] +
                                 inequality['q'][instance.end])
 
+            inequalities[it_counter][customer] = inequality
+
         current_bound = round(current_bound, 2)
         if current_bound > lower_bound:
             lower_bound = current_bound
@@ -142,6 +148,8 @@ def benders_decomposition(instance, time):
         print('Current bound: {}'.format(current_bound))
         print('Upper bound: {}'.format(upper_bound))
         print('\n\n--------------------------------------------')
+
+    print(inequalities)
 
     metadata['bd{}_iterations'.format(time)] = it_counter
     metadata['bd{}_objective'.format(time)] = lower_bound
