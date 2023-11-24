@@ -115,7 +115,7 @@ def benders_decomposition(instance):
 
             chosen_customer = closest_customer
 
-            if closest_distance <= 0.10:
+            if closest_distance <= 0.00:
             # if largest_distance >= 0.50:
 
                 # print('Adding inequality for customer {}'.format(chosen_customer))
