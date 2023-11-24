@@ -4,6 +4,7 @@ import variables as vb
 import constraints as ct
 import formulation as fm
 import heuristic as hr
+import numpy as np
 
 def benders_decomposition(instance, time):
 
@@ -85,6 +86,66 @@ def benders_decomposition(instance, time):
     def add_customer_cut(model, where):
 
         if where == gp.GRB.Callback.MIPNODE:
+
+            shapes = {}
+            for customer in instance.customers:
+                shapes[customer] = {i : 0 for i, _ in enumerate(model.getVars())}
+                summing = 0.
+                for period in instance.periods:
+                    for location in instance.locations:
+                        summing += model.cbGetNodeRel(model._var['y'][period, location]) * instance.catalogs[location][customer]
+                        if instance.catalogs[location][customer] == 1.:
+                            shapes[customer][model._var['y'][period, location].index] = 1.
+                if summing.is_integer():
+                    # print('No cut for customer {}'.format(customer))
+                    shapes[customer] = {i : 0 for i, _ in enumerate(model.getVars())}
+                    shapes[customer][len(model.getVars())] = 0
+                else:
+                    shapes[customer][len(model.getVars())] = np.floor(summing)
+
+                # print('Shape for customer {}: {}'.format(customer, shapes[customer]))
+
+                ################################################################################
+
+                # Create program for customer-based cut
+                cut_generation = gp.Model('cut-generation-{}'.format(customer))
+                cut_generation.setAttr('ModelSense', -1)
+                # cut_generation.setParam('OutputFlag', 0)
+
+                # Create decision variables
+                vars_y = len(instance.periods) * len(instance.locations)
+                vars_v = len(instance.customers)
+                vars = vars_y + vars_v
+                cons = len(master_mip.getConstrs())
+                rows, cols = cons + 2 * vars_y, vars
+
+                u = cut_generation.addVars([i for i in range(0, rows + 1)], lb = 0, ub = gp.GRB.INFINITY, obj = 0, vtype = 'C', name = ['u~{}'.format(i) for i in range(0, rows + 1)])
+                v = cut_generation.addVars([i for i in range(0, rows + 1)], lb = 0, ub = gp.GRB.INFINITY, obj = 0, vtype = 'C', name = ['v~{}'.format(i) for i in range(0, rows + 1)])
+                d = cut_generation.addVars([i for i in range(0, cols + 1)], lb = -gp.GRB.INFINITY, ub = gp.GRB.INFINITY, obj = 0, vtype = 'C', name = ['g~{}'.format(i) for i in range(0, cols + 1)])
+
+                A = model.getA()
+                b = model.getAttr('RHS', model.getConstrs())
+                for j in range(0, vars_y):
+                    cut_generation.addConstr(sum(u[i] * A[i, j] for i in range(0, cons)) + u[cons + j] - u[cons + vars_y + j] + u[rows] * shapes[customer][j] - d[j] == 0)
+                    cut_generation.addConstr(sum(v[i] * A[i, j] for i in range(0, cons)) + v[cons + j] - v[cons + vars_y + j] - v[rows] * shapes[customer][j] - d[j] == 0)
+                for j in range(vars_y, vars):
+                    cut_generation.addConstr(sum(u[i] * A[i, j] for i in range(0, cons)) + u[rows] * shapes[customer][j] - d[j] == 0)
+                    cut_generation.addConstr(sum(v[i] * A[i, j] for i in range(0, cons)) - v[rows] * shapes[customer][j] - d[j] == 0)
+
+                cut_generation.addConstr(sum(u[i] * b[i] for i in range(0, cons)) + sum(u[i] for i in range(cons, cons + vars_y)) + u[rows] * shapes[customer][cols] - d[cols] <= 0)
+                cut_generation.addConstr(sum(v[i] * b[i] for i in range(0, cons)) + sum(v[i] for i in range(cons, cons + vars_y)) - v[rows] * (shapes[customer][cols] + 1) - d[cols] <= 0)
+                cut_generation.addConstr(d[cols] >= -1)
+                cut_generation.addConstr(d[cols] <= 1)
+
+                solution = model.cbGetNodeRel(model.getVars())
+
+                cut_generation.setObjective(sum(solution[j] * d[j] for j in range(0, cols)) - d[cols])
+
+                cut_generation.optimize()
+
+                model.cbCut(sum(d[j].x * v for j, v in enumerate(model.getVars())) <= d[cols].x)
+
+                ################################################################################
 
             # print(model.getAttr("Sense",model.getConstrs()))
 
