@@ -19,6 +19,25 @@ def create_vry(instance, mip):
 
 # ---------------------------------------------------------------------------
 
+def create_vry_3(instance, mip):
+    # Create y^{t}_{ki} variables
+
+    lowers = [0. for _ in instance.periods_with_start for _ in instance.locations_extended for _ in instance.locations_extended]
+    uppers = [1. for _ in instance.periods_with_start for _ in instance.locations_extended for _ in instance.locations_extended]
+    coefs = [0. for _ in instance.periods_with_start for _ in instance.locations_extended for _ in instance.locations_extended]
+    types = ['B' for _ in instance.periods_with_start for _ in instance.locations_extended for _ in instance.locations_extended]
+    names = [
+        'y~{}_{}_{}'.format(period, location, destination)
+        for period in instance.periods_with_start
+        for location in instance.locations_extended
+        for destination in instance.locations_extended
+    ]
+
+    return mip.addVars(instance.periods_with_start, instance.locations_extended, instance.locations_extended, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+
+# ---------------------------------------------------------------------------
+
+
 def create_vrw(instance, mip):
     # Create w^{t}_{ij} variables
 
@@ -57,17 +76,17 @@ def create_vrw_2(instance, mip):
 def create_vrd3(instance, mip):
     # Create d3^{t}_{j} variables
 
-    lowers = [0. for _ in ['0'] + instance.periods for _ in instance.customers]
-    uppers = [gp.GRB.INFINITY for _ in ['0'] + instance.periods for _ in instance.customers]
-    coefs = [0. for _ in ['0'] + instance.periods for _ in instance.customers]
-    types = ['C' for _ in ['0'] + instance.periods for _ in instance.customers]
+    lowers = [0. for _ in instance.periods_with_start for _ in instance.customers]
+    uppers = [gp.GRB.INFINITY for _ in instance.periods_with_start for _ in instance.customers]
+    coefs = [0. for _ in instance.periods_with_start for _ in instance.customers]
+    types = ['C' for _ in instance.periods_with_start for _ in instance.customers]
     names = [
         'd3~{}_{}'.format(period, customer)
-        for period in ['0'] + instance.periods
+        for period in instance.periods_with_start
         for customer in instance.customers
     ]
 
-    return mip.addVars(['0'] + instance.periods, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+    return mip.addVars(instance.periods_with_start, instance.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
 # ---------------------------------------------------------------------------
 

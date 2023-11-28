@@ -38,7 +38,7 @@ def progressive_algorithm(instance):
 
             if int(reference) <= int(frontier):
 
-                for location in ['0'] + instance.locations:
+                for location in instance.locations_extended:
 
                     # Copy partial solution
                     candidate = copy_solution(best_solution)
@@ -65,7 +65,7 @@ def forward_algorithm(instance):
 
     for reference in instance.periods:
 
-        for location in ['0'] + instance.locations:
+        for location in instance.locations_extended:
 
             # Copy partial solution
             candidate = copy_solution(best_solution)
@@ -87,7 +87,7 @@ def backward_algorithm(instance):
 
     for reference in reversed(instance.periods):
 
-        for location in ['0'] + instance.locations:
+        for location in instance.locations_extended:
 
             # Copy partial solution
             candidate = copy_solution(best_solution)
@@ -108,7 +108,7 @@ def random_algorithm(instance):
     # Create partial solution
     best_solution = {}
     for period in instance.periods:
-        best_solution[period] = np.random.choice(['0'] + instance.locations)
+        best_solution[period] = np.random.choice(instance.locations_extended)
     best_objective = vd.evaluate_solution(instance, best_solution)
 
     return best_solution, round(best_objective, 2)

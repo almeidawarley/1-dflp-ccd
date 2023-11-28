@@ -21,10 +21,21 @@ def map_catalog(instance, reference, customer):
         for location in instance.locations
     }
 
+# ---------------------------------------------------------------------------
+
 def create_c1(instance, mip, variable):
     # Create constraint 1
 
     mip.addConstrs((variable['y'].sum(period, '*') <= 1 for period in instance.periods), name = 'c1')
+
+# ---------------------------------------------------------------------------
+
+def create_c1T(instance, mip, variable):
+    # Create constraint 1, network version
+
+    mip.addConstrs((variable['y'].sum(previous(period), '*', location) == variable['y'].sum(period, location, '*') for period in instance.periods for location in instance.locations_extended), name = 'c1A')
+    mip.addConstrs((variable['y'].sum(instance.start, instance.depot, '*') == 1), name = 'cB1')
+    mip.addConstrs((variable['y'].sum(previous(instance.end), '*', instance.depot) == 1), name = 'c1C')
 
 # ---------------------------------------------------------------------------
 

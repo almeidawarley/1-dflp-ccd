@@ -213,14 +213,23 @@ def fix_solution(mip, variable, solution):
 
     mip.addConstrs((variable['y'][period, solution[period]] == 1 if solution[period] != '0' else variable['y'].sum(period, '*') == 0 for period in solution.keys()), name = 'fix')
 
-def warm_start(instance, variable, solution):
+def warm_start(instance, variable, solution, indexes = 2):
     # Warm start with a feasible solution
 
-    for period in instance.periods:
-        for location in instance.locations:
-            variable['y'][period, location].start  = 1. if location == solution[period] else 0.
 
-def format_solution(instance, mip, variable, verbose = 0):
+    if indexes == 2:
+        for period in instance.periods:
+            for location in instance.locations:
+                variable['y'][period, location].start  = 1. if location == solution[period] else 0.
+
+    elif indexes == 3:
+        for period in instance.periods:
+            for location in instance.locations_extended:
+                for destination in instance.locations_extended:
+                    next_period = str(int(period) + 1)
+                    variable['y'][period, location, destination].start  = 1. if location == solution[period] and next_period != instance.end and destination == solution[next_period] else 0.
+
+def format_solution(instance, mip, variable, indexes = 2):
     # Format model solution as dictionary
 
     solution = {}
@@ -228,11 +237,20 @@ def format_solution(instance, mip, variable, verbose = 0):
     for period in instance.periods:
         solution[period] = '0'
 
-    for period in instance.periods:
-        for location in instance.locations:
-            value = variable['y'][period, location].x
-            if vd.is_equal(value, 1.):
-                solution[period] = location
+    if indexes == 2:
+        for period in instance.periods:
+            for location in instance.locations:
+                value = variable['y'][period, location].x
+                if vd.is_equal(value, 1.):
+                    solution[period] = location
+
+    elif indexes == 3:
+        for period in instance.periods:
+            for location in instance.locations_extended:
+                for destination in instance.locations_extended:
+                    value = variable['y'][period, location, destination].x
+                    if vd.is_equal(value, 1.):
+                        solution[period] = location
 
     return solution
 

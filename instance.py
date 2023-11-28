@@ -60,6 +60,9 @@ class instance:
         self.periods_with_end = [period for period in self.periods] + [self.end]
         self.periods_extended = [self.start] + [period for period in self.periods] + [self.end]
 
+        self.depot = '0'
+        self.locations_extended = [self.depot] + self.locations
+
     def create_slovakia(self, folder = 'instances/slovakia'):
         # Create slovakia instances
 
