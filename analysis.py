@@ -5,8 +5,9 @@ content = pd.read_csv('experiments/paper1/summary.csv')
 
 content['cold_lrz_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['cold_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
 content['cold_net_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['cold_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
+content['warm_lrz_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['warm_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
+content['warm_net_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['warm_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
 
-'''
 content = content.set_index('keyword')
 
 benders = pd.read_csv('experiments/paper1/benders.csv')
@@ -14,7 +15,7 @@ benders = benders.set_index('keyword')
 benders = benders.drop(['project', 'created', 'seed', 'locations', 'customers', 'periods', 'patronizing', 'rewards', 'replenishment', 'character', 'updated', 'commit', 'branch'], axis = 1)
 
 content = pd.concat([content, benders], axis = 1, join = 'inner')
-'''
+# content.to_csv('debugging.csv')
 
 characteristics = {
     'project': ['paper1'],
@@ -68,7 +69,7 @@ def table1(descriptor = 'paper'):
             filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
 
             if descriptor == 'paper':
-                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'cold_net_runtime'] #, 'bds_runtime']  # 'cold_nlr_runtime', 'warm_nlr_runtime'
+                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'cold_net_runtime'] # 'cold_nlr_runtime'
             else:
                 exit('Wrong descriptor for table 2')
 
@@ -160,6 +161,42 @@ def table3(descriptor = 'paper'):
 
     print('**************************************************************************************************')
 
+def table4(descriptor = 'paper'):
+
+    for characteristic, values in characteristics.items():
+
+        for value in values:
+
+            # filter = (content[characteristic] == value) & (content['cold_lrz_optgap'] <= 0.0001) & (content['cold_net_optgap'] <= 0.0001) & (content['bds_optgap'] <= 0.0001) & (content['bd5_optgap'] <= 0.0001) & (content['bdl_optgap'] <= 0.0001)
+            filter = (content[characteristic] == value) & (content['cold_lrz_optgap'] <= 0.0001) & (content['cold_net_optgap'] <= 0.0001) & (content['bdl_optgap'] <= 0.0001)
+
+            if descriptor == 'paper':
+                # columns = ['cold_lrz_runtime', 'cold_net_runtime', 'bd5_runtime', 'bds_runtime', 'bdl_runtime']
+                columns = ['cold_lrz_runtime', 'cold_net_runtime', 'bdl_runtime']
+            else:
+                exit('Wrong descriptor for table 4')
+
+            averages = {}
+            deviations = {}
+            maximums = {}
+
+            for column in columns:
+                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+
+            count = len(content[filter].index)
+
+            print('{}&{}&{}{}{}'.
+            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+        print('\\midrule')
+
+    _ = input('table4 {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
+
 def graph1(descriptor = 'paper'):
 
     methods = {
@@ -235,4 +272,5 @@ def graph1(descriptor = 'paper'):
 table1('paper')
 table2('paper')
 table3('paper')
+table4('paper')
 graph1('paper')
