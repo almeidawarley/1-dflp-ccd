@@ -34,8 +34,10 @@ def create_c1T(instance, mip, variable):
     # Create constraint 1, network version
 
     mip.addConstrs((variable['y'].sum(previous(period), '*', location) == variable['y'].sum(period, location, '*') for period in instance.periods for location in instance.locations_extended), name = 'c1A')
-    mip.addConstrs((variable['y'].sum(instance.start, instance.depot, '*') == 1), name = 'cB1')
-    mip.addConstrs((variable['y'].sum(previous(instance.end), '*', instance.depot) == 1), name = 'c1C')
+    mip.addConstr((variable['y'].sum(instance.start, instance.depot, '*') == 1), name = 'cB1')
+    mip.addConstr(sum(variable['y'].sum(instance.start, location, '*') for location in instance.locations) == 0, name = 'cC1')
+    mip.addConstr((variable['y'].sum(previous(instance.end), '*', instance.depot) == 1), name = 'c1D')
+    mip.addConstr(sum(variable['y'].sum(previous(instance.end), '*', location) for location in instance.locations) == 0, name = 'cE1')
 
 # ---------------------------------------------------------------------------
 
