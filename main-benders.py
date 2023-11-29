@@ -25,10 +25,10 @@ def main():
 
     _, _, bds_metadata = b2.benders_decomposition(instance)
     record = rc.update_record(record, bds_metadata)
-    _, _, bds_metadata = b1.benders_decomposition(instance, 5)
-    record = rc.update_record(record, bds_metadata)
-    _, _, bds_metadata = b1.benders_decomposition(instance, 's')
-    record = rc.update_record(record, bds_metadata)
+    # _, _, bds_metadata = b1.benders_decomposition(instance, 5)
+    # record = rc.update_record(record, bds_metadata)
+    # _, _, bds_metadata = b1.benders_decomposition(instance, 's')
+    # record = rc.update_record(record, bds_metadata)
 
 if __name__ == '__main__':
 
