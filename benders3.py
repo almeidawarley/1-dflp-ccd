@@ -83,7 +83,7 @@ def benders_decomposition(instance):
 
         solving_count = 0
 
-        if where == gp.GRB.Callback.MIPNODE and model.cbGet(gp.GRB.Callback.MIPNODE_STATUS) == gp.GRB.OPTIMAL:
+        if where == gp.GRB.Callback.MIPNODE and model.cbGet(gp.GRB.Callback.MIPNODE_STATUS) == gp.GRB.OPTIMAL and model.cbGet(gp.GRB.Callback.MIPNODE_NODCNT) == 0:
 
             closest_customer = '0'
             closest_distance = 1

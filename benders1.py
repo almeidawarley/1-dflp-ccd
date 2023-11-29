@@ -112,6 +112,7 @@ def benders_decomposition(instance, time):
                     for location in instance.locations]) -
                     slaves[customer]['var']['q'][instance.start] +
                     slaves[customer]['var']['q'][instance.end])
+            added = slaves[customer]['mip'].addConstrs(slaves[customer]['var']['p'][period, reference[period]] == 0 for period, location in reference.items() if location != instance.depot)
             # slaves[customer]['mip'].write('slave_{}.lp'.format(customer))
             # print('Solving slave customer {}'.format(customer))
             slaves[customer]['mip'].optimize()
@@ -137,6 +138,7 @@ def benders_decomposition(instance, time):
                                 + bds_inequality['b'])
 
             bds_inequalities[it_counter][customer] = bds_inequality
+            slaves[customer]['mip'].remove(added)
 
         current_bound = round(current_bound, 2)
         if current_bound > lower_bound:
