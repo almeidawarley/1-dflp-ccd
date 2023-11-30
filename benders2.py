@@ -3,6 +3,10 @@ import variables as vb
 import constraints as ct
 import formulation as fm
 
+'''
+    Implementation #2 of Benders decomposition
+    Lazy constraints, original formulation
+'''
 
 def benders_decomposition(instance):
 
@@ -112,7 +116,7 @@ def benders_decomposition(instance):
                         for location in instance.locations]) -
                         slaves[customer]['var']['q'][instance.start] +
                         slaves[customer]['var']['q'][instance.end])
-                added = slaves[customer]['mip'].addConstrs(slaves[customer]['var']['p'][period, location] == 0 for period in instance.periods for location in instance.locations if solution[period, location] == 1)
+                # added = slaves[customer]['mip'].addConstrs(slaves[customer]['var']['p'][period, location] == 0 for period in instance.periods for location in instance.locations if solution[period, location] == 1)
                 slaves[customer]['mip'].optimize()
 
                 # Build cut for some customer
@@ -135,7 +139,7 @@ def benders_decomposition(instance):
                                     - inequality['q'][instance.start] +
                                     inequality['q'][instance.end])
 
-                slaves[customer]['mip'].remove(added)
+                # slaves[customer]['mip'].remove(added)
         '''
         elif where == gp.GRB.Callback.MIPNODE:
 

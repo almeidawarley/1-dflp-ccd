@@ -7,6 +7,11 @@ import heuristic as hr
 import numpy as np
 import time as tm
 
+'''
+    Implementation #3 of Benders decomposition
+    Vanilla version, original formulation, customer-based cuts
+'''
+
 def benders_decomposition(instance):
 
     B_TIME_LIMIT = 5 * 60 * 60

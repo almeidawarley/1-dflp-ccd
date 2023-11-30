@@ -3,6 +3,11 @@ import variables as vb
 import constraints as ct
 import formulation as fm
 
+'''
+    Implementation #5 of Benders decomposition
+    Lazy constraints, network reformulation
+'''
+
 
 def benders_decomposition(instance):
 

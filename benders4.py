@@ -6,8 +6,8 @@ import formulation as fm
 import heuristic as hr
 
 '''
-    Implementation #1 of Benders decomposition
-    Vanilla version, original formulation
+    Implementation #4 of Benders decomposition
+    Vanilla version, network reformulation
 '''
 
 def benders_decomposition(instance, time):
@@ -32,7 +32,8 @@ def benders_decomposition(instance, time):
     # Create decision variables
     master_var = {
         # Main decision variables
-        'y': vb.create_vry(instance, master_mip),
+        # 'y': vb.create_vry(instance, master_mip),
+        'y': vb.create_vry_3(instance, master_mip),
         'v': vb.create_vrv(instance, master_mip)
     }
 
@@ -50,7 +51,7 @@ def benders_decomposition(instance, time):
              for customer in instance.customers]))
 
     # Create main constraints
-    ct.create_c1(instance, master_mip, master_var)
+    ct.create_c1T(instance, master_mip, master_var)
 
     # Create slave programs
     slaves = {}
@@ -92,15 +93,21 @@ def benders_decomposition(instance, time):
             # Create empty solution
             reference = hr.empty_solution(instance)
         else:
-            fm.warm_start(instance, master_var, best_solution)
+            fm.warm_start(instance, master_var, best_solution, 3)
             TIME_LEFT = min(M_TIME_LIMIT, B_TIME_LIMIT - metadata['bd{}_runtime'.format(time)])
             TIME_LEFT = max(TIME_LEFT, 1) # Give one extra second to solver
             master_mip.setParam('TimeLimit', TIME_LEFT)
+            master_mip.write('master-tigther.lp')
             master_mip.optimize()
+            # relax = master_mip.relax()
+            # relax.optimize()
+            # relax.write('relaxed-tgt.lp')
+            # relax.write('relaxed-tgt.sol')
+            # _ = input('continue?')
             metadata['bd{}_optgap'.format(time)] = master_mip.MIPGap
             metadata['bd{}_runtime'.format(time)] += round(master_mip.runtime, 2)
             upper_bound = min(upper_bound, round(master_mip.objBound, 2))
-            reference = fm.format_solution(instance, master_mip, master_var)
+            reference = fm.format_solution(instance, master_mip, master_var, 3)
 
         current_bound = 0.
 
@@ -117,7 +124,6 @@ def benders_decomposition(instance, time):
                     for location in instance.locations]) -
                     slaves[customer]['var']['q'][instance.start] +
                     slaves[customer]['var']['q'][instance.end])
-            # added = slaves[customer]['mip'].addConstrs(slaves[customer]['var']['p'][period, reference[period]] == 0 for period, location in reference.items() if location != instance.depot)
             # slaves[customer]['mip'].write('slave_{}.lp'.format(customer))
             # print('Solving slave customer {}'.format(customer))
             slaves[customer]['mip'].optimize()
@@ -135,15 +141,20 @@ def benders_decomposition(instance, time):
             bds_inequality['b'] = - slaves[customer]['var']['q'][instance.start].x + slaves[customer]['var']['q'][instance.end].x
 
             # Add inequality for some customer
+            #master_mip.addConstr(master_var['v'][customer] <=
+            #                        sum(bds_inequality['y'][period][location] *
+            #                        instance.catalogs[location][customer] *
+            #                        master_var['y'][period, location]
+            #                    for period in instance.periods for location in instance.locations)
+            #                    + bds_inequality['b'])
             master_mip.addConstr(master_var['v'][customer] <=
                                     sum(bds_inequality['y'][period][location] *
                                     instance.catalogs[location][customer] *
-                                    master_var['y'][period, location]
+                                    master_var['y'].sum(period, location, '*')
                                 for period in instance.periods for location in instance.locations)
                                 + bds_inequality['b'])
 
             bds_inequalities[it_counter][customer] = bds_inequality
-            # slaves[customer]['mip'].remove(added)
 
         current_bound = round(current_bound, 2)
         if current_bound > lower_bound:
@@ -157,6 +168,8 @@ def benders_decomposition(instance, time):
         print('Current bound: {}'.format(current_bound))
         print('Upper bound: {}'.format(upper_bound))
         print('\n\n--------------------------------------------')
+
+        _ = input('wait...')
 
     metadata['bd{}_iterations'.format(time)] = it_counter
     metadata['bd{}_objective'.format(time)] = lower_bound
