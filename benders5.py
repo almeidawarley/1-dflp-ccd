@@ -114,7 +114,6 @@ def benders_decomposition(instance):
                         slaves[customer]['var']['q'][instance.end])
                 # added = slaves[customer]['mip'].addConstrs(slaves[customer]['var']['p'][period, location] == 0 for period in instance.periods for location in instance.locations if solution[period, location] == 1)
                 slaves[customer]['mip'].optimize()
-                slaves[customer]['mip'].write('debug_this_shit.lp')
 
                 # Build cut for some customer
                 inequality = {}
@@ -150,8 +149,6 @@ def benders_decomposition(instance):
         '''
 
     master_mip.optimize(add_cut)
-    master_mip.write('wot.sol')
-    master_mip.write('wot.lp')
 
     objective = round(master_mip.objVal, 2)
     solution = fm.format_solution(instance, master_mip, master_var, 3)
