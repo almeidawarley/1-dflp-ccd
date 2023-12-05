@@ -134,7 +134,7 @@ def build_networked_mip(instance):
     ct.create_c7(instance, mip, variable)
     ct.create_c8(instance, mip, variable)
     ct.create_c9(instance, mip, variable)
-    ct.create_c10(instance, mip, variable)
+    # ct.create_c10(instance, mip, variable)
 
     return mip, variable
 

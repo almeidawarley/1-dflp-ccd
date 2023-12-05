@@ -1,6 +1,8 @@
 import pandas as pd
 import validation as vd
 
+tolerance = 0.0001
+
 content = pd.read_csv('experiments/paper1/summary.csv')
 
 content['cold_lrz_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['cold_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
@@ -167,11 +169,11 @@ def table4(descriptor = 'paper'):
 
         for value in values:
 
-            # filter = (content[characteristic] == value) & (content['cold_lrz_optgap'] <= 0.0001) & (content['cold_net_optgap'] <= 0.0001) & (content['bds_optgap'] <= 0.0001) & (content['bd5_optgap'] <= 0.0001) & (content['bdl_optgap'] <= 0.0001)
-            filter = (content[characteristic] == value) & (content['cold_lrz_optgap'] <= 0.0001) & (content['cold_net_optgap'] <= 0.0001) & (content['bdl_optgap'] <= 0.0001)
+            # filter = (content[characteristic] == value) & (content['cold_lrz_optgap'] <= tolerance) & (content['cold_net_optgap'] <= tolerance) & (content['bds_optgap'] <= tolerance) & (content['bdl_optgap'] <= tolerance)
+            filter = (content[characteristic] == value) & (content['cold_lrz_optgap'] <= tolerance) & (content['cold_net_optgap'] <= tolerance) & (content['bdl_optgap'] <= tolerance)
 
             if descriptor == 'paper':
-                # columns = ['cold_lrz_runtime', 'cold_net_runtime', 'bd5_runtime', 'bds_runtime', 'bdl_runtime']
+                # columns = ['cold_lrz_runtime', 'cold_net_runtime', 'bds_runtime', 'bdl_runtime']
                 columns = ['cold_lrz_runtime', 'cold_net_runtime', 'bdl_runtime']
             else:
                 exit('Wrong descriptor for table 4')
@@ -193,6 +195,43 @@ def table4(descriptor = 'paper'):
         print('\\midrule')
 
     _ = input('table4 {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
+def table5(descriptor = 'paper'):
+
+    for characteristic, values in characteristics.items():
+
+        for value in values:
+
+            # filter = (content[characteristic] == value) & ((content['cold_lrz_optgap'] > tolerance) | (content['cold_net_optgap'] > tolerance) | (content['bds_optgap'] > tolerance) | (content['bdl_optgap'] > tolerance))
+            filter = (content[characteristic] == value) & ((content['cold_lrz_optgap'] > tolerance) | (content['cold_net_optgap'] > tolerance) | (content['bdl_optgap'] > tolerance))
+
+            if descriptor == 'paper':
+                # columns = ['cold_lrz_optgap', 'cold_net_optgap', 'bds_optgap', 'bdl_optgap']
+                columns = ['cold_lrz_optgap', 'cold_net_optgap', 'bdl_optgap']
+            else:
+                exit('Wrong descriptor for table 5')
+
+            averages = {}
+            deviations = {}
+            maximums = {}
+            feasibles = {}
+
+            for column in columns:
+                averages[column] = round(content[filter & (content[column] > tolerance)][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                deviations[column] = round(content[filter & (content[column] > tolerance)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                # maximums[column] = round(content[filter & (content[column] > tolerance)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                feasibles[column] = content[filter & (content[column] > tolerance)][column].count()
+
+            count = len(content[filter].index)
+
+            print('{}&{}&{}{}{}'.
+            format(labels[characteristic][value], count, '&'.join(['$[{}]\,{:.2f}\pm{:.2f}$'.format(feasibles[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+        print('\\midrule')
+
+    _ = input('table5 {}'.format(descriptor))
 
     print('**************************************************************************************************')
 
@@ -269,8 +308,9 @@ def graph1(descriptor = 'paper'):
 
                 print('Exported graph to graphs/graph_{}_{}.tex'.format(characteristic, value))
 
-table1('paper')
-table2('paper')
-table3('paper')
+# table1('paper')
+# table2('paper')
+# table3('paper')
 table4('paper')
-graph1('paper')
+table5('paper')
+# graph1('paper')

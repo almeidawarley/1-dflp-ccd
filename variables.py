@@ -179,13 +179,13 @@ def create_vrp(instance, mip):
 def create_vrq(instance, mip):
     # Create q^{t} variables
 
-    lowers = [-gp.GRB.INFINITY for _ in instance.periods_extended]
-    uppers = [gp.GRB.INFINITY for _ in instance.periods_extended]
-    coefs = [0. for _ in instance.periods_extended]
-    types = ['C' for _ in instance.periods_extended]
+    lowers = [0 for _ in instance.periods_with_start]
+    uppers = [gp.GRB.INFINITY for _ in instance.periods_with_start]
+    coefs = [0. for _ in instance.periods_with_start]
+    types = ['C' for _ in instance.periods_with_start]
     names = [
         'q~{}'.format(period)
-        for period in instance.periods_extended
+        for period in instance.periods_with_start
     ]
 
-    return mip.addVars(instance.periods_extended, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+    return mip.addVars(instance.periods_with_start, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)

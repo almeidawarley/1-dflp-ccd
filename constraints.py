@@ -142,10 +142,7 @@ def create_c10(instance, mip, variable):
 def create_c11(instance, mip, variable, customer):
     # Create constraint 11, slave
 
-    mip.addConstrs((variable['p'][period2, location] - variable['q'][period1] + variable['q'][period2]
+    mip.addConstrs((variable['p'][period2, location] + variable['q'][period1] - variable['q'][period2]
                      >= instance.revenues[period2][location] * instance.partial_demand(period1, period2, customer)
-                    for period1 in instance.periods_with_start for period2 in instance.periods for location in instance.locations 
-                    if is_before(period1, period2) and instance.catalogs[location][customer] == 1.), name = 'c11a')
-
-    mip.addConstrs((- variable['q'][period1] + variable['q'][instance.end] >= 0
-                    for period1 in instance.periods_with_start), name = 'c11b')
+                    for period1 in instance.periods_with_start for period2 in instance.periods for location in instance.locations
+                    if is_before(period1, period2) and instance.catalogs[location][customer] == 1.), name = 'c11')
