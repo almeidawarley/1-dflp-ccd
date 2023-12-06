@@ -86,8 +86,6 @@ def benders_decomposition(instance):
 
     def add_customer_cut(model, where):
 
-        solving_count = 0
-
         if where == gp.GRB.Callback.MIPNODE and model.cbGet(gp.GRB.Callback.MIPNODE_STATUS) == gp.GRB.OPTIMAL and model.cbGet(gp.GRB.Callback.MIPNODE_NODCNT) == 0:
 
             closest_customer = '0'
@@ -166,12 +164,11 @@ def benders_decomposition(instance):
                 end = tm.time()
 
                 cut_generation.optimize()
-                solving_count += 1
 
                 if abs(cut_generation.objVal - 0) > 0.01:
                     model.cbCut(sum(d[j].x * v for j, v in enumerate(model.getVars())) <= d[cols].x)
 
-                # print('buildtime: {:.4f}, runtime: {:.4f}, count: {:.4f}'.format(end-start, cut_generation.runtime, solving_count))
+                # print('buildtime: {:.4f}, runtime: {:.4f}, count: {:.4f}'.format(end-start, cut_generation.runtime))
 
             ################################################################################
 
@@ -186,9 +183,9 @@ def benders_decomposition(instance):
             TIME_LEFT = max(TIME_LEFT, 1) # Give one extra second to solver
             master_mip.setParam('TimeLimit', TIME_LEFT)
             master_mip.optimize(add_customer_cut)
-            metadata['bdc_optgap'] = master_mip.MIPGap
-            metadata['bdc_runtime'] += round(master_mip.runtime, 2)
             upper_bound = min(upper_bound, round(master_mip.objBound, 2))
+            metadata['bdc_runtime'] += round(master_mip.runtime, 2)
+            metadata['bdc_optgap'] = vd.compute_gap(upper_bound, lower_bound)
             reference = fm.format_solution(instance, master_mip, master_var)
 
         current_bound = 0.
