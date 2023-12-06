@@ -104,9 +104,9 @@ def benders_decomposition(instance, time):
             # relax.write('relaxed-tgt.lp')
             # relax.write('relaxed-tgt.sol')
             # _ = input('continue?')
-            metadata['bd{}_optgap'.format(time)] = master_mip.MIPGap
-            metadata['bd{}_runtime'.format(time)] += round(master_mip.runtime, 2)
             upper_bound = min(upper_bound, round(master_mip.objBound, 2))
+            metadata['bd{}_optgap'.format(time)] = vd.compute_gap(upper_bound, lower_bound)
+            metadata['bd{}_runtime'.format(time)] += round(master_mip.runtime, 2)
             reference = fm.format_solution(instance, master_mip, master_var, 3)
 
         current_bound = 0.
