@@ -10,6 +10,11 @@ import heuristic as hr
     Vanilla version, original formulation
 '''
 
+def analytical_solution(instance, solution):
+
+
+    pass
+
 def benders_decomposition(instance, time):
 
     B_TIME_LIMIT = 5 * 60 * 60
@@ -97,9 +102,9 @@ def benders_decomposition(instance, time):
             TIME_LEFT = max(TIME_LEFT, 1) # Give one extra second to solver
             master_mip.setParam('TimeLimit', TIME_LEFT)
             master_mip.optimize()
-            metadata['bd{}_optgap'.format(time)] = master_mip.MIPGap
-            metadata['bd{}_runtime'.format(time)] += round(master_mip.runtime, 2)
             upper_bound = min(upper_bound, round(master_mip.objBound, 2))
+            metadata['bd{}_runtime'.format(time)] += round(master_mip.runtime, 2)
+            metadata['bd{}_optgap'.format(time)] = vd.compute_gap(upper_bound, lower_bound)
             reference = fm.format_solution(instance, master_mip, master_var)
 
         current_bound = 0.
@@ -114,10 +119,8 @@ def benders_decomposition(instance, time):
                     instance.catalogs[location][customer] *
                     (1 if reference[period] == location else 0)
                     for period in instance.periods
-                    for location in instance.locations]) -
-                    slaves[customer]['var']['q'][instance.start] +
-                    slaves[customer]['var']['q'][instance.end])
-            # added = slaves[customer]['mip'].addConstrs(slaves[customer]['var']['p'][period, reference[period]] == 0 for period, location in reference.items() if location != instance.depot)
+                    for location in instance.locations])
+                    + slaves[customer]['var']['q'][instance.start])
             # slaves[customer]['mip'].write('slave_{}.lp'.format(customer))
             # print('Solving slave customer {}'.format(customer))
             slaves[customer]['mip'].optimize()
@@ -132,7 +135,18 @@ def benders_decomposition(instance, time):
                     bds_inequality['y'][period] = {}
                     for location in instance.locations:
                         bds_inequality['y'][period][location] = slaves[customer]['var']['p'][period, location].x
-            bds_inequality['b'] = - slaves[customer]['var']['q'][instance.start].x + slaves[customer]['var']['q'][instance.end].x
+            bds_inequality['b'] = slaves[customer]['var']['q'][instance.start].x
+
+            '''
+            print(reference)
+            print('Customer {}:'.format(customer))
+            for period in instance.periods:
+                for location in instance.locations:
+                    print('p[{}, {}] = {}'.format(period, location, slaves[customer]['var']['p'][period, location].x))
+            for period1 in instance.periods_with_start:
+                print('q[{}] = {}'.format(period1, slaves[customer]['var']['q'][period1].x))
+            _ = input('wait...')
+            '''
 
             # Add inequality for some customer
             master_mip.addConstr(master_var['v'][customer] <=
@@ -140,10 +154,9 @@ def benders_decomposition(instance, time):
                                     instance.catalogs[location][customer] *
                                     master_var['y'][period, location]
                                 for period in instance.periods for location in instance.locations)
-                                + bds_inequality['b'])
+                                + bds_inequality['b']).lazy = 3
 
             bds_inequalities[it_counter][customer] = bds_inequality
-            # slaves[customer]['mip'].remove(added)
 
         current_bound = round(current_bound, 2)
         if current_bound > lower_bound:

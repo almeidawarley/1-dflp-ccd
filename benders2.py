@@ -71,8 +71,7 @@ def benders_decomposition(instance):
 
         # Update slave programs
         slave_mip.setObjective(
-            - slave_var['q'][instance.start]
-            + slave_var['q'][instance.end]
+            slave_var['q'][instance.start]
         )
 
         # Build cut for some customer
@@ -80,8 +79,8 @@ def benders_decomposition(instance):
         inequality = {}
         inequality['p'] = {}
         inequality['q'] = {}
-        for period in instance.periods_extended:
-            if period != instance.start and period != instance.end:
+        for period in instance.periods_with_start:
+            if period != instance.start:
                 inequality['p'][period] = {}
                 for location in instance.locations:
                     inequality['p'][period][location] = slave_var['p'][period, location].x
@@ -93,13 +92,12 @@ def benders_decomposition(instance):
                                         instance.catalogs[location][customer] *
                                         master_var['y'][period, location]
                                     for period in instance.periods for location in instance.locations)
-                            - inequality['q'][instance.start] +
-                            inequality['q'][instance.end])
+                            + inequality['q'][instance.start])
 
         slaves[customer]['mip'] = slave_mip
         slaves[customer]['var'] = slave_var
 
-    def add_cut(model, where):
+    def benders_logic(model, where):
 
         if where == gp.GRB.Callback.MIPSOL:
 
@@ -113,18 +111,16 @@ def benders_decomposition(instance):
                         instance.catalogs[location][customer] *
                         solution[period, location]
                         for period in instance.periods
-                        for location in instance.locations]) -
-                        slaves[customer]['var']['q'][instance.start] +
-                        slaves[customer]['var']['q'][instance.end])
-                # added = slaves[customer]['mip'].addConstrs(slaves[customer]['var']['p'][period, location] == 0 for period in instance.periods for location in instance.locations if solution[period, location] == 1)
+                        for location in instance.locations])
+                        + slaves[customer]['var']['q'][instance.start])
                 slaves[customer]['mip'].optimize()
 
                 # Build cut for some customer
                 inequality = {}
                 inequality['p'] = {}
                 inequality['q'] = {}
-                for period in instance.periods_extended:
-                    if period != instance.start and period != instance.end:
+                for period in instance.periods_with_start:
+                    if period != instance.start:
                         inequality['p'][period] = {}
                         for location in instance.locations:
                             inequality['p'][period][location] = slaves[customer]['var']['p'][period, location].x
@@ -136,24 +132,9 @@ def benders_decomposition(instance):
                                         instance.catalogs[location][customer] *
                                         model._var['y'][period, location]
                                     for period in instance.periods for location in instance.locations)
-                                    - inequality['q'][instance.start] +
-                                    inequality['q'][instance.end])
+                                    + inequality['q'][instance.start])
 
-                # slaves[customer]['mip'].remove(added)
-        '''
-        elif where == gp.GRB.Callback.MIPNODE:
-
-            solution = model.cbGetNodeRel(model._var['y'])
-            print(solution)
-
-            solution = model.cbGetNodeRel(model._var['v'])
-            print(solution)
-
-            print('wait...')
-            _ = input('waht???')
-        '''
-
-    master_mip.optimize(add_cut)
+    master_mip.optimize(benders_logic)
 
     objective = round(master_mip.objVal, 2)
     solution = fm.format_solution(instance, master_mip, master_var)
