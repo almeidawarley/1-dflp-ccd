@@ -4,18 +4,69 @@ import variables as vb
 import constraints as ct
 import formulation as fm
 import heuristic as hr
+import time as tm
 
 '''
     Implementation #1 of Benders decomposition
     Vanilla version, original formulation
 '''
 
-def analytical_solution(instance, solution):
+def analytical_solution(instance, solution, customer):
 
+    # Wrong implementation so far.
 
-    pass
+    dual_solution = {}
 
-def benders_decomposition(instance, time):
+    print('Analytical solution for j = {} ...'.format(customer))
+
+    dual_solution['q'] = {}
+    for period1 in instance.periods_with_start:
+        dual_solution['q'][period1] = 0.
+        for period2, location in solution.items():
+            if ct.is_before(period1, period2) and location != instance.depot and instance.catalogs[location][customer] == 1.:
+                # current = max(instance.revenues[period2][holder] for holder in instance.locations) * instance.partial_demand(period1, period2, customer)
+                current = instance.revenues[period2][location] * instance.partial_demand(period1, period2, customer)
+                if current > dual_solution['q'][period1]:
+                    dual_solution['q'][period1] = current
+
+        print('q[{}] = {}'.format(period1, dual_solution['q'][period1]))
+
+    dual_solution['p'] = {}
+    for period2 in instance.periods:
+        dual_solution['p'][period2] = {}
+        for location in instance.locations:
+            current = instance.revenues[period2][location] * instance.partial_demand(instance.start, period2, customer)
+            current += dual_solution['q'][period2]  - dual_solution['q'][instance.start]
+            current *= instance.catalogs[location][customer]
+            dual_solution['p'][period2][location] = current
+            for period1 in instance.periods_with_start:
+                if ct.is_before(period1, period2):
+                    current = instance.revenues[period2][location] * instance.partial_demand(period1, period2, customer)
+                    current += dual_solution['q'][period2] - dual_solution['q'][period1]
+                    current *= instance.catalogs[location][customer]
+                    if current > dual_solution['p'][period2][location]:
+                        dual_solution['p'][period2][location] = current
+
+            print('p[{},{}] = {}'.format(period2, location, dual_solution['p'][period2][location]))
+
+    # Build cut for some customer
+    bds_inequality = {}
+    bds_inequality['y'] = {}
+    for period in instance.periods_extended:
+        if period != instance.start and period != instance.end:
+            bds_inequality['y'][period] = {}
+            for location in instance.locations:
+                bds_inequality['y'][period][location] = dual_solution['p'][period][location]
+    bds_inequality['b'] = dual_solution['q'][instance.start]
+
+    dual_objective = dual_solution['q'][instance.start] + sum([dual_solution['p'][period][location] for period, location in solution.items() if location != instance.depot])
+
+    print('... with an objective of {}'.format(dual_objective))
+    print('Reference: {}'.format('-'.join(solution.values())))
+
+    return dual_objective, bds_inequality
+
+def benders_decomposition(instance, algo = 'analytical', time = 's'):
 
     B_TIME_LIMIT = 5 * 60 * 60
 
@@ -104,7 +155,6 @@ def benders_decomposition(instance, time):
             master_mip.optimize()
             upper_bound = min(upper_bound, round(master_mip.objBound, 2))
             metadata['bd{}_runtime'.format(time)] += round(master_mip.runtime, 2)
-            metadata['bd{}_optgap'.format(time)] = vd.compute_gap(upper_bound, lower_bound)
             reference = fm.format_solution(instance, master_mip, master_var)
 
         current_bound = 0.
@@ -113,6 +163,11 @@ def benders_decomposition(instance, time):
 
         for customer in instance.customers:
 
+            start = tm.time()
+            # if algo == 'analytical':
+            dual_objective, bds_inequality = analytical_solution(instance, reference, customer)
+            current_bound += dual_objective
+            # elif algo == 'program':
             # Update slave programs
             slaves[customer]['mip'].setObjective(
                 sum([slaves[customer]['var']['p'][period, location] *
@@ -121,13 +176,26 @@ def benders_decomposition(instance, time):
                     for period in instance.periods
                     for location in instance.locations])
                     + slaves[customer]['var']['q'][instance.start])
-            # slaves[customer]['mip'].write('slave_{}.lp'.format(customer))
+            slaves[customer]['mip'].write('slave_{}.lp'.format(customer))
             # print('Solving slave customer {}'.format(customer))
             slaves[customer]['mip'].optimize()
-            metadata['bd{}_runtime'.format(time)] += round(slaves[customer]['mip'].runtime, 2)
-            current_bound += slaves[customer]['mip'].objVal
+            # current_bound += slaves[customer]['mip'].objVal
+
+            print('Dual program for j = {} ...'.format(customer))
+            for period1 in instance.periods_with_start:
+                print('q[{}] = {}'.format(period1, slaves[customer]['var']['q'][period1].x))
+            for period in instance.periods:
+                for location in instance.locations:
+                    print('p[{}, {}] = {}'.format(period, location, slaves[customer]['var']['p'][period, location].x))
+            print('.. with an objective of {}'.format(slaves[customer]['mip'].objVal))
+
+            if max(slaves[customer]['mip'].objVal, dual_objective) > 0  and not vd.compare_obj(slaves[customer]['mip'].objVal, dual_objective):
+                print('-'.join(reference.values()))
+                print('Iteration {}, customer {} : {} != {}'.format(it_counter, customer, slaves[customer]['mip'].objVal, dual_objective))
+                _ = input('wait...')
 
             # Build cut for some customer
+            '''
             bds_inequality = {}
             bds_inequality['y'] = {}
             for period in instance.periods_extended:
@@ -136,17 +204,12 @@ def benders_decomposition(instance, time):
                     for location in instance.locations:
                         bds_inequality['y'][period][location] = slaves[customer]['var']['p'][period, location].x
             bds_inequality['b'] = slaves[customer]['var']['q'][instance.start].x
+            '''
+            # else:
+            #    exit('Invalid algo for solving the dual problem')
+            end = tm.time()
 
-            '''
-            print(reference)
-            print('Customer {}:'.format(customer))
-            for period in instance.periods:
-                for location in instance.locations:
-                    print('p[{}, {}] = {}'.format(period, location, slaves[customer]['var']['p'][period, location].x))
-            for period1 in instance.periods_with_start:
-                print('q[{}] = {}'.format(period1, slaves[customer]['var']['q'][period1].x))
-            _ = input('wait...')
-            '''
+            metadata['bd{}_runtime'.format(time)] += round(end - start, 2)
 
             # Add inequality for some customer
             master_mip.addConstr(master_var['v'][customer] <=
@@ -169,8 +232,13 @@ def benders_decomposition(instance, time):
         print('Lower bound: {}'.format(lower_bound))
         print('Current bound: {}'.format(current_bound))
         print('Upper bound: {}'.format(upper_bound))
+        print('Current solution: {}'.format('-'.join(reference.values())))
+        print('Best solution: {}'.format('-'.join(best_solution.values())))
         print('\n\n--------------------------------------------')
 
+        _ = input('next iteration...')
+
+    metadata['bd{}_optgap'.format(time)] = vd.compute_gap(upper_bound, lower_bound)
     metadata['bd{}_iterations'.format(time)] = it_counter
     metadata['bd{}_objective'.format(time)] = lower_bound
     metadata['bd{}_solution'.format(time)] = '-'.join(best_solution.values())
