@@ -129,6 +129,7 @@ def benders_decomposition(instance, algo = 'analytical', time = 's'):
 
     metadata = {}
     metadata['bd{}_runtime'.format(time)] = 0.
+    metadata['mst_runtime'] = 0.
 
     # Creater master program
     master_mip = gp.Model('DSFLP-DAR-M')
@@ -203,6 +204,7 @@ def benders_decomposition(instance, algo = 'analytical', time = 's'):
             master_mip.optimize()
             upper_bound = min(upper_bound, round(master_mip.objBound, 2))
             metadata['bd{}_runtime'.format(time)] += round(master_mip.runtime, 2)
+            metadata['mst_runtime'] += round(master_mip.runtime, 2)
             reference = fm.format_solution(instance, master_mip, master_var)
 
         current_bound = 0.
