@@ -13,23 +13,71 @@ import time as tm
 
 def analytical_solution(instance, solution, customer):
 
-    # Wrong implementation so far.
+    # Retrieve primal solution from master solution
+    primal_solution = {}
+    for period1 in instance.periods_with_start:
+        primal_solution[period1] = instance.end
+        for period2 in instance.periods:
+            if ct.is_before(period1, period2) and solution[period2] != instance.depot and instance.catalogs[solution[period2]][customer] == 1.:
+                primal_solution[period1] = period2
+                break
 
     dual_solution = {}
 
-    print('Analytical solution for j = {} ...'.format(customer))
+    # print('Reference: {}'.format('-'.join(solution.values())))
 
-    dual_solution['q'] = {}
-    for period1 in instance.periods_with_start:
-        dual_solution['q'][period1] = 0.
+    # print('Analytical solution for j = {} ...'.format(customer))
+
+    dual_solution['q'] = {period : 0. for period in instance.periods_with_start}
+    '''
+        period1 - l
+        period2 - t
+        period3 - k
+    '''
+    '''
+    for period3 in reversed(instance.periods_with_start):
+        dual_solution['q'][period3] = 0.
         for period2, location in solution.items():
-            if ct.is_before(period1, period2) and location != instance.depot and instance.catalogs[location][customer] == 1.:
-                # current = max(instance.revenues[period2][holder] for holder in instance.locations) * instance.partial_demand(period1, period2, customer)
-                current = instance.revenues[period2][location] * instance.partial_demand(period1, period2, customer)
-                if current > dual_solution['q'][period1]:
-                    dual_solution['q'][period1] = current
+            for period1 in instance.periods_with_start:
+                if period1 != period3 and ct.is_before(period3, period2) and ct.is_before(period1, period2) and location != instance.depot and instance.catalogs[location][customer] == 1. and not free_periods[period1]:
+                # if ct.is_before(period3, period2) and ct.is_before(period3, period1) and location != instance.depot and instance.catalogs[location][customer] == 1.:
+                    print('z[{} -> {}][{}]'.format(period1, period2, location))
+                    current = instance.revenues[period2][location] * instance.partial_demand(period3, period2, customer)
+                    current -= instance.revenues[period2][location] * instance.partial_demand(period1, period2, customer)
+                    current += dual_solution['q'][period1]
+                    if current > dual_solution['q'][period3]:
+                        dual_solution['q'][period3] = current
 
-        print('q[{}] = {}'.format(period1, dual_solution['q'][period1]))
+        print('q[{}] = {}'.format(period3, dual_solution['q'][period3]))
+    '''
+
+    # First pass, capture periods
+    for period3 in reversed(instance.periods_with_start):
+        for period1, period2 in primal_solution.items():
+            # compute Q for capture periods first  & check if it is not last period & check if it is not the same period & check precedence
+            if primal_solution[period3] != period2 and period2 != instance.end and period1 != period3 and ct.is_before(period3, period2):
+                location = solution[period2]
+                # print('q{} through z[{} -> {}][{}]'.format(period3, period1, period2, location))
+                current = instance.revenues[period2][location] * instance.partial_demand(period3, period2, customer)
+                current -= instance.revenues[period2][location] * instance.partial_demand(period1, period2, customer)
+                current += dual_solution['q'][period1]
+                if current > dual_solution['q'][period3]:
+                    dual_solution['q'][period3] = current
+
+    # Second pass, free periods
+    for period3 in reversed(instance.periods_with_start):
+        for period1, period2 in primal_solution.items():
+            # compute Q for free periods second  & check if it is not last period & check if it is not the same period & check precedence
+            if primal_solution[period3] == period2 and period2 != instance.end and period1 != period3 and ct.is_before(period3, period2):
+                location = solution[period2]
+                # print('q{} through z[{} -> {}][{}]'.format(period3, period1, period2, location))
+                current = instance.revenues[period2][location] * instance.partial_demand(period3, period2, customer)
+                current -= instance.revenues[period2][location] * instance.partial_demand(period1, period2, customer)
+                current += dual_solution['q'][period1]
+                if current > dual_solution['q'][period3]:
+                    dual_solution['q'][period3] = current
+
+        # print('q[{}] = {}'.format(period3, dual_solution['q'][period3]))
 
     dual_solution['p'] = {}
     for period2 in instance.periods:
@@ -47,7 +95,7 @@ def analytical_solution(instance, solution, customer):
                     if current > dual_solution['p'][period2][location]:
                         dual_solution['p'][period2][location] = current
 
-            print('p[{},{}] = {}'.format(period2, location, dual_solution['p'][period2][location]))
+            # print('p[{},{}] = {}'.format(period2, location, dual_solution['p'][period2][location]))
 
     # Build cut for some customer
     bds_inequality = {}
@@ -61,8 +109,8 @@ def analytical_solution(instance, solution, customer):
 
     dual_objective = dual_solution['q'][instance.start] + sum([dual_solution['p'][period][location] for period, location in solution.items() if location != instance.depot])
 
-    print('... with an objective of {}'.format(dual_objective))
-    print('Reference: {}'.format('-'.join(solution.values())))
+    # print('... with an objective of {}'.format(dual_objective))
+    # print('Reference: {}'.format('-'.join(solution.values())))
 
     return dual_objective, bds_inequality
 
@@ -176,23 +224,25 @@ def benders_decomposition(instance, algo = 'analytical', time = 's'):
                     for period in instance.periods
                     for location in instance.locations])
                     + slaves[customer]['var']['q'][instance.start])
-            slaves[customer]['mip'].write('slave_{}.lp'.format(customer))
+            # slaves[customer]['mip'].write('slave_{}.lp'.format(customer))
             # print('Solving slave customer {}'.format(customer))
             slaves[customer]['mip'].optimize()
             # current_bound += slaves[customer]['mip'].objVal
 
+            '''
             print('Dual program for j = {} ...'.format(customer))
             for period1 in instance.periods_with_start:
                 print('q[{}] = {}'.format(period1, slaves[customer]['var']['q'][period1].x))
             for period in instance.periods:
                 for location in instance.locations:
-                    print('p[{}, {}] = {}'.format(period, location, slaves[customer]['var']['p'][period, location].x))
+                    pass
+                    # print('p[{}, {}] = {}'.format(period, location, slaves[customer]['var']['p'][period, location].x))
             print('.. with an objective of {}'.format(slaves[customer]['mip'].objVal))
+            '''
 
             if max(slaves[customer]['mip'].objVal, dual_objective) > 0  and not vd.compare_obj(slaves[customer]['mip'].objVal, dual_objective):
                 print('-'.join(reference.values()))
-                print('Iteration {}, customer {} : {} != {}'.format(it_counter, customer, slaves[customer]['mip'].objVal, dual_objective))
-                _ = input('wait...')
+                exit('Iteration {}, customer {} : {} != {}'.format(it_counter, customer, slaves[customer]['mip'].objVal, dual_objective))
 
             # Build cut for some customer
             '''
@@ -236,7 +286,7 @@ def benders_decomposition(instance, algo = 'analytical', time = 's'):
         print('Best solution: {}'.format('-'.join(best_solution.values())))
         print('\n\n--------------------------------------------')
 
-        _ = input('next iteration...')
+        # _ = input('next iteration...')
 
     metadata['bd{}_optgap'.format(time)] = vd.compute_gap(upper_bound, lower_bound)
     metadata['bd{}_iterations'.format(time)] = it_counter
