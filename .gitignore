@@ -8,6 +8,7 @@ ML*
 sarwesh_*
 *.txt
 *.sh
+main.py
 
 # Experimental files
 sarwesh/
