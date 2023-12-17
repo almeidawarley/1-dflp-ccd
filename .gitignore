@@ -1,39 +1,37 @@
 # -------------------------------------------
-preliminary.7z
-slovakia
-3sat
-bckp
+
+# Non standard git ignore stuff
+
+# Root folder
 *.lp
-ML*
-sarwesh_*
 *.txt
 *.sh
 main.py
+things/*
 
-# Experimental files
-sarwesh/
-archives/*.lp
-archives/*.sol
-archives/*.png
-experiments/*.sh
-experiments/*.zip
-experiments/*
+# Results folder
+results/*.sh
+results/*.zip
+
+# Outputs folder
 outputs/*.out
+
+# Records folder
 records/*.csv
-ignorable/*
-episodes/*
+
+# Graphs folder
 graphs/*.tex
 
 # Instance files
 instances/exploratory/*.json
 instances/synthetic/*.json
+instances/3sat/*.cnf
+instances/slovakia/*
 
 # Script files
 scripts/*.sh
 
 # -------------------------------------------
-
-# Standard stuff
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

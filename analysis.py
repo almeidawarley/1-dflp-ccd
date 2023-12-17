@@ -3,7 +3,7 @@ import validation as vd
 
 tolerance = 0.0001
 
-content = pd.read_csv('experiments/paper1/summary.csv')
+content = pd.read_csv('results/paper1/summary.csv')
 
 content['cold_lrz_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['cold_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
 content['cold_net_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['cold_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
@@ -12,7 +12,7 @@ content['warm_net_optimal'] = content.apply(lambda row: vd.compare_obj(row['uppe
 
 content = content.set_index('keyword')
 
-benders = pd.read_csv('experiments/paper1/benders.csv')
+benders = pd.read_csv('results/paper1/benders.csv')
 benders = benders.set_index('keyword')
 benders = benders.drop(['project', 'created', 'seed', 'locations', 'customers', 'periods', 'patronizing', 'rewards', 'replenishment', 'character', 'updated', 'commit', 'branch'], axis = 1)
 
