@@ -103,9 +103,9 @@ def benders_decomposition(instance, algo = 'analytic'):
     TIME_LEFT = B_TIME_LIMIT
 
     metadata = {}
-    metadata['bds_runtime'] = 0.
-    metadata['bds_subtime'] = 0.
-    metadata['bds_cuttime'] = 0.
+    metadata['bs{}_runtime'.format(algo[0])] = 0.
+    metadata['bs{}_subtime'.format(algo[0])] = 0.
+    metadata['bs{}_cuttime'.format(algo[0])] = 0.
 
     # Creater master program
     master_mip = gp.Model('DSFLP-DAR-M')
@@ -176,12 +176,12 @@ def benders_decomposition(instance, algo = 'analytic'):
             reference = hr.empty_solution(instance)
         else:
             fm.warm_start(instance, master_var, best_solution)
-            TIME_LEFT = min(M_TIME_LIMIT, B_TIME_LIMIT - metadata['bds_runtime'])
+            TIME_LEFT = min(M_TIME_LIMIT, B_TIME_LIMIT - metadata['bs{}_runtime'.format(algo[0])])
             TIME_LEFT = max(TIME_LEFT, 1) # Give one extra second to solver
             master_mip.setParam('TimeLimit', TIME_LEFT)
             master_mip.optimize()
             upper_bound = min(upper_bound, round(master_mip.objBound, 2))
-            metadata['bds_runtime'] += round(master_mip.runtime, 2)
+            metadata['bs{}_runtime'.format(algo[0])] += round(master_mip.runtime, 2)
             reference = fm.format_solution(instance, master_mip, master_var)
 
         current_bound = 0.
@@ -220,8 +220,8 @@ def benders_decomposition(instance, algo = 'analytic'):
             else:
                 exit('Invalid algo for solving the dual problem')
             end = tm.time()
-            metadata['bds_runtime'] += round(end - start, 2)
-            metadata['bds_subtime'] += round(end - start, 2)
+            metadata['bs{}_runtime'.format(algo[0])] += round(end - start, 2)
+            metadata['bs{}_subtime'.format(algo[0])] += round(end - start, 2)
 
             start = tm.time()
             # Add inequality for some customer
@@ -230,10 +230,10 @@ def benders_decomposition(instance, algo = 'analytic'):
                                     instance.catalogs[location][customer] *
                                     master_var['y'][period, location]
                                 for period in instance.periods for location in instance.locations)
-                                + bds_inequality['b']).lazy = 1
+                                + bds_inequality['b']).lazy = 3
             end = tm.time()
-            metadata['bds_runtime'] += round(end - start, 2)
-            metadata['bds_cuttime'] += round(end - start, 2)
+            metadata['bs{}_runtime'.format(algo[0])] += round(end - start, 2)
+            metadata['bs{}_cuttime'.format(algo[0])] += round(end - start, 2)
 
             bds_inequalities[it_counter][customer] = bds_inequality
 
@@ -254,9 +254,9 @@ def benders_decomposition(instance, algo = 'analytic'):
 
         # _ = input('next iteration...')
 
-    metadata['bds_optgap'] = vd.compute_gap(upper_bound, lower_bound)
-    metadata['bds_iterations'] = it_counter
-    metadata['bds_objective'] = lower_bound
-    metadata['bds_solution'] = '-'.join(best_solution.values())
+    metadata['bs{}_optgap'.format(algo[0])] = vd.compute_gap(upper_bound, lower_bound)
+    metadata['bs{}_iterations'.format(algo[0])] = it_counter
+    metadata['bs{}_objective'.format(algo[0])] = lower_bound
+    metadata['bs{}_solution'.format(algo[0])] = '-'.join(best_solution.values())
 
     return best_solution, lower_bound, metadata

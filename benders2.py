@@ -101,10 +101,9 @@ def benders_decomposition(instance, algo = 'analytic'):
     S_TIME_LIMIT = 1 * 10 * 60
 
     metadata = {}
-    metadata['bdl_runtime'] = 0.
-    metadata['bdl_subtime'] = 0.
-    metadata['bdl_cuttime'] = 0.
-    metadata['bdl_iterations'] = 0.
+    metadata['bl{}_subtime'.format(algo[0])] = 0.
+    metadata['bl{}_cuttime'.format(algo[0])] = 0.
+    metadata['bl{}_iterations'.format(algo[0])] = 0.
 
     # Creater master program
     master_mip = gp.Model('DSFLP-DAR-M')
@@ -192,8 +191,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
         end = tm.time()
 
-        metadata['bdl_runtime'] += round(end - start, 2)
-        metadata['bdl_subtime'] += round(end - start, 2)
+        metadata['bl{}_subtime'.format(algo[0])] += round(end - start, 2)
 
         start = tm.time()
 
@@ -207,8 +205,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
         end = tm.time()
 
-        metadata['bdl_runtime'] += round(end - start, 2)
-        metadata['bdl_cuttime'] += round(end - start, 2)
+        metadata['bl{}_cuttime'.format(algo[0])] += round(end - start, 2)
 
 
     def benders_logic(model, where):
@@ -227,7 +224,7 @@ def benders_decomposition(instance, algo = 'analytic'):
                     if vd.is_equal(value, 1.):
                         reference[period] = location
 
-            metadata['bdl_iterations'] += 1
+            metadata['bl{}_iterations'.format(algo[0])] += 1
 
             for customer in instance.customers:
 
@@ -259,7 +256,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
                 else:
 
-                        exit('Invalid algo for solving the dual problem')
+                    exit('Invalid algo for solving the dual problem')
 
                 # Add inequality for some customer
                 model.cbLazy(model._var['v'][customer] <=
@@ -274,9 +271,9 @@ def benders_decomposition(instance, algo = 'analytic'):
     objective = round(master_mip.objVal, 2)
     solution = fm.format_solution(instance, master_mip, master_var)
 
-    metadata['bdl_runtime'] = master_mip.runtime
-    metadata['bdl_objective'] = objective
-    metadata['bdl_solution'] = '-'.join(solution.values())
-    metadata['bdl_optgap'] = master_mip.MIPGap
+    metadata['bl{}_runtime'.format(algo[0])] = master_mip.runtime
+    metadata['bl{}_objective'.format(algo[0])] = objective
+    metadata['bl{}_solution'.format(algo[0])] = '-'.join(solution.values())
+    metadata['bl{}_optgap'.format(algo[0])] = master_mip.MIPGap
 
     return solution, objective, metadata
