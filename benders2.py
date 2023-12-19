@@ -18,7 +18,7 @@ def analytical_solution(instance, solution, customer):
     for period1 in instance.periods_with_start:
         primal_solution[period1] = instance.end
         for period2 in instance.periods:
-            if ct.is_before(period1, period2) and solution[period2] != instance.depot and instance.catalogs[solution[period2]][customer] == 1.:
+            if instance.is_before(period1, period2) and solution[period2] != instance.depot and instance.catalogs[solution[period2]][customer] == 1.:
                 primal_solution[period1] = period2
                 break
 
@@ -35,11 +35,11 @@ def analytical_solution(instance, solution, customer):
     for period3 in reversed(instance.periods_with_start):
         for period1, period2 in primal_solution.items():
             # compute Q for capture periods first  & check if it is not last period & check if it is not the same period & check precedence
-            if primal_solution[period3] != period2 and period2 != instance.end and period1 != period3 and ct.is_before(period3, period2):
+            if primal_solution[period3] != period2 and period2 != instance.end and period1 != period3 and instance.is_before(period3, period2):
                 location = solution[period2]
                 # print('q{} through z[{} -> {}][{}]'.format(period3, period1, period2, location))
-                current = instance.revenues[period2][location] * instance.partial_demand(period3, period2, customer)
-                current -= instance.revenues[period2][location] * instance.partial_demand(period1, period2, customer)
+                current = instance.revenues[period2][location] * instance.accumulated_demand(period3, period2, customer)
+                current -= instance.revenues[period2][location] * instance.accumulated_demand(period1, period2, customer)
                 current += dual_solution['q'][period1]
                 if current > dual_solution['q'][period3]:
                     dual_solution['q'][period3] = current
@@ -48,11 +48,11 @@ def analytical_solution(instance, solution, customer):
     for period3 in reversed(instance.periods_with_start):
         for period1, period2 in primal_solution.items():
             # compute Q for free periods second  & check if it is not last period & check if it is not the same period & check precedence
-            if primal_solution[period3] == period2 and period2 != instance.end and period1 != period3 and ct.is_before(period3, period2):
+            if primal_solution[period3] == period2 and period2 != instance.end and period1 != period3 and instance.is_before(period3, period2):
                 location = solution[period2]
                 # print('q{} through z[{} -> {}][{}]'.format(period3, period1, period2, location))
-                current = instance.revenues[period2][location] * instance.partial_demand(period3, period2, customer)
-                current -= instance.revenues[period2][location] * instance.partial_demand(period1, period2, customer)
+                current = instance.revenues[period2][location] * instance.accumulated_demand(period3, period2, customer)
+                current -= instance.revenues[period2][location] * instance.accumulated_demand(period1, period2, customer)
                 current += dual_solution['q'][period1]
                 if current > dual_solution['q'][period3]:
                     dual_solution['q'][period3] = current
@@ -63,13 +63,13 @@ def analytical_solution(instance, solution, customer):
     for period2 in instance.periods:
         dual_solution['p'][period2] = {}
         for location in instance.locations:
-            current = instance.revenues[period2][location] * instance.partial_demand(instance.start, period2, customer)
+            current = instance.revenues[period2][location] * instance.accumulated_demand(instance.start, period2, customer)
             current += dual_solution['q'][period2]  - dual_solution['q'][instance.start]
             current *= instance.catalogs[location][customer]
             dual_solution['p'][period2][location] = current
             for period1 in instance.periods_with_start:
-                if ct.is_before(period1, period2):
-                    current = instance.revenues[period2][location] * instance.partial_demand(period1, period2, customer)
+                if instance.is_before(period1, period2):
+                    current = instance.revenues[period2][location] * instance.accumulated_demand(period1, period2, customer)
                     current += dual_solution['q'][period2] - dual_solution['q'][period1]
                     current *= instance.catalogs[location][customer]
                     if current > dual_solution['p'][period2][location]:
@@ -106,7 +106,7 @@ def benders_decomposition(instance, algo = 'analytic'):
     metadata['bl{}_iterations'.format(algo[0])] = 0.
 
     # Creater master program
-    master_mip = gp.Model('DSFLP-DAR-M')
+    master_mip = gp.Model('DSFLP-C-M')
 
     # Create decision variables
     master_var = {
@@ -148,7 +148,7 @@ def benders_decomposition(instance, algo = 'analytic'):
             # Create slave programs
             slaves[customer] = {}
 
-            slave_mip = gp.Model('DSFLP-DAR-S{}'.format(customer))
+            slave_mip = gp.Model('DSFLP-C-S{}'.format(customer))
             slave_var = {
                 'p': vb.create_vrp(instance, slave_mip),
                 'q': vb.create_vrq(instance, slave_mip)
@@ -162,7 +162,7 @@ def benders_decomposition(instance, algo = 'analytic'):
             slave_mip.setParam('Threads', 1)
             slave_mip.setParam('TimeLimit', S_TIME_LIMIT)
 
-            ct.create_c11(instance, slave_mip, slave_var, customer)
+            ct.create_c9(instance, slave_mip, slave_var, customer)
 
             # Update slave programs
             slave_mip.setObjective(

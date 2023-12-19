@@ -2,7 +2,6 @@ import instance as ic
 import argparse as ap
 import benders1 as b1
 import benders2 as b2
-import benders5 as b5
 import recording as rc
 
 def mark_section(title):
@@ -12,9 +11,9 @@ def mark_section(title):
 
 def main():
 
-    parser = ap.ArgumentParser(description = 'Run relevant solution methods for some DSFLP-DAR instance')
+    parser = ap.ArgumentParser(description = 'Run relevant solution methods for some DSFLP-C instance')
     parser.add_argument('keyword', type = str, help = 'Instance keyword following established patterns')
-    parser.add_argument('-p', '--project', default = 'dsflp-dar', type = str, help = 'Instance project name')
+    parser.add_argument('-p', '--project', default = 'dsflp-c', type = str, help = 'Instance project name')
     args = parser.parse_args()
 
     mark_section('Generating instance based on the parameters...')
@@ -24,11 +23,9 @@ def main():
     mark_section('Logging instance parameters read from file...')
     record = rc.load_record(args.project, instance)
 
-    # _, _, bds_metadata = b1.benders_decomposition(instance, 's')
-    # record = rc.update_record(record, bds_metadata)
-    # _, _, bds_metadata = b2.benders_decomposition(instance)
-    # record = rc.update_record(record, bds_metadata)
-    _, _, bds_metadata = b5.benders_decomposition(instance)
+    _, _, bds_metadata = b1.benders_decomposition(instance)
+    record = rc.update_record(record, bds_metadata)
+    _, _, bds_metadata = b2.benders_decomposition(instance)
     record = rc.update_record(record, bds_metadata)
 
 if __name__ == '__main__':

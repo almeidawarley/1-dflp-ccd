@@ -49,7 +49,7 @@ class instance:
         for period in self.periods:
             self.limits[period] = {}
             for customer in self.customers:
-                limit = self.partial_demand('0', period, customer)
+                limit = self.accumulated_demand('0', period, customer)
                 self.limits[period][customer] = np.ceil(limit)
 
         self.start = '0'
@@ -470,8 +470,8 @@ class instance:
 
         return [location for location in self.locations if self.catalogs[location][customer] == 1]
 
-    def partial_demand(self, lastly, current, customer):
-        # Compute phi function within formulations
+    def accumulated_demand(self, lastly, current, customer):
+        # Compute accumulated demand
 
         lastly, current = int(lastly), int(current)
 
@@ -490,3 +490,40 @@ class instance:
                 accumulated += self.alphas[customer] * accumulated + self.betas[customer]
 
         return round(accumulated, 8)
+
+    def previous_period(self, period):
+        # Retrieve previous period
+
+        assert period in self.periods_extended
+
+        return str(int(period) - 1)
+
+    def is_before(self, period1, period2):
+        # True if period1 < period2
+
+        assert period1 in self.periods_extended
+        assert period2 in self.periods_extended
+
+        return int(period1) < int(period2)
+
+    def is_after(self, period1, period2):
+        # True if period1 > period2
+
+        assert period1 in self.periods_extended
+        assert period2 in self.periods_extended
+
+        return int(period1) > int(period2)
+
+    def evaluate_solution(self, solution):
+
+        fitness = 0.
+
+        lastly = {customer: self.start for customer in self.customers}
+
+        for period, location in solution.items():
+            for customer in self.customers:
+                if location != self.depot and self.catalogs[location][customer] == 1.:
+                    fitness += self.revenues[period][location] * self.accumulated_demand(lastly[customer], period, customer)
+                    lastly[customer] = period
+
+        return round(fitness, 2)

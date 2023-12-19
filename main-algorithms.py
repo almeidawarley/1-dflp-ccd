@@ -13,9 +13,9 @@ def mark_section(title):
 
 def main():
 
-    parser = ap.ArgumentParser(description = 'Run relevant solution methods for some DSFLP-DAR instance')
+    parser = ap.ArgumentParser(description = 'Run relevant solution methods for some DSFLP-C instance')
     parser.add_argument('keyword', type = str, help = 'Instance keyword following established patterns')
-    parser.add_argument('-p', '--project', default = 'dsflp-dar', type = str, help = 'Instance project name')
+    parser.add_argument('-p', '--project', default = 'dsflp-c', type = str, help = 'Instance project name')
     args = parser.parse_args()
 
     mark_section('Generating instance based on the parameters...')
@@ -99,7 +99,7 @@ def main():
     mip_lrz, mip_lrz_variable = fm.build_linearized_mip(instance)
     mip_net, mip_net_variable = fm.build_networked_mip(instance)
 
-    mark_section('Solving cold MIP of the DSFLP-DAR-LRZ model...')
+    mark_section('Solving cold MIP of the DSFLP-C-LRZ model...')
     mip_lrz.optimize()
     mip_lrz_solution = fm.format_solution(instance, mip_lrz, mip_lrz_variable)
     mip_lrz_objective = round(mip_lrz.objVal, 2)
@@ -114,7 +114,7 @@ def main():
     })
     mip_lrz.reset()
 
-    mark_section('Solving warm MIP of the DSFLP-DAR-LRZ model...')
+    mark_section('Solving warm MIP of the DSFLP-C-LRZ model...')
     fm.warm_start(instance, mip_lrz_variable, warm_solution)
     mip_lrz.optimize()
     mip_lrz_solution = fm.format_solution(instance, mip_lrz, mip_lrz_variable)
@@ -130,7 +130,7 @@ def main():
     })
     assert(vd.compare_obj(mip_lrz_objective, warm_objective) or mip_lrz_objective >= warm_objective)
 
-    mark_section('Solving the relaxed DSFLP-DAR-LRZ model...')
+    mark_section('Solving the relaxed DSFLP-C-LRZ model...')
     mip_lrz, mip_lrz_variable = fm.relax_linearized_mip(instance, mip_lrz, mip_lrz_variable)
     mip_lrz.optimize()
     mip_lrz_objective = round(mip_lrz.objVal, 2)
@@ -142,7 +142,7 @@ def main():
         'rlxt_lrz_status': mip_lrz.status
     })
 
-    mark_section('Solving cold MIP of the DSFLP-DAR-NET model...')
+    mark_section('Solving cold MIP of the DSFLP-C-NET model...')
     mip_net.optimize()
     mip_net_solution = fm.format_solution(instance, mip_net, mip_net_variable)
     mip_net_objective = round(mip_net.objVal, 2)
@@ -157,7 +157,7 @@ def main():
     })
     mip_net.reset()
 
-    mark_section('Solving warm MIP of the DSFLP-DAR-NET model...')
+    mark_section('Solving warm MIP of the DSFLP-C-NET model...')
     fm.warm_start(instance, mip_net_variable, warm_solution)
     mip_net.optimize()
     mip_net_solution = fm.format_solution(instance, mip_net, mip_net_variable)
@@ -173,7 +173,7 @@ def main():
     })
     assert(vd.compare_obj(mip_net_objective, warm_objective) or mip_net_objective >= warm_objective)
 
-    mark_section('Solving the relaxed DSFLP-DAR-NET model...')
+    mark_section('Solving the relaxed DSFLP-C-NET model...')
     mip_net, mip_net_variable = fm.relax_networked_mip(instance, mip_net, mip_net_variable)
     mip_net.optimize()
     mip_net_objective = round(mip_net.objVal, 2)
@@ -199,22 +199,20 @@ def main():
         'prg_optgap': vd.compute_gap(record['upper_bound'], record['prg_objective'])
     })
 
-    for method in ['1', '2']:
-
-        mark_section('Emulating the DSFLP-DAR through DSFLP-{}...'.format(method))
-        eml, eml_variable = fm.build_simplified_mip(instance, method)
-        eml.optimize()
-        eml_solution = fm.format_solution(instance, eml, eml_variable)
-        eml_objective = vd.evaluate_solution(instance, eml_solution)
-        eml_runtime = round(eml.runtime, 2)
-        print('Emulated solution #{}: [{}] {}'.format(method, eml_objective, eml_solution))
-        record = rc.update_record(record, {
-            'em{}_objective'.format(method): eml_objective,
-            'em{}_solution'.format(method): '-'.join(eml_solution.values()),
-            'em{}_runtime'.format(method): eml_runtime,
-            'em{}_status'.format(method): eml.status,
-            'em{}_optgap'.format(method): vd.compute_gap(record['upper_bound'], eml_objective)
-        })
+    mark_section('Emulating the DSFLP-C through DSFLP...')
+    eml, eml_variable = fm.build_simplified_mip(instance)
+    eml.optimize()
+    eml_solution = fm.format_solution(instance, eml, eml_variable)
+    eml_objective = instance.evaluate_solution(instance, eml_solution)
+    eml_runtime = round(eml.runtime, 2)
+    print('Emulated solution: [{}] {}'.format(eml_objective, eml_solution))
+    record = rc.update_record(record, {
+        'eml_objective': eml_objective,
+        'eml_solution': '-'.join(eml_solution.values()),
+        'eml_runtime': eml_runtime,
+        'eml_status': eml.status,
+        'eml_optgap': vd.compute_gap(record['upper_bound'], eml_objective)
+    })
 
     mark_section('Wrapping up the execution with the following objectives...')
     print('>>> LRZ objective: {}'.format(record['warm_lrz_objective']))
