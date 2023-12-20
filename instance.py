@@ -527,3 +527,24 @@ class instance:
                     lastly[customer] = period
 
         return round(fitness, 2)
+
+    def copy_solution(self, solution):
+
+        return {period : location for period, location in solution.items()}
+
+    def empty_solution(self):
+
+        return {period: self.depot for period in self.periods}
+
+    def insert_solution(self, solution, period, location):
+
+        inserted = self.copy_solution(solution)
+
+        for reference in inserted.keys():
+            previous = self.previous_period(reference)
+            if self.is_after(reference, period):
+                inserted[reference] = solution[previous]
+
+        inserted[period] = location
+
+        return inserted

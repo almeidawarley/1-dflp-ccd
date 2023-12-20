@@ -2,7 +2,6 @@ import gurobipy as gp
 import variables as vb
 import constraints as ct
 import formulation as fm
-import heuristic as hr
 import validation as vd
 import time as tm
 
@@ -139,6 +138,8 @@ def benders_decomposition(instance, algo = 'analytic'):
     if algo == 'program':
         slaves = {}
 
+    empty = instance.empty_solution()
+
     for customer in instance.customers:
 
         start = tm.time()
@@ -185,7 +186,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
         elif algo == 'analytic':
 
-            _, bds_inequality = analytical_solution(instance, hr.empty_solution(instance), customer)
+            _, bds_inequality = analytical_solution(instance, empty, customer)
         else:
                 exit('Invalid algo for solving the dual problem')
 

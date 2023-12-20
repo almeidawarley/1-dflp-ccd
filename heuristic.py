@@ -5,13 +5,13 @@ import numpy as np
 def progressive_algorithm(instance):
 
     # Create partial solution
-    best_solution = empty_solution(instance)
+    best_solution = instance.empty_solution()
     best_objective = 0.
 
     for frontier in instance.periods:
 
         local_objective = best_objective
-        local_solution = copy_solution(best_solution)
+        local_solution = instance.copy_solution(best_solution)
 
         for reference in reversed(instance.periods):
 
@@ -20,25 +20,25 @@ def progressive_algorithm(instance):
                 for location in instance.locations_extended:
 
                     # Copy partial solution
-                    candidate = copy_solution(best_solution)
+                    candidate = instance.copy_solution(best_solution)
                     # Insert location
-                    candidate = insert_location(candidate, reference, location)
-                    objective = instance.evaluate_solution(instance, candidate)
+                    candidate = instance.insert_solution(candidate, reference, location)
+                    objective = instance.evaluate_solution(candidate)
 
                     if objective > local_objective:
-                        local_solution = copy_solution(candidate)
+                        local_solution = instance.copy_solution(candidate)
                         local_objective =  objective
 
         if local_objective > best_objective:
             best_objective = local_objective
-            best_solution = copy_solution(local_solution)
+            best_solution = instance.copy_solution(local_solution)
 
     return best_solution, round(best_objective, 2)
 
 def forward_algorithm(instance):
 
     # Create partial solution
-    best_solution = empty_solution(instance)
+    best_solution = instance.empty_solution()
     best_objective = 0.
 
     for reference in instance.periods:
@@ -46,13 +46,13 @@ def forward_algorithm(instance):
         for location in instance.locations_extended:
 
             # Copy partial solution
-            candidate = copy_solution(best_solution)
+            candidate = instance.copy_solution(best_solution)
             # Insert location
             candidate[reference] = location
-            objective = instance.evaluate_solution(instance, candidate)
+            objective = instance.evaluate_solution(candidate)
 
             if objective > best_objective:
-                best_solution = copy_solution(candidate)
+                best_solution = instance.copy_solution(candidate)
                 best_objective =  objective
 
     return best_solution, round(best_objective, 2)
@@ -60,7 +60,7 @@ def forward_algorithm(instance):
 def backward_algorithm(instance):
 
     # Create partial solution
-    best_solution = empty_solution(instance)
+    best_solution = instance.empty_solution()
     best_objective = 0.
 
     for reference in reversed(instance.periods):
@@ -68,13 +68,13 @@ def backward_algorithm(instance):
         for location in instance.locations_extended:
 
             # Copy partial solution
-            candidate = copy_solution(best_solution)
+            candidate = instance.copy_solution(best_solution)
             # Insert location
             candidate[reference] = location
-            objective = instance.evaluate_solution(instance, candidate)
+            objective = instance.evaluate_solution(candidate)
 
             if objective > best_objective:
-                best_solution = copy_solution(candidate)
+                best_solution = instance.copy_solution(candidate)
                 best_objective =  objective
 
     return best_solution, round(best_objective, 2)
@@ -87,7 +87,7 @@ def random_algorithm(instance):
     best_solution = {}
     for period in instance.periods:
         best_solution[period] = np.random.choice(instance.locations_extended)
-    best_objective = instance.evaluate_solution(instance, best_solution)
+    best_objective = instance.evaluate_solution(best_solution)
 
     return best_solution, round(best_objective, 2)
 
@@ -134,6 +134,6 @@ def fixing_algorithm(instance):
                     relax.addConstr(variable['y'][period, maximum_location] == 1)
 
     solution = fm.format_solution(instance, relax, variable)
-    objective = instance.evaluate_solution(instance, solution)
+    objective = instance.evaluate_solution(solution)
 
     return solution, round(objective, 2)

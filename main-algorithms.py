@@ -203,7 +203,7 @@ def main():
     eml, eml_variable = fm.build_simplified_mip(instance)
     eml.optimize()
     eml_solution = fm.format_solution(instance, eml, eml_variable)
-    eml_objective = instance.evaluate_solution(instance, eml_solution)
+    eml_objective = instance.evaluate_solution(eml_solution)
     eml_runtime = round(eml.runtime, 2)
     print('Emulated solution: [{}] {}'.format(eml_objective, eml_solution))
     record = rc.update_record(record, {

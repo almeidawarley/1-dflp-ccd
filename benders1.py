@@ -3,7 +3,6 @@ import validation as vd
 import variables as vb
 import constraints as ct
 import formulation as fm
-import heuristic as hr
 import time as tm
 
 '''
@@ -165,7 +164,7 @@ def benders_decomposition(instance, algo = 'analytic'):
     upper_bound = gp.GRB.INFINITY
     lower_bound = 0.
     it_counter = 0
-    best_solution = hr.empty_solution(instance)
+    best_solution = instance.empty_solution()
 
     bds_inequalities = {}
 
@@ -173,7 +172,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
         if it_counter == 0:
             # Create empty solution
-            reference = hr.empty_solution(instance)
+            reference = instance.empty_solution()
         else:
             fm.warm_start(instance, master_var, best_solution)
             TIME_LEFT = min(M_TIME_LIMIT, B_TIME_LIMIT - metadata['bs{}_runtime'.format(algo[0])])
@@ -240,7 +239,7 @@ def benders_decomposition(instance, algo = 'analytic'):
         current_bound = round(current_bound, 2)
         if current_bound > lower_bound:
             lower_bound = current_bound
-            best_solution = hr.copy_solution(reference)
+            best_solution = instance.copy_solution(reference)
         it_counter += 1
 
         print('--------------------------------------------\n\n')
