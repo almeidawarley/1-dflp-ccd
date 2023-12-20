@@ -1,7 +1,7 @@
 import json as js
-import random as rd
 import numpy as np
 import pandas as pd
+import common as cm
 
 class instance:
 
@@ -548,3 +548,32 @@ class instance:
         inserted[period] = location
 
         return inserted
+
+    def format_solution(self, variable):
+        # Format model solution as dictionary
+
+        solution = self.empty_solution()
+
+        for period in self.periods:
+            for location in self.locations:
+                value = variable['y'][period, location].x
+                if cm.is_equal_to(value, 1.):
+                    solution[period] = location
+
+        return solution
+
+    def unpack_solution(self, text):
+        # Format text solution as dictionary
+
+        solution = self.empty_solution()
+        text = text.strip().split('-')
+
+        assert len(text) == len(self.periods)
+
+        index = 0
+
+        for period in self.periods:
+            solution[period] = text[index]
+            index += 1
+
+        return solution

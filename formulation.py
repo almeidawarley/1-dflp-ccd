@@ -1,7 +1,6 @@
 import gurobipy as gp
 import variables as vb
 import constraints as ct
-import validation as vd
 
 TIME_LIMIT = 5 * 60 * 60
 
@@ -178,42 +177,9 @@ def build_nonlinear_mip(instance):
 
     return mip, variable
 
-def warm_start(instance, variable, solution, indexes = 2):
+def warm_start(instance, variable, solution):
     # Warm start with a feasible solution
 
-    if indexes == 2:
-        for period in instance.periods:
-            for location in instance.locations:
-                variable['y'][period, location].start  = 1. if location == solution[period] else 0.
-
-    elif indexes == 3:
-        for period in instance.periods:
-            for location in instance.locations_extended:
-                for destination in instance.locations_extended:
-                    next_period = str(int(period) + 1)
-                    variable['y'][period, location, destination].start  = 1. if location == solution[period] and next_period != instance.end and destination == solution[next_period] else 0.
-
-def format_solution(instance, mip, variable, indexes = 2):
-    # Format model solution as dictionary
-
-    solution = {}
-
     for period in instance.periods:
-        solution[period] = '0'
-
-    if indexes == 2:
-        for period in instance.periods:
-            for location in instance.locations:
-                value = variable['y'][period, location].x
-                if vd.is_equal(value, 1.):
-                    solution[period] = location
-
-    elif indexes == 3:
-        for period in instance.periods:
-            for location in instance.locations_extended:
-                for destination in instance.locations_extended:
-                    value = variable['y'][period, location, destination].x
-                    if vd.is_equal(value, 1.):
-                        solution[period] = location
-
-    return solution
+        for location in instance.locations:
+            variable['y'][period, location].start  = 1. if location == solution[period] else 0.

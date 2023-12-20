@@ -1,14 +1,14 @@
 import pandas as pd
-import validation as vd
+import common as cm
 
 tolerance = 0.0001
 
 content = pd.read_csv('results/paper1/summary.csv')
 
-content['cold_lrz_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['cold_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
-content['cold_net_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['cold_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
-content['warm_lrz_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['warm_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
-content['warm_net_optimal'] = content.apply(lambda row: vd.compare_obj(row['upper_bound'], row['warm_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
+content['cold_lrz_optimal'] = content.apply(lambda row: cm.compare_obj(row['upper_bound'], row['cold_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
+content['cold_net_optimal'] = content.apply(lambda row: cm.compare_obj(row['upper_bound'], row['cold_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
+content['warm_lrz_optimal'] = content.apply(lambda row: cm.compare_obj(row['upper_bound'], row['warm_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
+content['warm_net_optimal'] = content.apply(lambda row: cm.compare_obj(row['upper_bound'], row['warm_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
 
 content = content.set_index('keyword')
 

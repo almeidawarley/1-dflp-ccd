@@ -1,5 +1,5 @@
 import formulation as fm
-import validation as vd
+import common as cm
 import numpy as np
 
 def progressive_algorithm(instance):
@@ -115,7 +115,7 @@ def fixing_algorithm(instance):
             integral = True
             for location in instance.locations:
                 value = variable['y'][period, location].x
-                if not vd.is_equal(value, 0) and not vd.is_equal(value, 1):
+                if not cm.is_equal_to(value, 0) and not cm.is_equal_to(value, 1):
                     integral = False
                     # Store smallest
                     if value < minimum_value:
@@ -133,7 +133,7 @@ def fixing_algorithm(instance):
                 else:
                     relax.addConstr(variable['y'][period, maximum_location] == 1)
 
-    solution = fm.format_solution(instance, relax, variable)
+    solution = instance.format_solution(variable)
     objective = instance.evaluate_solution(solution)
 
     return solution, round(objective, 2)

@@ -1,5 +1,5 @@
 import gurobipy as gp
-import validation as vd
+import common as cm
 import variables as vb
 import constraints as ct
 import formulation as fm
@@ -10,7 +10,7 @@ import time as tm
     Vanilla version, original formulation
 '''
 
-def analytical_solution(instance, solution, customer):
+def analytical_method(instance, solution, customer):
 
     # Retrieve primal solution from master solution
     primal_solution = {}
@@ -168,7 +168,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
     bds_inequalities = {}
 
-    while not vd.compare_obj(upper_bound, lower_bound) and TIME_LEFT > 1:
+    while not cm.compare_obj(upper_bound, lower_bound) and TIME_LEFT > 1:
 
         if it_counter == 0:
             # Create empty solution
@@ -181,7 +181,7 @@ def benders_decomposition(instance, algo = 'analytic'):
             master_mip.optimize()
             upper_bound = min(upper_bound, round(master_mip.objBound, 2))
             metadata['bs{}_runtime'.format(algo[0])] += round(master_mip.runtime, 2)
-            reference = fm.format_solution(instance, master_mip, master_var)
+            reference = instance.format_solution(master_var)
 
         current_bound = 0.
 
@@ -191,7 +191,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
             start = tm.time()
             if algo == 'analytic':
-                dual_objective, bds_inequality = analytical_solution(instance, reference, customer)
+                dual_objective, bds_inequality = analytical_method(instance, reference, customer)
                 current_bound += dual_objective
             elif algo == 'program':
                 # Update slave programs
@@ -253,7 +253,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
         # _ = input('next iteration...')
 
-    metadata['bs{}_optgap'.format(algo[0])] = vd.compute_gap(upper_bound, lower_bound)
+    metadata['bs{}_optgap'.format(algo[0])] = cm.compute_gap(upper_bound, lower_bound)
     metadata['bs{}_iterations'.format(algo[0])] = it_counter
     metadata['bs{}_objective'.format(algo[0])] = lower_bound
     metadata['bs{}_solution'.format(algo[0])] = '-'.join(best_solution.values())

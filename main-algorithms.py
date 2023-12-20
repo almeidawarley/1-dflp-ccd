@@ -1,7 +1,7 @@
 import instance as ic
 import formulation as fm
 import heuristic as hr
-import validation as vd
+import common as cm
 import argparse as ap
 import recording as rc
 import time as tm
@@ -101,7 +101,7 @@ def main():
 
     mark_section('Solving cold MIP of the DSFLP-C-LRZ model...')
     mip_lrz.optimize()
-    mip_lrz_solution = fm.format_solution(instance, mip_lrz, mip_lrz_variable)
+    mip_lrz_solution = instance.format_solution(mip_lrz_variable)
     mip_lrz_objective = round(mip_lrz.objVal, 2)
     mip_lrz_runtime = round(mip_lrz.runtime, 2)
     print('Optimal cold LRZ solution: [{}] {}'.format(mip_lrz_objective, mip_lrz_solution))
@@ -117,7 +117,7 @@ def main():
     mark_section('Solving warm MIP of the DSFLP-C-LRZ model...')
     fm.warm_start(instance, mip_lrz_variable, warm_solution)
     mip_lrz.optimize()
-    mip_lrz_solution = fm.format_solution(instance, mip_lrz, mip_lrz_variable)
+    mip_lrz_solution = instance.format_solution(mip_lrz_variable)
     mip_lrz_objective = round(mip_lrz.objVal, 2)
     mip_lrz_runtime = round(mip_lrz.runtime, 2)
     print('Optimal warm LRZ solution: [{}] {}'.format(mip_lrz_objective, mip_lrz_solution))
@@ -128,7 +128,7 @@ def main():
         'warm_lrz_status': mip_lrz.status,
         'warm_lrz_optgap': mip_lrz.MIPGap
     })
-    assert(vd.compare_obj(mip_lrz_objective, warm_objective) or mip_lrz_objective >= warm_objective)
+    assert(cm.compare_obj(mip_lrz_objective, warm_objective) or mip_lrz_objective >= warm_objective)
 
     mark_section('Solving the relaxed DSFLP-C-LRZ model...')
     mip_lrz, mip_lrz_variable = fm.relax_linearized_mip(instance, mip_lrz, mip_lrz_variable)
@@ -144,7 +144,7 @@ def main():
 
     mark_section('Solving cold MIP of the DSFLP-C-NET model...')
     mip_net.optimize()
-    mip_net_solution = fm.format_solution(instance, mip_net, mip_net_variable)
+    mip_net_solution = instance.format_solution(mip_net_variable)
     mip_net_objective = round(mip_net.objVal, 2)
     mip_net_runtime = round(mip_net.runtime, 2)
     print('Optimal cold NET solution: [{}] {}'.format(mip_net_objective, mip_net_solution))
@@ -160,7 +160,7 @@ def main():
     mark_section('Solving warm MIP of the DSFLP-C-NET model...')
     fm.warm_start(instance, mip_net_variable, warm_solution)
     mip_net.optimize()
-    mip_net_solution = fm.format_solution(instance, mip_net, mip_net_variable)
+    mip_net_solution = instance.format_solution(mip_net_variable)
     mip_net_objective = round(mip_net.objVal, 2)
     mip_net_runtime = round(mip_net.runtime, 2)
     print('Optimal warm NET solution: [{}] {}'.format(mip_net_objective, mip_net_solution))
@@ -171,7 +171,7 @@ def main():
         'warm_net_status': mip_net.status,
         'warm_net_optgap': mip_net.MIPGap
     })
-    assert(vd.compare_obj(mip_net_objective, warm_objective) or mip_net_objective >= warm_objective)
+    assert(cm.compare_obj(mip_net_objective, warm_objective) or mip_net_objective >= warm_objective)
 
     mark_section('Solving the relaxed DSFLP-C-NET model...')
     mip_net, mip_net_variable = fm.relax_networked_mip(instance, mip_net, mip_net_variable)
@@ -190,19 +190,19 @@ def main():
     })
 
     record = rc.update_record(record, {
-        'lrz_intgap': vd.compute_gap(record['rlxt_lrz_objective'], max(record['cold_lrz_objective'], record['warm_lrz_objective'])),
-        'net_intgap': vd.compute_gap(record['rlxt_net_objective'], max(record['cold_net_objective'], record['warm_net_objective'])),
-        'rnd_optgap': vd.compute_gap(record['upper_bound'], record['rnd_objective']),
-        'frw_optgap': vd.compute_gap(record['upper_bound'], record['frw_objective']),
-        'bcw_optgap': vd.compute_gap(record['upper_bound'], record['bcw_objective']),
-        #'fix_optgap': vd.compute_gap(record['upper_bound'], record['fix_objective']),
-        'prg_optgap': vd.compute_gap(record['upper_bound'], record['prg_objective'])
+        'lrz_intgap': cm.compute_gap(record['rlxt_lrz_objective'], max(record['cold_lrz_objective'], record['warm_lrz_objective'])),
+        'net_intgap': cm.compute_gap(record['rlxt_net_objective'], max(record['cold_net_objective'], record['warm_net_objective'])),
+        'rnd_optgap': cm.compute_gap(record['upper_bound'], record['rnd_objective']),
+        'frw_optgap': cm.compute_gap(record['upper_bound'], record['frw_objective']),
+        'bcw_optgap': cm.compute_gap(record['upper_bound'], record['bcw_objective']),
+        #'fix_optgap': cm.compute_gap(record['upper_bound'], record['fix_objective']),
+        'prg_optgap': cm.compute_gap(record['upper_bound'], record['prg_objective'])
     })
 
     mark_section('Emulating the DSFLP-C through DSFLP...')
     eml, eml_variable = fm.build_simplified_mip(instance)
     eml.optimize()
-    eml_solution = fm.format_solution(instance, eml, eml_variable)
+    eml_solution = instance.format_solution(eml_variable)
     eml_objective = instance.evaluate_solution(eml_solution)
     eml_runtime = round(eml.runtime, 2)
     print('Emulated solution: [{}] {}'.format(eml_objective, eml_solution))
@@ -211,7 +211,7 @@ def main():
         'eml_solution': '-'.join(eml_solution.values()),
         'eml_runtime': eml_runtime,
         'eml_status': eml.status,
-        'eml_optgap': vd.compute_gap(record['upper_bound'], eml_objective)
+        'eml_optgap': cm.compute_gap(record['upper_bound'], eml_objective)
     })
 
     mark_section('Wrapping up the execution with the following objectives...')
@@ -235,6 +235,8 @@ def main():
     print('>>> BCW solution: {}'.format('-'.join(bcw_solution.values())))
     # print('>>> FIX solution: {}'.format('-'.join(fix_solution.values())))
     print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
+
+    print(instance.evaluate_solution(instance.unpack_solution('3-2-1')))
 
 if __name__ == '__main__':
 

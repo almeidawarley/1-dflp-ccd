@@ -2,7 +2,7 @@ import gurobipy as gp
 import variables as vb
 import constraints as ct
 import formulation as fm
-import validation as vd
+import common as cm
 import time as tm
 
 '''
@@ -10,7 +10,7 @@ import time as tm
     Lazy constraints, original formulation
 '''
 
-def analytical_solution(instance, solution, customer):
+def analytical_method(instance, solution, customer):
 
     # Retrieve primal solution from master solution
     primal_solution = {}
@@ -186,7 +186,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
         elif algo == 'analytic':
 
-            _, bds_inequality = analytical_solution(instance, empty, customer)
+            _, bds_inequality = analytical_method(instance, empty, customer)
         else:
                 exit('Invalid algo for solving the dual problem')
 
@@ -222,7 +222,7 @@ def benders_decomposition(instance, algo = 'analytic'):
             for period in instance.periods:
                 for location in instance.locations:
                     value = solution[period, location]
-                    if vd.is_equal(value, 1.):
+                    if cm.is_equal_to(value, 1.):
                         reference[period] = location
 
             metadata['bl{}_iterations'.format(algo[0])] += 1
@@ -253,7 +253,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
                 elif algo == 'analytic':
 
-                    _, bds_inequality = analytical_solution(instance, reference, customer)
+                    _, bds_inequality = analytical_method(instance, reference, customer)
 
                 else:
 
@@ -270,7 +270,7 @@ def benders_decomposition(instance, algo = 'analytic'):
     master_mip.optimize(benders_logic)
 
     objective = round(master_mip.objVal, 2)
-    solution = fm.format_solution(instance, master_mip, master_var)
+    solution = instance.format_solution(master_var)
 
     metadata['bl{}_runtime'.format(algo[0])] = master_mip.runtime
     metadata['bl{}_objective'.format(algo[0])] = objective
