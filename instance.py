@@ -556,7 +556,7 @@ class instance:
 
         for period in self.periods:
             for location in self.locations:
-                value = variable['y'][period, location].x
+                value = variable[period, location].x
                 if cm.is_equal_to(value, 1.):
                     solution[period] = location
 

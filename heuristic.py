@@ -133,7 +133,7 @@ def fixing_algorithm(instance):
                 else:
                     relax.addConstr(variable['y'][period, maximum_location] == 1)
 
-    solution = instance.format_solution(variable)
+    solution = instance.format_solution(variable['y'])
     objective = instance.evaluate_solution(solution)
 
     return solution, round(objective, 2)

@@ -101,7 +101,7 @@ def main():
 
     mark_section('Solving cold MIP of the DSFLP-C-LRZ model...')
     mip_lrz.optimize()
-    mip_lrz_solution = instance.format_solution(mip_lrz_variable)
+    mip_lrz_solution = instance.format_solution(mip_lrz_variable['y'])
     mip_lrz_objective = round(mip_lrz.objVal, 2)
     mip_lrz_runtime = round(mip_lrz.runtime, 2)
     print('Optimal cold LRZ solution: [{}] {}'.format(mip_lrz_objective, mip_lrz_solution))
@@ -117,7 +117,7 @@ def main():
     mark_section('Solving warm MIP of the DSFLP-C-LRZ model...')
     fm.warm_start(instance, mip_lrz_variable, warm_solution)
     mip_lrz.optimize()
-    mip_lrz_solution = instance.format_solution(mip_lrz_variable)
+    mip_lrz_solution = instance.format_solution(mip_lrz_variable['y'])
     mip_lrz_objective = round(mip_lrz.objVal, 2)
     mip_lrz_runtime = round(mip_lrz.runtime, 2)
     print('Optimal warm LRZ solution: [{}] {}'.format(mip_lrz_objective, mip_lrz_solution))
@@ -144,7 +144,7 @@ def main():
 
     mark_section('Solving cold MIP of the DSFLP-C-NET model...')
     mip_net.optimize()
-    mip_net_solution = instance.format_solution(mip_net_variable)
+    mip_net_solution = instance.format_solution(mip_net_variable['y'])
     mip_net_objective = round(mip_net.objVal, 2)
     mip_net_runtime = round(mip_net.runtime, 2)
     print('Optimal cold NET solution: [{}] {}'.format(mip_net_objective, mip_net_solution))
@@ -160,7 +160,7 @@ def main():
     mark_section('Solving warm MIP of the DSFLP-C-NET model...')
     fm.warm_start(instance, mip_net_variable, warm_solution)
     mip_net.optimize()
-    mip_net_solution = instance.format_solution(mip_net_variable)
+    mip_net_solution = instance.format_solution(mip_net_variable['y'])
     mip_net_objective = round(mip_net.objVal, 2)
     mip_net_runtime = round(mip_net.runtime, 2)
     print('Optimal warm NET solution: [{}] {}'.format(mip_net_objective, mip_net_solution))
@@ -202,7 +202,7 @@ def main():
     mark_section('Emulating the DSFLP-C through DSFLP...')
     eml, eml_variable = fm.build_simplified_mip(instance)
     eml.optimize()
-    eml_solution = instance.format_solution(eml_variable)
+    eml_solution = instance.format_solution(eml_variable['y'])
     eml_objective = instance.evaluate_solution(eml_solution)
     eml_runtime = round(eml.runtime, 2)
     print('Emulated solution: [{}] {}'.format(eml_objective, eml_solution))
@@ -235,8 +235,6 @@ def main():
     print('>>> BCW solution: {}'.format('-'.join(bcw_solution.values())))
     # print('>>> FIX solution: {}'.format('-'.join(fix_solution.values())))
     print('>>> PRG solution: {}'.format('-'.join(prg_solution.values())))
-
-    print(instance.evaluate_solution(instance.unpack_solution('3-2-1')))
 
 if __name__ == '__main__':
 

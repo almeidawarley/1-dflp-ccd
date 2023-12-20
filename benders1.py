@@ -23,7 +23,7 @@ def analytical_method(instance, solution, customer):
 
     dual_solution = {}
 
-    # print('Reference: {}'.format('-'.join(solution.values())))
+    # print('Incumbent: {}'.format('-'.join(solution.values())))
 
     # print('Analytical solution for j = {} ...'.format(customer))
 
@@ -89,7 +89,7 @@ def analytical_method(instance, solution, customer):
     dual_objective = dual_solution['q'][instance.start] + sum([dual_solution['p'][period][location] for period, location in solution.items() if location != instance.depot])
 
     # print('... with an objective of {}'.format(dual_objective))
-    # print('Reference: {}'.format('-'.join(solution.values())))
+    # print('Incumbent: {}'.format('-'.join(solution.values())))
 
     return dual_objective, bds_inequality
 
@@ -172,7 +172,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
         if it_counter == 0:
             # Create empty solution
-            reference = instance.empty_solution()
+            incumbent = instance.empty_solution()
         else:
             fm.warm_start(instance, master_var, best_solution)
             TIME_LEFT = min(M_TIME_LIMIT, B_TIME_LIMIT - metadata['bs{}_runtime'.format(algo[0])])
@@ -181,7 +181,7 @@ def benders_decomposition(instance, algo = 'analytic'):
             master_mip.optimize()
             upper_bound = min(upper_bound, round(master_mip.objBound, 2))
             metadata['bs{}_runtime'.format(algo[0])] += round(master_mip.runtime, 2)
-            reference = instance.format_solution(master_var)
+            incumbent = instance.format_solution(master_var['y'])
 
         current_bound = 0.
 
@@ -191,14 +191,14 @@ def benders_decomposition(instance, algo = 'analytic'):
 
             start = tm.time()
             if algo == 'analytic':
-                dual_objective, bds_inequality = analytical_method(instance, reference, customer)
+                dual_objective, bds_inequality = analytical_method(instance, incumbent, customer)
                 current_bound += dual_objective
             elif algo == 'program':
                 # Update slave programs
                 slaves[customer]['mip'].setObjective(
                     sum([slaves[customer]['var']['p'][period, location] *
                         instance.catalogs[location][customer] *
-                        (1 if reference[period] == location else 0)
+                        (1 if incumbent[period] == location else 0)
                         for period in instance.periods
                         for location in instance.locations])
                         + slaves[customer]['var']['q'][instance.start])
@@ -239,7 +239,7 @@ def benders_decomposition(instance, algo = 'analytic'):
         current_bound = round(current_bound, 2)
         if current_bound > lower_bound:
             lower_bound = current_bound
-            best_solution = instance.copy_solution(reference)
+            best_solution = instance.copy_solution(incumbent)
         it_counter += 1
 
         print('--------------------------------------------\n\n')
@@ -247,7 +247,7 @@ def benders_decomposition(instance, algo = 'analytic'):
         print('Lower bound: {}'.format(lower_bound))
         print('Current bound: {}'.format(current_bound))
         print('Upper bound: {}'.format(upper_bound))
-        print('Current solution: {}'.format('-'.join(reference.values())))
+        print('Current solution: {}'.format('-'.join(incumbent.values())))
         print('Best solution: {}'.format('-'.join(best_solution.values())))
         print('\n\n--------------------------------------------')
 

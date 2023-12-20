@@ -23,7 +23,7 @@ def analytical_method(instance, solution, customer):
 
     dual_solution = {}
 
-    # print('Reference: {}'.format('-'.join(solution.values())))
+    # print('Incumbent: {}'.format('-'.join(solution.values())))
 
     # print('Analytical solution for j = {} ...'.format(customer))
 
@@ -89,7 +89,7 @@ def analytical_method(instance, solution, customer):
     dual_objective = dual_solution['q'][instance.start] + sum([dual_solution['p'][period][location] for period, location in solution.items() if location != instance.depot])
 
     # print('... with an objective of {}'.format(dual_objective))
-    # print('Reference: {}'.format('-'.join(solution.values())))
+    # print('Incumbent: {}'.format('-'.join(solution.values())))
 
     return dual_objective, bds_inequality
 
@@ -216,14 +216,14 @@ def benders_decomposition(instance, algo = 'analytic'):
             solution = model.cbGetSolution(model._var['y'])
 
             # Format raw solution
-            reference = {}
+            incumbent = {}
             for period in instance.periods:
-                reference[period] = '0'
+                incumbent[period] = '0'
             for period in instance.periods:
                 for location in instance.locations:
                     value = solution[period, location]
                     if cm.is_equal_to(value, 1.):
-                        reference[period] = location
+                        incumbent[period] = location
 
             metadata['bl{}_iterations'.format(algo[0])] += 1
 
@@ -235,7 +235,7 @@ def benders_decomposition(instance, algo = 'analytic'):
                     slaves[customer]['mip'].setObjective(
                         sum([slaves[customer]['var']['p'][period, location] *
                             instance.catalogs[location][customer] *
-                            (1 if reference[period] == location else 0)
+                            (1 if incumbent[period] == location else 0)
                             for period in instance.periods
                             for location in instance.locations])
                             + slaves[customer]['var']['q'][instance.start])
@@ -253,7 +253,7 @@ def benders_decomposition(instance, algo = 'analytic'):
 
                 elif algo == 'analytic':
 
-                    _, bds_inequality = analytical_method(instance, reference, customer)
+                    _, bds_inequality = analytical_method(instance, incumbent, customer)
 
                 else:
 
@@ -270,7 +270,7 @@ def benders_decomposition(instance, algo = 'analytic'):
     master_mip.optimize(benders_logic)
 
     objective = round(master_mip.objVal, 2)
-    solution = instance.format_solution(master_var)
+    solution = instance.format_solution(master_var['y'])
 
     metadata['bl{}_runtime'.format(algo[0])] = master_mip.runtime
     metadata['bl{}_objective'.format(algo[0])] = objective
