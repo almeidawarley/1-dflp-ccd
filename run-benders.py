@@ -21,12 +21,6 @@ def main():
     instance.print_instance()
     record = rc.load_record(args.project, instance)
 
-    mark_section('Identifying solution for warm start')
-    if 'warm_solution' in record.keys():
-        warm_solution = instance.unpack_solution(record['warm_solution'])
-    else:
-        warm_solution = instance.empty_solution()
-
     mark_section('Solving with standard Benders')
     benders1 = bd.benders(instance, 'duality')
     metadata = benders1.solve_std('bsd')

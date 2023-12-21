@@ -162,7 +162,6 @@ class duality(subproblem):
 
         self.create_c1()
 
-
     def create_vrp(self):
         # Create p^{t}_{i} variables
 
@@ -206,23 +205,29 @@ class maxQ(duality):
     # It finds a stronger cut in some cases
     # Example: proof instance, solution 0-3
 
-    def set_objective(self):
+    def __init__(self, instance, customer):
 
-        self.mip.setAttr('ModelSense', -1)
+        super().__init__(instance, customer)
 
-        self.mip.setObjective(self.var['q'][self.ins.start])
+        self.analytical = analytical(instance, customer)
 
-    def set_constraints(self):
+    def update(self, solution):
 
-        self.create_c1()
-        self.create_c2()
+        super().update(solution)
 
-    def create_c2(self):
-        # Create constraint 2
+        self.analytical.update(self.solution)
+        dual_objective, _ = self.analytical.cut()
 
-        self.mip.addConstr(sum([self.var['p'][period, location] *
+        try:
+            self.normalization
+            self.mip.remove(self.normalization)
+        except:
+            pass
+
+        self.normalization = self.mip.addConstr(
+            sum([self.var['p'][period, location] *
                 self.ins.catalogs[location][self.customer] *
                 (1 if self.solution[period] == location else 0)
                 for period in self.ins.periods
                 for location in self.ins.locations])
-                + self.var['q'][self.ins.start] == 1.53 , name = 'c2')
+                + self.var['q'][self.ins.start] == dual_objective, name = 'c2')

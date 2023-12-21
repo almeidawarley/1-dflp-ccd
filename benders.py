@@ -15,22 +15,21 @@ class benders(fm.formulation):
         for customer in self.ins.customers:
             if type == 'analytical':
                 self.subproblems[customer] = sb.analytical(self.ins, customer)
-            else:
-                # self.subproblems[customer] = sb.maxQ(self.ins, customer)
+            elif type == 'duality':
                 self.subproblems[customer] = sb.duality(self.ins, customer)
+            elif type == 'maxQ':
+                self.subproblems[customer] = sb.maxQ(self.ins, customer)
+            else:
+                exit('Invalid method for solving suproblems')
 
     def solve_std(self, label = ''):
 
         # Standard Benders implementation
-
         '''
         for customer in self.ins.customers:
             self.add_inequality(self.ins.unpack_solution('0-3'), customer)
         self.mip.write('refactoring-master.lp')
         '''
-        for customer in self.ins.customers:
-            self.add_inequality(self.ins.unpack_solution('0-3'), customer)
-        self.mip.write('refactoring-master.lp')
 
         label = label + '_' if len(label) > 0 else label
 

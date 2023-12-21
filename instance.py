@@ -582,3 +582,7 @@ class instance:
             index += 1
 
         return solution
+
+    def stable_solution(self, location):
+
+        return {period: location for period in self.periods}
