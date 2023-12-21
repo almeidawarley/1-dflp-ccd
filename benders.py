@@ -1,15 +1,16 @@
 import gurobipy as gp
+import common as cm
 import variables as vb
 import constraints as ct
 import formulation as fm
-import common as cm
 import time as tm
 
 '''
-    Implementation #2 of Benders decomposition
-    Lazy constraints, original formulation
+    Implementation #1 of Benders decomposition
+    Vanilla version, original formulation
 '''
 
+# Create subproblems
 subproblems = {}
 
 def duality_method(instance, incumbent, customer):
@@ -119,7 +120,102 @@ def analytical_method(instance, solution, customer):
 
     return dual_objective, inequality
 
-def benders_decomposition(instance, algo = 'analytic'):
+def benders_standard(instance, algo = 'analytic'):
+
+    subproblems = {}
+
+    remaining = cm.TIMELIMIT
+
+    metadata = {}
+    metadata['bs{}_runtime'.format(algo[0])] = 0.
+    metadata['bs{}_subtime'.format(algo[0])] = 0.
+    metadata['bs{}_cuttime'.format(algo[0])] = 0.
+
+    master_mip, master_var = fm.build_master(instance)
+
+    if algo == 'duality':
+
+        for customer in instance.customers:
+            subproblems[customer] = {}
+            subproblem_mip, subproblem_var = fm.build_subproblem(instance, customer)
+            subproblems[customer]['mip'] = subproblem_mip
+            subproblems[customer]['var'] = subproblem_var
+
+    upper_bound = gp.GRB.INFINITY
+    lower_bound = 0.
+    it_counter = 0
+    best_solution = instance.empty_solution()
+
+    while not cm.compare_obj(upper_bound, lower_bound) and remaining > 1:
+
+        if it_counter == 0:
+            # Create empty solution
+            incumbent = instance.empty_solution()
+        else:
+            fm.warm_start(instance, master_var, best_solution)
+            remaining = max(cm.TIMELIMIT - metadata['bs{}_runtime'.format(algo[0])], 10) # Give 1s extra
+            master_mip.setParam('TimeLimit', remaining)
+            master_mip.optimize()
+            upper_bound = min(upper_bound, round(master_mip.objBound, 2))
+            metadata['bs{}_runtime'.format(algo[0])] += round(master_mip.runtime, 2)
+            incumbent = instance.format_solution(master_var['y'])
+
+        current_bound = 0.
+
+        for customer in instance.customers:
+
+            start = tm.time()
+            if algo == 'analytic':
+                dual_objective, inequality = analytical_method(instance, incumbent, customer)
+            elif algo == 'duality':
+                dual_objective, inequality = duality_method(instance, incumbent, customer)
+            else:
+                exit('Invalid algo for solving the dual problem')
+            end = tm.time()
+            current_bound += dual_objective
+            metadata['bs{}_runtime'.format(algo[0])] += round(end - start, 2)
+            metadata['bs{}_subtime'.format(algo[0])] += round(end - start, 2)
+
+            start = tm.time()
+            # Add inequality for some customer
+            master_mip.addConstr(master_var['v'][customer] <=
+                                    sum(inequality['y'][period][location] *
+                                    instance.catalogs[location][customer] *
+                                    master_var['y'][period, location]
+                                    for period in instance.periods 
+                                    for location in instance.locations)
+                                + inequality['b']).lazy = 3
+            end = tm.time()
+            metadata['bs{}_runtime'.format(algo[0])] += round(end - start, 2)
+            metadata['bs{}_cuttime'.format(algo[0])] += round(end - start, 2)
+
+        current_bound = round(current_bound, 2)
+        if current_bound > lower_bound:
+            lower_bound = current_bound
+            best_solution = instance.copy_solution(incumbent)
+        it_counter += 1
+
+        print('--------------------------------------------\n\n')
+        print('Iteration: {}'.format(it_counter))
+        print('Lower bound: {}'.format(lower_bound))
+        print('Current bound: {}'.format(current_bound))
+        print('Upper bound: {}'.format(upper_bound))
+        print('Current solution: {}'.format('-'.join(incumbent.values())))
+        print('Best solution: {}'.format('-'.join(best_solution.values())))
+        print('\n\n--------------------------------------------')
+
+        # _ = input('next iteration...')
+
+    metadata['bs{}_optgap'.format(algo[0])] = cm.compute_gap(upper_bound, lower_bound)
+    metadata['bs{}_iterations'.format(algo[0])] = it_counter
+    metadata['bs{}_objective'.format(algo[0])] = lower_bound
+    metadata['bs{}_solution'.format(algo[0])] = '-'.join(best_solution.values())
+
+    return best_solution, lower_bound, metadata
+
+def branch_and_benders_cut(instance, algo = 'analytic'):
+
+    subproblems = {}
 
     metadata = {}
     metadata['bl{}_subtime'.format(algo[0])] = 0.

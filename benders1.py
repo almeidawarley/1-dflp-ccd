@@ -10,6 +10,33 @@ import time as tm
     Vanilla version, original formulation
 '''
 
+# Create subproblems
+subproblems = {}
+
+def duality_method(instance, incumbent, customer):
+
+    # Update subproblems
+    subproblems[customer]['mip'].setObjective(
+        sum([subproblems[customer]['var']['p'][period, location] *
+            instance.catalogs[location][customer] *
+            (1 if incumbent[period] == location else 0)
+            for period in instance.periods
+            for location in instance.locations])
+            + subproblems[customer]['var']['q'][instance.start])
+    subproblems[customer]['mip'].optimize()
+
+    # Build cut for some customer
+    inequality = {}
+    inequality['y'] = {}
+    for period in instance.periods_extended:
+        if period != instance.start and period != instance.end:
+            inequality['y'][period] = {}
+            for location in instance.locations:
+                inequality['y'][period][location] = subproblems[customer]['var']['p'][period, location].x
+    inequality['b'] = subproblems[customer]['var']['q'][instance.start].x
+
+    return subproblems[customer]['mip'].objVal, inequality
+
 def analytical_method(instance, solution, customer):
 
     # Retrieve primal solution from master solution
@@ -77,107 +104,55 @@ def analytical_method(instance, solution, customer):
             # print('p[{},{}] = {}'.format(period2, location, dual_solution['p'][period2][location]))
 
     # Build cut for some customer
-    bds_inequality = {}
-    bds_inequality['y'] = {}
+    inequality = {}
+    inequality['y'] = {}
     for period in instance.periods_extended:
         if period != instance.start and period != instance.end:
-            bds_inequality['y'][period] = {}
+            inequality['y'][period] = {}
             for location in instance.locations:
-                bds_inequality['y'][period][location] = dual_solution['p'][period][location]
-    bds_inequality['b'] = dual_solution['q'][instance.start]
+                inequality['y'][period][location] = dual_solution['p'][period][location]
+    inequality['b'] = dual_solution['q'][instance.start]
 
     dual_objective = dual_solution['q'][instance.start] + sum([dual_solution['p'][period][location] for period, location in solution.items() if location != instance.depot])
 
     # print('... with an objective of {}'.format(dual_objective))
     # print('Incumbent: {}'.format('-'.join(solution.values())))
 
-    return dual_objective, bds_inequality
+    return dual_objective, inequality
 
 def benders_decomposition(instance, algo = 'analytic'):
 
-    B_TIME_LIMIT = 5 * 60 * 60
-    M_TIME_LIMIT = B_TIME_LIMIT
-    S_TIME_LIMIT = B_TIME_LIMIT
-
-    TIME_LEFT = B_TIME_LIMIT
+    remaining = cm.TIMELIMIT
 
     metadata = {}
     metadata['bs{}_runtime'.format(algo[0])] = 0.
     metadata['bs{}_subtime'.format(algo[0])] = 0.
     metadata['bs{}_cuttime'.format(algo[0])] = 0.
 
-    # Creater master program
-    master_mip = gp.Model('DSFLP-C-M')
+    master_mip, master_var = fm.build_master(instance)
 
-    # Create decision variables
-    master_var = {
-        # Main decision variables
-        'y': vb.create_vry(instance, master_mip),
-        'v': vb.create_vrv(instance, master_mip)
-    }
+    if algo == 'duality':
 
-    # Maximize the total revenue
-    master_mip.setAttr('ModelSense', -1)
-
-    # Turn off GUROBI logs
-    # master_mip.setParam('OutputFlag', 0)
-    master_mip.setParam('Threads', 1)
-    master_mip.setParam('TimeLimit', M_TIME_LIMIT)
-
-    # Set objective function
-    master_mip.setObjective(
-        sum([master_var['v'][customer]
-             for customer in instance.customers]))
-
-    # Create main constraints
-    ct.create_c1(instance, master_mip, master_var)
-
-    if algo == 'program':
-
-        # Create slave programs
-        slaves = {}
         for customer in instance.customers:
-            slaves[customer] = {}
-
-            # print('Creating slave customer {}'.format(customer))
-
-            slave_mip = gp.Model('DSFLP-C-S{}'.format(customer))
-            slave_var = {
-                # Main decision variables
-                'p': vb.create_vrp(instance, slave_mip),
-                'q': vb.create_vrq(instance, slave_mip)
-            }
-
-            # Minimize dual objective
-            slave_mip.setAttr('ModelSense', 1)
-
-            # Turn off GUROBI logs
-            slave_mip.setParam('OutputFlag', 0)
-            slave_mip.setParam('Threads', 1)
-            slave_mip.setParam('TimeLimit', S_TIME_LIMIT)
-
-            ct.create_c9(instance, slave_mip, slave_var, customer)
-
-            slaves[customer]['mip'] = slave_mip
-            slaves[customer]['var'] = slave_var
+            subproblems[customer] = {}
+            subproblem_mip, subproblem_var = fm.build_subproblem(instance, customer)
+            subproblems[customer]['mip'] = subproblem_mip
+            subproblems[customer]['var'] = subproblem_var
 
     upper_bound = gp.GRB.INFINITY
     lower_bound = 0.
     it_counter = 0
     best_solution = instance.empty_solution()
 
-    bds_inequalities = {}
-
-    while not cm.compare_obj(upper_bound, lower_bound) and TIME_LEFT > 1:
+    while not cm.compare_obj(upper_bound, lower_bound) and remaining > 1:
 
         if it_counter == 0:
             # Create empty solution
             incumbent = instance.empty_solution()
         else:
             fm.warm_start(instance, master_var, best_solution)
-            TIME_LEFT = min(M_TIME_LIMIT, B_TIME_LIMIT - metadata['bs{}_runtime'.format(algo[0])])
-            TIME_LEFT = max(TIME_LEFT, 1) # Give one extra second to solver
-            master_mip.setParam('TimeLimit', TIME_LEFT)
+            remaining = max(cm.TIMELIMIT - metadata['bs{}_runtime'.format(algo[0])], 10) # Give 1s extra
+            master_mip.setParam('TimeLimit', remaining)
             master_mip.optimize()
             upper_bound = min(upper_bound, round(master_mip.objBound, 2))
             metadata['bs{}_runtime'.format(algo[0])] += round(master_mip.runtime, 2)
@@ -185,56 +160,32 @@ def benders_decomposition(instance, algo = 'analytic'):
 
         current_bound = 0.
 
-        bds_inequalities[it_counter] = {}
-
         for customer in instance.customers:
 
             start = tm.time()
             if algo == 'analytic':
-                dual_objective, bds_inequality = analytical_method(instance, incumbent, customer)
-                current_bound += dual_objective
-            elif algo == 'program':
-                # Update slave programs
-                slaves[customer]['mip'].setObjective(
-                    sum([slaves[customer]['var']['p'][period, location] *
-                        instance.catalogs[location][customer] *
-                        (1 if incumbent[period] == location else 0)
-                        for period in instance.periods
-                        for location in instance.locations])
-                        + slaves[customer]['var']['q'][instance.start])
-                # slaves[customer]['mip'].write('slave_{}.lp'.format(customer))
-                # print('Solving slave customer {}'.format(customer))
-                slaves[customer]['mip'].optimize()
-                current_bound += slaves[customer]['mip'].objVal
-
-                # Build cut for some customer
-                bds_inequality = {}
-                bds_inequality['y'] = {}
-                for period in instance.periods_extended:
-                    if period != instance.start and period != instance.end:
-                        bds_inequality['y'][period] = {}
-                        for location in instance.locations:
-                            bds_inequality['y'][period][location] = slaves[customer]['var']['p'][period, location].x
-                bds_inequality['b'] = slaves[customer]['var']['q'][instance.start].x
+                dual_objective, inequality = analytical_method(instance, incumbent, customer)
+            elif algo == 'duality':
+                dual_objective, inequality = duality_method(instance, incumbent, customer)
             else:
                 exit('Invalid algo for solving the dual problem')
             end = tm.time()
+            current_bound += dual_objective
             metadata['bs{}_runtime'.format(algo[0])] += round(end - start, 2)
             metadata['bs{}_subtime'.format(algo[0])] += round(end - start, 2)
 
             start = tm.time()
             # Add inequality for some customer
             master_mip.addConstr(master_var['v'][customer] <=
-                                    sum(bds_inequality['y'][period][location] *
+                                    sum(inequality['y'][period][location] *
                                     instance.catalogs[location][customer] *
                                     master_var['y'][period, location]
-                                for period in instance.periods for location in instance.locations)
-                                + bds_inequality['b']).lazy = 3
+                                    for period in instance.periods 
+                                    for location in instance.locations)
+                                + inequality['b']).lazy = 3
             end = tm.time()
             metadata['bs{}_runtime'.format(algo[0])] += round(end - start, 2)
             metadata['bs{}_cuttime'.format(algo[0])] += round(end - start, 2)
-
-            bds_inequalities[it_counter][customer] = bds_inequality
 
         current_bound = round(current_bound, 2)
         if current_bound > lower_bound:
