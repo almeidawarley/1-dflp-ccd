@@ -1,14 +1,8 @@
-import gurobipy as gp
-import common as cm
-import variables as vb
-import constraints as ct
 import formulation as fm
+import gurobipy as gp
+import heuristic as hr
+import common as cm
 import time as tm
-
-'''
-    Implementation #1 of Benders decomposition
-    Vanilla version, original formulation
-'''
 
 # Create subproblems
 subproblems = {}
@@ -40,68 +34,68 @@ def duality_method(instance, incumbent, customer):
 def analytical_method(instance, solution, customer):
 
     # Retrieve primal solution from master solution
-    primal_solution = {}
+    primal = {}
     for period1 in instance.periods_with_start:
-        primal_solution[period1] = instance.end
+        primal[period1] = instance.end
         for period2 in instance.periods:
             if instance.is_before(period1, period2) and solution[period2] != instance.depot and instance.catalogs[solution[period2]][customer] == 1.:
-                primal_solution[period1] = period2
+                primal[period1] = period2
                 break
 
-    dual_solution = {}
+    dual = {}
 
     # print('Incumbent: {}'.format('-'.join(solution.values())))
 
     # print('Analytical solution for j = {} ...'.format(customer))
 
-    dual_solution['q'] = {period : 0. for period in instance.periods_with_start}
+    dual['q'] = {period : 0. for period in instance.periods_with_start}
 
     # period1 l, period2 t period3 k
     # First pass, capture periods
     for period3 in reversed(instance.periods_with_start):
-        for period1, period2 in primal_solution.items():
+        for period1, period2 in primal.items():
             # compute Q for capture periods first  & check if it is not last period & check if it is not the same period & check precedence
-            if primal_solution[period3] != period2 and period2 != instance.end and period1 != period3 and instance.is_before(period3, period2):
+            if primal[period3] != period2 and period2 != instance.end and period1 != period3 and instance.is_before(period3, period2):
                 location = solution[period2]
                 # print('q{} through z[{} -> {}][{}]'.format(period3, period1, period2, location))
                 current = instance.revenues[period2][location] * instance.accumulated_demand(period3, period2, customer)
                 current -= instance.revenues[period2][location] * instance.accumulated_demand(period1, period2, customer)
-                current += dual_solution['q'][period1]
-                if current > dual_solution['q'][period3]:
-                    dual_solution['q'][period3] = current
+                current += dual['q'][period1]
+                if current > dual['q'][period3]:
+                    dual['q'][period3] = current
 
     # Second pass, free periods
     for period3 in reversed(instance.periods_with_start):
-        for period1, period2 in primal_solution.items():
+        for period1, period2 in primal.items():
             # compute Q for free periods second  & check if it is not last period & check if it is not the same period & check precedence
-            if primal_solution[period3] == period2 and period2 != instance.end and period1 != period3 and instance.is_before(period3, period2):
+            if primal[period3] == period2 and period2 != instance.end and period1 != period3 and instance.is_before(period3, period2):
                 location = solution[period2]
                 # print('q{} through z[{} -> {}][{}]'.format(period3, period1, period2, location))
                 current = instance.revenues[period2][location] * instance.accumulated_demand(period3, period2, customer)
                 current -= instance.revenues[period2][location] * instance.accumulated_demand(period1, period2, customer)
-                current += dual_solution['q'][period1]
-                if current > dual_solution['q'][period3]:
-                    dual_solution['q'][period3] = current
+                current += dual['q'][period1]
+                if current > dual['q'][period3]:
+                    dual['q'][period3] = current
 
-        # print('q[{}] = {}'.format(period3, dual_solution['q'][period3]))
+        # print('q[{}] = {}'.format(period3, dual['q'][period3]))
 
-    dual_solution['p'] = {}
+    dual['p'] = {}
     for period2 in instance.periods:
-        dual_solution['p'][period2] = {}
+        dual['p'][period2] = {}
         for location in instance.locations:
             current = instance.revenues[period2][location] * instance.accumulated_demand(instance.start, period2, customer)
-            current += dual_solution['q'][period2]  - dual_solution['q'][instance.start]
+            current += dual['q'][period2]  - dual['q'][instance.start]
             current *= instance.catalogs[location][customer]
-            dual_solution['p'][period2][location] = current
+            dual['p'][period2][location] = current
             for period1 in instance.periods_with_start:
                 if instance.is_before(period1, period2):
                     current = instance.revenues[period2][location] * instance.accumulated_demand(period1, period2, customer)
-                    current += dual_solution['q'][period2] - dual_solution['q'][period1]
+                    current += dual['q'][period2] - dual['q'][period1]
                     current *= instance.catalogs[location][customer]
-                    if current > dual_solution['p'][period2][location]:
-                        dual_solution['p'][period2][location] = current
+                    if current > dual['p'][period2][location]:
+                        dual['p'][period2][location] = current
 
-            # print('p[{},{}] = {}'.format(period2, location, dual_solution['p'][period2][location]))
+            # print('p[{},{}] = {}'.format(period2, location, dual['p'][period2][location]))
 
     # Build cut for some customer
     inequality = {}
@@ -110,10 +104,10 @@ def analytical_method(instance, solution, customer):
         if period != instance.start and period != instance.end:
             inequality['y'][period] = {}
             for location in instance.locations:
-                inequality['y'][period][location] = dual_solution['p'][period][location]
-    inequality['b'] = dual_solution['q'][instance.start]
+                inequality['y'][period][location] = dual['p'][period][location]
+    inequality['b'] = dual['q'][instance.start]
 
-    dual_objective = dual_solution['q'][instance.start] + sum([dual_solution['p'][period][location] for period, location in solution.items() if location != instance.depot])
+    dual_objective = dual['q'][instance.start] + sum([dual['p'][period][location] for period, location in solution.items() if location != instance.depot])
 
     # print('... with an objective of {}'.format(dual_objective))
     # print('Incumbent: {}'.format('-'.join(solution.values())))
@@ -141,16 +135,16 @@ def benders_standard(instance, algo = 'analytic'):
             subproblems[customer]['mip'] = subproblem_mip
             subproblems[customer]['var'] = subproblem_var
 
+    # best_solution, lower_bound = instance.empty_solution(), 0.
+    best_solution, lower_bound = hr.progressive_algorithm(instance)
     upper_bound = gp.GRB.INFINITY
-    lower_bound = 0.
     it_counter = 0
-    best_solution = instance.empty_solution()
 
     while not cm.compare_obj(upper_bound, lower_bound) and remaining > 1:
 
         if it_counter == 0:
-            # Create empty solution
-            incumbent = instance.empty_solution()
+            # Assign incumbent solution
+            incumbent = instance.copy_solution(best_solution)
         else:
             fm.warm_start(instance, master_var, best_solution)
             remaining = max(cm.TIMELIMIT - metadata['bs{}_runtime'.format(algo[0])], 10) # Give 1s extra
@@ -226,7 +220,8 @@ def branch_and_benders_cut(instance, algo = 'analytic'):
 
     master_mip._var = master_var
 
-    empty = instance.empty_solution()
+    incumbent, _ = hr.progressive_algorithm(instance)
+    # incumbent = instance.empty_solution()
 
     for customer in instance.customers:
 
@@ -242,11 +237,11 @@ def branch_and_benders_cut(instance, algo = 'analytic'):
             subproblems[customer]['mip'] = subproblem_mip
             subproblems[customer]['var'] = subproblem_var
 
-            _, inequality = duality_method(instance, empty, customer)
+            _, inequality = duality_method(instance, incumbent, customer)
 
         elif algo == 'analytic':
 
-            _, inequality = analytical_method(instance, empty, customer)
+            _, inequality = analytical_method(instance, incumbent, customer)
         else:
                 exit('Invalid algo for solving the dual problem')
 
@@ -307,7 +302,7 @@ def branch_and_benders_cut(instance, algo = 'analytic'):
                                     sum(inequality['y'][period][location] *
                                     instance.catalogs[location][customer] *
                                     model._var['y'][period, location]
-                                    for period in instance.periods 
+                                    for period in instance.periods
                                     for location in instance.locations)
                                     + inequality['b'])
 
