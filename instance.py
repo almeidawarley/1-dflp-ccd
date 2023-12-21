@@ -399,7 +399,7 @@ class instance:
 
         self.locations = ['1', '2', '3', '4']
         self.customers = ['A', 'B', 'C']
-        self.periods = ['1', '2', '3']
+        self.periods = ['1', '2', '3', '4']
 
         # Create catalogs
         considerations = {}
@@ -561,6 +561,11 @@ class instance:
                     solution[period] = location
 
         return solution
+
+    def pack_solution(self, solution):
+        # Format dictionary solution as text
+
+        return '-'.join(solution.values())
 
     def unpack_solution(self, text):
         # Format text solution as dictionary

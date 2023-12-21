@@ -1,139 +1,154 @@
-import formulation as fm
+import gurobipy as gp
 import common as cm
 import numpy as np
+import time as tm
 
-def progressive_algorithm(instance):
+class heuristic:
 
-    # Create partial solution
-    best_solution = instance.empty_solution()
-    best_objective = 0.
+    def __init__(self, instance, name):
 
-    for frontier in instance.periods:
+        self.ins = instance
+        self.name = name
+        self.solution = self.ins.empty_solution()
+        self.objective = 0.
 
-        local_objective = best_objective
-        local_solution = instance.copy_solution(best_solution)
+    def solve(self, label = ''):
 
-        for reference in reversed(instance.periods):
+        label = label + '_' if len(label) > 0 else label
 
-            if int(reference) <= int(frontier):
+        start = tm.time()
+        self.run()
+        end = tm.time()
 
-                for location in instance.locations_extended:
+        metadata = {
+            '{}objective'.format(label): self.objective,
+            '{}runtime'.format(label): round(end - start, cm.PRECISION),
+            '{}solution'.format(label): self.ins.pack_solution(self.solution)
+        }
 
-                    # Copy partial solution
-                    candidate = instance.copy_solution(best_solution)
-                    # Insert location
-                    candidate = instance.insert_solution(candidate, reference, location)
-                    objective = instance.evaluate_solution(candidate)
+        return metadata
 
-                    if objective > local_objective:
-                        local_solution = instance.copy_solution(candidate)
-                        local_objective =  objective
+class progressive(heuristic):
 
-        if local_objective > best_objective:
-            best_objective = local_objective
-            best_solution = instance.copy_solution(local_solution)
+    def __init__(self, instance):
 
-    return best_solution, round(best_objective, 2)
+        super().__init__(instance, 'PRG')
 
-def forward_algorithm(instance):
+    def run(self):
 
-    # Create partial solution
-    best_solution = instance.empty_solution()
-    best_objective = 0.
+        for frontier in self.ins.periods:
 
-    for reference in instance.periods:
+            local_objective = self.objective
+            local_solution = self.ins.copy_solution(self.solution)
 
-        for location in instance.locations_extended:
+            for reference in reversed(self.ins.periods):
 
-            # Copy partial solution
-            candidate = instance.copy_solution(best_solution)
-            # Insert location
-            candidate[reference] = location
-            objective = instance.evaluate_solution(candidate)
+                if int(reference) <= int(frontier):
 
-            if objective > best_objective:
-                best_solution = instance.copy_solution(candidate)
-                best_objective =  objective
+                    for location in self.ins.locations_extended:
 
-    return best_solution, round(best_objective, 2)
+                        # Copy partial solution
+                        candidate = self.ins.copy_solution(self.solution)
+                        # Insert location
+                        candidate = self.ins.insert_solution(candidate, reference, location)
+                        objective = self.ins.evaluate_solution(candidate)
 
-def backward_algorithm(instance):
+                        if objective > local_objective:
+                            local_solution = self.ins.copy_solution(candidate)
+                            local_objective =  objective
 
-    # Create partial solution
-    best_solution = instance.empty_solution()
-    best_objective = 0.
+            if local_objective > self.objective:
+                self.objective = local_objective
+                self.solution = self.ins.copy_solution(local_solution)
 
-    for reference in reversed(instance.periods):
+class forward(heuristic):
 
-        for location in instance.locations_extended:
+    def __init__(self, instance):
 
-            # Copy partial solution
-            candidate = instance.copy_solution(best_solution)
-            # Insert location
-            candidate[reference] = location
-            objective = instance.evaluate_solution(candidate)
+        super().__init__(instance, 'FRW')
 
-            if objective > best_objective:
-                best_solution = instance.copy_solution(candidate)
-                best_objective =  objective
+    def run(self):
 
-    return best_solution, round(best_objective, 2)
+        for reference in self.ins.periods:
 
-def random_algorithm(instance):
+            for location in self.ins.locations_extended:
 
-    np.random.seed(instance.parameters['seed'])
+                # Copy partial solution
+                candidate = self.ins.copy_solution(self.solution)
+                # Insert location
+                candidate[reference] = location
+                objective = self.ins.evaluate_solution(candidate)
 
-    # Create partial solution
-    best_solution = {}
-    for period in instance.periods:
-        best_solution[period] = np.random.choice(instance.locations_extended)
-    best_objective = instance.evaluate_solution(best_solution)
+                if objective > self.objective:
+                    self.solution = self.ins.copy_solution(candidate)
+                    self.objective =  objective
 
-    return best_solution, round(best_objective, 2)
+class backward(heuristic):
 
-def fixing_algorithm(instance):
+    def __init__(self, instance):
 
-    # Create relaxation
-    relax, variable = fm.build_linearized_lpr(instance)
+        super().__init__(instance, 'BCW')
 
-    for period in instance.periods:
+    def run(self):
 
-        # Store integrality
-        integral = False
+        for reference in reversed(self.ins.periods):
 
-        while not integral:
+            for location in self.ins.locations_extended:
 
-            minimum_value = 1.
-            minimum_location = '0'
-            maximum_value = 0.
-            maximum_location = '0'
+                # Copy partial solution
+                candidate = self.ins.copy_solution(self.solution)
+                # Insert location
+                candidate[reference] = location
+                objective = self.ins.evaluate_solution(candidate)
 
-            # Solve relaxation
-            relax.optimize()
+                if objective > self.objective:
+                    self.solution = self.ins.copy_solution(candidate)
+                    self.objective =  objective
 
-            # Check integrality
-            integral = True
-            for location in instance.locations:
-                value = variable['y'][period, location].x
-                if not cm.is_equal_to(value, 0) and not cm.is_equal_to(value, 1):
-                    integral = False
-                    # Store smallest
-                    if value < minimum_value:
-                        minimum_value = value
-                        minimum_location = location
-                    # Store largest
-                    if value > maximum_value:
-                        maximum_value = value
-                        maximum_location = location
+class random(heuristic):
 
-            # Fix variable
-            if not integral:
-                if abs(minimum_value - 0.) < abs(maximum_value - 1.):
-                    relax.addConstr(variable['y'][period, minimum_location] == 0)
-                else:
-                    relax.addConstr(variable['y'][period, maximum_location] == 1)
+    def __init__(self, instance):
 
-    solution = instance.format_solution(variable['y'])
-    objective = instance.evaluate_solution(solution)
+        super().__init__(instance, 'RND')
 
-    return solution, round(objective, 2)
+    def run(self):
+
+        np.random.seed(self.ins.parameters['seed'])
+
+        # Create partial solution
+        self.solution = {}
+        for period in self.ins.periods:
+            self.solution[period] = np.random.choice(self.ins.locations_extended)
+        self.objective = self.ins.evaluate_solution(self.solution)
+
+class emulation(heuristic):
+
+    def __init__(self, instance):
+
+        super().__init__(instance, 'EML')
+
+    def run(self):
+
+        candidate = self.ins.empty_solution()
+
+        for reference in self.ins.periods:
+
+            local_objective = 0.
+            local_location = self.ins.depot
+
+            for location in self.ins.locations_extended:
+
+                # Insert location
+                candidate[reference] = location
+                objective = self.ins.evaluate_solution(candidate)
+                # Insert location
+                candidate[reference] = self.ins.depot
+
+                if objective > local_objective:
+                    local_objective = objective
+                    local_location = location
+
+            # Fix location
+            self.solution[reference] = local_location
+
+        self.objective = self.ins.evaluate_solution(self.solution)

@@ -1,244 +1,98 @@
 import gurobipy as gp
-import variables as vb
-import constraints as ct
 import common as cm
 
-def warm_start(instance, variable, solution):
-    # Warm start with a feasible solution
+class formulation:
 
-    for period in instance.periods:
-        for location in instance.locations:
-            variable['y'][period, location].start  = 1. if location == solution[period] else 0.
+    def __init__(self, instance, name):
 
-def build_simplified_mip(instance):
-    # Build the MIP of the simplified DSFLP-C (i.e., DSFLP)
+        self.ins = instance
+        self.mip = gp.Model(name)
+        self.var = {}
 
-    mip = gp.Model('DSFLP')
+        self.set_parameters()
+        self.set_variables()
+        self.set_objective()
+        self.set_constraints()
 
-    # Create decision variables
-    variable = {
-        'y': vb.create_vry(instance, mip)
-    }
+    def solve(self, label = ''):
 
-    # Maximize the total revenue
-    mip.setAttr('ModelSense', -1)
+        label = label + '_' if len(label) > 0 else label
 
-    # Turn off GUROBI logs
-    # mip.setParam('OutputFlag', 0)
-    mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', cm.TIMELIMIT)
+        self.mip.optimize()
 
-    mip.setObjective(
-        sum([instance.revenues[period][location] *
-         instance.accumulated_demand(instance.start, period, customer) *
-         instance.catalogs[location][customer] *
-         variable['y'][period, location]
-         for period in instance.periods
-         for location in instance.locations
-         for customer in instance.customers]))
+        solution = self.ins.format_solution(self.var['y'])
 
-    # Create main constraints
-    ct.create_c1(instance, mip, variable)
+        assert self.mip.status != gp.GRB.OPTIMAL or cm.compare_obj(self.mip.objVal, self.ins.evaluate_solution(solution))
 
-    return mip, variable
+        metadata = {
+            '{}status'.format(label): self.mip.status,
+            '{}objective'.format(label): round(self.mip.objVal, cm.PRECISION),
+            '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
+            '{}optgap'.format(label): self.mip.MIPGap,
+            '{}solution'.format(label): self.ins.pack_solution(solution)
+        }
 
-def build_linearized_mip(instance):
-    # Build the MIP of the linearized DSFLP-C
+        self.mip.reset()
 
-    mip = gp.Model('DSFLP-C-LRZ')
+        return metadata
 
-    # Create decision variables
-    variable = {
-        # Main decision variables
-        'y': vb.create_vry(instance, mip),
-        'w': vb.create_vrw(instance, mip),
-        'b': vb.create_vrb(instance, mip),
-        'c': vb.create_vrc(instance, mip)
-    }
+    def bound(self, label = ''):
 
-    # Maximize the total revenue
-    mip.setAttr('ModelSense', -1)
+        label = label + '_' if len(label) > 0 else label
 
-    # Turn off GUROBI logs
-    # mip.setParam('OutputFlag', 0)
-    mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', cm.TIMELIMIT)
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].vtype = 'C'
 
-    # Set objective function
-    mip.setObjective(
-        sum([instance.revenues[period][location] *
-             variable['w'][period, location, customer]
-             for period in instance.periods
-             for location in instance.locations
-             for customer in instance.customers]))
+        self.mip.optimize()
 
-    # Create main constraints
-    ct.create_c1(instance, mip, variable)
-    ct.create_c2(instance, mip, variable)
-    ct.create_c3(instance, mip, variable)
-    ct.create_c4(instance, mip, variable)
-    ct.create_c5A(instance, mip, variable)
-    ct.create_c5B(instance, mip, variable)
-    ct.create_c5C(instance, mip, variable)
-    ct.create_c5D(instance, mip, variable)
+        metadata = {
+            '{}status'.format(label): self.mip.status,
+            '{}objective'.format(label): round(self.mip.objVal, cm.PRECISION),
+            '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION)
+        }
 
-    return mip, variable
+        self.mip.reset()
 
-def relax_linearized_mip(instance, mip, variable):
-    # Build the LPR of the linearized DSFLP-C
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].vtype = 'B'
 
-    for period in instance.periods:
-        for location in instance.locations:
-            variable['y'][period, location].vtype = 'C'
+        return metadata
 
-    # mip.setParam('OutputFlag', 0)
+    def heaten(self, solution):
 
-    return mip, variable
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].start  = 1. if location == solution[period] else 0.
 
-def build_networked_mip(instance):
-    # Build the MIP of the networked DSFLP-C
+    def set_parameters(self):
 
-    mip = gp.Model('DSFLP-C-NET')
+        # Maximize the total revenue
+        self.mip.setAttr('ModelSense', -1)
+        # Turn off GUROBI logs
+        # mip.setParam('OutputFlag', 0)
+        # Constrain Gurobi to 1 thread
+        self.mip.setParam('Threads', 1)
+        # Set experimental time limit
+        self.mip.setParam('TimeLimit', cm.TIMELIMIT)
 
-    # Create decision variables
-    variable = {
-        # Main decision variables
-        'y': vb.create_vry(instance, mip),
-        'z': vb.create_vrz(instance, mip)
-    }
+    def create_vry(self):
+        # Create y^{t}_{i} variables
 
-    # Maximize the total revenue
-    mip.setAttr('ModelSense', -1)
+        lowers = [0. for _ in self.ins.periods for _ in self.ins.locations]
+        uppers = [1. for _ in self.ins.periods for _ in self.ins.locations]
+        coefs = [0. for _ in self.ins.periods for _ in self.ins.locations]
+        types = ['B' for _ in self.ins.periods for _ in self.ins.locations]
+        names = [
+            'y~{}_{}'.format(period, location)
+            for period in self.ins.periods
+            for location in self.ins.locations
+        ]
 
-    # Turn off GUROBI logs
-    # mip.setParam('OutputFlag', 0)
-    mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', cm.TIMELIMIT)
+        self.var['y'] = self.mip.addVars(self.ins.periods, self.ins.locations, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
-    # Set objective function
-    mip.setObjective(
-        sum([instance.revenues[period2][location] *
-         instance.accumulated_demand(period1, period2, customer) *
-         variable['z'][period1, period2, location, customer]
-         for period1 in instance.periods_with_start
-         for period2 in instance.periods
-         for location in instance.locations
-         for customer in instance.customers]))
+    def create_c1(self):
+        # Create constraint 1
 
-    # Create main constraints
-    ct.create_c1(instance, mip, variable)
-    ct.create_c6(instance, mip, variable)
-    ct.create_c7(instance, mip, variable)
-    ct.create_c8(instance, mip, variable)
-
-    return mip, variable
-
-def relax_networked_mip(instance, mip, variable):
-    # Build the LPR of the networked DSFLP-C
-
-    for period in instance.periods:
-        for location in instance.locations:
-            variable['y'][period, location].vtype = 'C'
-
-    return mip, variable
-
-def build_nonlinear_mip(instance):
-    # Build the MIP of the nonlinear DSFLP-C
-
-    mip = gp.Model('DSFLP-C-NLR')
-
-    # Create decision variables
-    variable = {
-        # Main decision variables
-        'y': vb.create_vry(instance, mip),
-        'w': vb.create_vrw_2(instance, mip),
-        'b': vb.create_vrb(instance, mip),
-        'c': vb.create_vrc(instance, mip)
-    }
-
-    # Maximize the total revenue
-    mip.setAttr('ModelSense', -1)
-
-    # Turn off GUROBI logs
-    # mip.setParam('OutputFlag', 0)
-    mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', cm.TIMELIMIT)
-
-    # Set objective function
-    mip.setObjective(
-        sum([instance.revenues[period][location] *
-             instance.catalogs[location][customer] *
-             variable['w'][period, customer] *
-             variable['y'][period, location]
-             for period in instance.periods
-             for location in instance.locations
-             for customer in instance.customers]))
-
-    # Create main constraints
-    ct.create_c1(instance, mip, variable)
-    ct.create_c2(instance, mip, variable)
-    ct.create_c3(instance, mip, variable)
-    ct.create_c4_NL(instance, mip, variable)
-    ct.create_c5_NL(instance, mip, variable)
-
-    return mip, variable
-
-def build_master(instance):
-    # Build MIP of the master problem within Benders
-
-    # Creater master program
-    mip = gp.Model('DSFLP-C-MP')
-
-    # Create decision variables
-    var = {
-        # Main decision variables
-        'y': vb.create_vry(instance, mip),
-        'v': vb.create_vrv(instance, mip)
-    }
-
-    # Maximize the total revenue
-    mip.setAttr('ModelSense', -1)
-
-    # Turn off GUROBI logs
-    # mip.setParam('OutputFlag', 0)
-    mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', cm.TIMELIMIT)
-    # Activate lazy constraints
-    mip.setParam('LazyConstraints', 1)
-
-    # Set objective function
-    mip.setObjective(
-        sum([var['v'][customer]
-             for customer in instance.customers]))
-
-    # Create main constraints
-    ct.create_c1(instance, mip, var)
-
-    return mip, var
-
-def build_subproblem(instance, customer):
-    # Build MIP of the subproblem within Benders
-
-    mip = gp.Model('DSFLP-C-S{}'.format(customer))
-    var = {
-        # Main decision variables
-        'p': vb.create_vrp(instance, mip),
-        'q': vb.create_vrq(instance, mip)
-    }
-
-    # Minimize dual objective
-    mip.setAttr('ModelSense', 1)
-
-    # Turn off GUROBI logs
-    mip.setParam('OutputFlag', 0)
-    mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', cm.TIMELIMIT)
-
-    # Update slave programs
-    mip.setObjective(
-        var['q'][instance.start]
-    )
-
-    ct.create_c9(instance, mip, var, customer)
-
-    return mip, var
+        self.mip.addConstrs((self.var['y'].sum(period, '*') <= 1 for period in self.ins.periods), name = 'c1')
