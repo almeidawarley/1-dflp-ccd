@@ -2,6 +2,7 @@ import debugging as db
 import synthetic as sy
 import slovakia as sl
 import satisfiability as st
+import artificial as ar
 
 TIMELIMIT = 5 * 60 * 60
 TIMENOUGH = 5
@@ -36,6 +37,8 @@ def load_instance(keyword, project):
         instance = st.satisfiability(keyword, project)
     elif 'rnd' in keyword:
         instance = sy.synthetic(keyword, project)
+    elif 'art' in keyword:
+        instance = ar.artificial(keyword, project)
     elif keyword == 'slovakia':
         instance = sl.slovakia(keyword, project)
     else:
