@@ -71,6 +71,9 @@ def main():
     # metadata = formulation3.bound('rlx_nlr')
     # record = rc.update_record(record, metadata)
 
+    for approach in ['lrz', 'nlr', 'net']:
+        print('> {} formulation: {} [{}]'.format(approach.upper(), record['cold_{}_objective'.format(approach)], record['cold_{}_solution'.format(approach)]))
+
 if __name__ == '__main__':
 
     main()

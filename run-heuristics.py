@@ -63,7 +63,8 @@ def main():
         'warm_solution': warmest_solution
     })
 
-    print(record)
+    for approach in ['rnd', 'eml', 'frw', 'bcw', 'prg']:
+        print('> {} heuristic: {} [{}]'.format(approach.upper(), record['{}_objective'.format(approach)], record['{}_solution'.format(approach)]))
 
 if __name__ == '__main__':
 

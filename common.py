@@ -1,5 +1,5 @@
 import debugging as db
-import synthetic as sy
+# import synthetic as sy
 import slovakia as sl
 import satisfiability as st
 import artificial as ar
@@ -35,8 +35,8 @@ def load_instance(keyword, project):
         instance = db.debugging(keyword, project)
     elif '.cnf' in keyword:
         instance = st.satisfiability(keyword, project)
-    elif 'rnd' in keyword:
-        instance = sy.synthetic(keyword, project)
+    # elif 'rnd' in keyword:
+    #     instance = sy.synthetic(keyword, project)
     elif 'art' in keyword:
         instance = ar.artificial(keyword, project)
     elif keyword == 'slovakia':

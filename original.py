@@ -40,12 +40,12 @@ class original(fm.formulation):
     def create_c2(self):
         # Create constraint 2
 
-        self.mip.addConstrs((self.var['b'][self.ins.start, customer] == self.ins.starts[customer] for customer in self.ins.customers), name = 'c2')
+        self.mip.addConstrs((self.var['b'][self.ins.start, customer] == 0 for customer in self.ins.customers), name = 'c2')
 
     def create_c3(self):
         # Create constraint 3
 
-        self.mip.addConstrs((self.var['c'][period, customer] == (1 + self.ins.alphas[customer]) * self.var['b'][period - 1, customer] + self.ins.betas[customer] for period in self.ins.periods for customer in self.ins.customers), name = 'c3')
+        self.mip.addConstrs((self.var['c'][period, customer] == self.var['b'][period - 1, customer] + self.ins.spawning[period][customer] for period in self.ins.periods for customer in self.ins.customers), name = 'c3')
 
 class nonlinear(original):
 

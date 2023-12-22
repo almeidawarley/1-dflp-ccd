@@ -15,12 +15,13 @@ class network(fm.formulation):
 
         self.mip.setObjective(
             sum([self.ins.rewards[period2][location] *
-                self.ins.accumulated_demand(period1, period2, customer) *
+                self.ins.accumulated[period1][period2][customer] *
                 self.var['z'][period1, period2, location, customer]
                 for period1 in self.ins.periods_with_start
                 for period2 in self.ins.periods
                 for location in self.ins.locations
-                for customer in self.ins.customers]))
+                for customer in self.ins.customers
+                if period1 < period2]))
 
     def set_constraints(self):
 

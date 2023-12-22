@@ -23,45 +23,39 @@ class instance:
 
         # Store instance keyword
         self.keyword = keyword
+
         # Store project keyword
         self.project = project
 
         # Store parameters
         self.parameters = {}
 
-        # Standard seed
+        # Set random seed
         self.parameters['seed'] = 0
 
         # Apply generator
         self.create_instance()
 
+        # Set start/finish
         self.start = 0
         self.finish = len(self.periods) + 1
-
-        # Set proper big M values
-        self.limits = {}
-        for period in self.periods:
-            self.limits[period] = {}
-            for customer in self.customers:
-                limit = self.accumulated_demand(self.start, period, customer)
-                self.limits[period][customer] = np.ceil(limit)
-
-        # Set start and end periods
         self.periods_with_start = [self.start] + [period for period in self.periods]
         self.periods_with_end = [period for period in self.periods] + [self.finish]
         self.periods_extended = [self.start] + [period for period in self.periods] + [self.finish]
 
+        # Set depot info
         self.depot = '0'
         self.locations_extended = [self.depot] + self.locations
 
-        self.acc_demand = {}
-        for customer in self.customers:
-            self.acc_demand[customer] = {}
-            for period1 in self.periods_with_start:
-                self.acc_demand[customer][period1] = {}
-                for period2 in self.periods:
-                    if period1 < period2:
-                        self.acc_demand[customer][period1][period2] = self.accumulated_demand(period1, period2, customer)
+        # Compute accumulated demand
+        self.accumulated = {}
+        for period1 in self.periods_with_start:
+            self.accumulated[period1] = {}
+            for period2 in self.periods:
+                if period1 < period2:
+                    self.accumulated[period1][period2] = {}
+                    for customer in self.customers:
+                        self.accumulated[period1][period2][customer] = sum(self.spawning[period][customer] for period in self.periods if period1 < period and period <= period2)
 
         self.captured_locations = {}
         for customer in self.customers:
@@ -72,20 +66,26 @@ class instance:
         for location in self.locations:
             self.captured_customers[location] = self.served_customers(location)
 
+        # Set proper big M values
+        self.limits = {}
+        for period in self.periods:
+            self.limits[period] = {}
+            for customer in self.customers:
+                limit = self.accumulated[self.start][period][customer]
+                self.limits[period][customer] = np.ceil(limit)
+
     def print_instance(self):
         # Print stored instance
 
         print('Keyword: <{}>'.format(self.keyword))
 
         print('Customers: {}'.format(self.customers))
-        print('\t| j: a\tb\ts\t[L]')
+        print('\t| j: #\t[L]')
         for customer in self.customers:
-            print('\t| {}: {}\t{}\t{}\t{}'.format(
+            print('\t| {}: {}\t{}'.format(
                 customer,
-                self.alphas[customer],
-                self.betas[customer],
-                self.starts[customer],
-                self.attended_locations(customer) if self.keyword != 'slovakia' else len(self.attended_locations(customer))))
+                len(self.attended_locations(customer)),
+                self.attended_locations(customer) if self.keyword != 'slovakia' else '[..]'))
 
         print('Locations: {}'.format(self.locations))
         for location in self.locations:
@@ -101,27 +101,6 @@ class instance:
 
         return [location for location in self.locations if self.catalogs[location][customer] == 1]
 
-    def accumulated_demand(self, lastly, current, customer):
-        # Compute accumulated demand
-
-        lastly, current = int(lastly), int(current)
-
-        accumulated = .0
-
-        if current == len(self.periods) + 1:
-            exit('This should never happen!')
-
-        if lastly == 0:
-            accumulated += self.starts[customer]
-
-        for period in self.periods:
-
-            if int(period) > lastly and int(period) <= current:
-
-                accumulated += self.alphas[customer] * accumulated + self.betas[customer]
-
-        return round(accumulated, 8)
-
     def evaluate_solution(self, solution):
 
         objective = 0.
@@ -131,7 +110,7 @@ class instance:
         for period, location in solution.items():
             for customer in self.customers:
                 if location != self.depot and self.catalogs[location][customer] == 1:
-                    objective += self.rewards[period][location] * self.accumulated_demand(lastly[customer], period, customer)
+                    objective += self.rewards[period][location] * self.accumulated[lastly[customer]][period][customer]
                     lastly[customer] = period
 
         return round(objective, 2)
@@ -149,8 +128,8 @@ class instance:
         inserted = self.copy_solution(solution)
 
         for reference in inserted.keys():
-            previous = self.previous_period(reference)
-            if self.is_after(reference, period):
+            previous = reference - 1
+            if reference > period:
                 inserted[reference] = solution[previous]
 
         inserted[period] = location

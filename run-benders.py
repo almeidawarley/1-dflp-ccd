@@ -41,6 +41,8 @@ def main():
     metadata = benders2.solve_bbc('bdd')
     record = rc.update_record(record, metadata)
 
+    print(record)
+
 if __name__ == '__main__':
 
     main()

@@ -49,13 +49,12 @@ class debugging(ic.instance):
                     # Avoid ambiguity for heuristic
                     self.rewards[period][location] = 0.21
 
-        self.alphas = {}
-        self.betas = {}
-        self.starts = {}
-        for customer in self.customers:
-            self.alphas[customer] = 0
-            self.betas[customer] = 0
-            self.starts[customer] = 1
+        # Create spawning
+        self.spawning = {}
+        for period in self.periods:
+            self.spawning[period] = {}
+            for customer in self.customers:
+                self.spawning[period][customer] = 1. if period == 1 else 0.
 
     def create_proof(self, K = 2):
         # Create proof instance
@@ -82,13 +81,12 @@ class debugging(ic.instance):
                     # Avoid ambiguity for heuristic
                     self.rewards[period][location] = 0.51
 
-        self.alphas = {}
-        self.betas = {}
-        self.starts = {}
-        for customer in self.customers:
-            self.alphas[customer] = 0
-            self.betas[customer] = 1
-            self.starts[customer] = 1
+        # Create spawning
+        self.spawning = {}
+        for period in self.periods:
+            self.spawning[period] = {}
+            for customer in self.customers:
+                self.spawning[period][customer] = 1. if period == 1 else 0.
 
     '''
         Create instance used for approximation proof
@@ -120,20 +118,12 @@ class debugging(ic.instance):
             for location in self.locations:
                 self.rewards[period][location] =  1
 
-        # Create alphas
-        self.alphas = {}
-        for customer in self.customers:
-            self.alphas[customer] = 0
-
-        # Create betas
-        self.betas = {}
-        for customer in self.customers:
-            self.betas[customer] = 0
-
-        # Create start values
-        self.starts = {}
-        for customer in self.customers:
-            self.starts[customer] = 1
+        # Create spawning
+        self.spawning = {}
+        for period in self.periods:
+            self.spawning[period] = {}
+            for customer in self.customers:
+                self.spawning[period][customer] = 1. if period == 1 else 0.
 
     '''
         Create instance used for JOPT presentation
@@ -143,7 +133,7 @@ class debugging(ic.instance):
 
         self.locations = ['1', '2', '3', '4']
         self.customers = ['A', 'B', 'C']
-        self.periods = [1, 2, 3, 4]
+        self.periods = [1, 2, 3]#, 4]
 
         # Create catalogs
         considerations = {}
@@ -165,19 +155,9 @@ class debugging(ic.instance):
             for location in self.locations:
                 self.rewards[period][location] = rewards [location]
 
-        # Create alphas
-        self.alphas = {}
-        for customer in self.customers:
-            self.alphas[customer] = 0
-
-        # Create betas
-        self.betas = {}
-        self.betas['A'] = 1
-        self.betas['B'] = 1
-        self.betas['C'] = 1
-
-        # Create start values
-        self.starts = {}
-        self.starts['A'] = 0.
-        self.starts['B'] = 0.
-        self.starts['C'] = 0.
+        # Create spawning
+        self.spawning = {}
+        for period in self.periods:
+            self.spawning[period] = {}
+            for customer in self.customers:
+                self.spawning[period][customer] = 1.
