@@ -42,7 +42,6 @@ class benders(fm.formulation):
         while not cm.compare_obj(upper_bound, lower_bound) and time_remaining > cm.TIMENOUGH:
 
             # Optimize master problem
-            time_remaining = cm.TIMELIMIT - time_elapsed
             self.mip.setParam('TimeLimit', time_remaining)
             self.heaten(incumbent)
             self.mip.optimize()
@@ -90,6 +89,8 @@ class benders(fm.formulation):
             '{}optgap'.format(label): cm.compute_gap(upper_bound, lower_bound),
             '{}solution'.format(label): self.ins.pack_solution(incumbent)
         }
+
+        time_remaining = cm.TIMELIMIT - time_elapsed
 
         return metadata
 
