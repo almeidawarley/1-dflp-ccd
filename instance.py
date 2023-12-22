@@ -55,6 +55,7 @@ class instance:
                 if period1 < period2:
                     self.accumulated[period1][period2] = {}
                     for customer in self.customers:
+                        # self.accumulated[period1][period2][customer] = sum(self.spawning[period][customer] for period in self.periods if period <= period2 - period1) 
                         self.accumulated[period1][period2][customer] = sum(self.spawning[period][customer] for period in self.periods if period1 < period and period <= period2)
 
         self.captured_locations = {}

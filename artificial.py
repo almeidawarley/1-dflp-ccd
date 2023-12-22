@@ -74,9 +74,9 @@ class artificial(ic.instance):
         self.amplitude = {}
         for customer in self.customers:
             if self.parameters['behaviour'] == 'heterogeneous':
-                self.amplitude[customer] = np.random.choice([0, 5, 10, 15, 20])
+                self.amplitude[customer] = np.random.choice([10, 15, 20, 25, 30])
             elif self.parameters['behaviour'] == 'homogeneous':
-                self.amplitude[customer] = 10
+                self.amplitude[customer] = 20
             else:
                 exit('Wrong value for behaviour parameter')
 
@@ -92,7 +92,7 @@ class artificial(ic.instance):
                 elif self.parameters['demand'] == 'increasing':
                     self.spawning[period][customer] = (period / number_periods) * self.amplitude[customer]
                 elif self.parameters['demand'] == 'decreasing':
-                    self.spawning[period][customer] = self.amplitude[customer] - ((period - 1)/ number_periods) * self.amplitude[customer]
+                    self.spawning[period][customer] = ((number_periods - period + 1)/ number_periods) * self.amplitude[customer]
                 elif self.parameters['demand'] == 'bass':
                     self.spawning[period][customer] = stored_f[period] * self.amplitude[customer]
                 else:
