@@ -130,7 +130,7 @@ class instance:
 
         for period, location in solution.items():
             for customer in self.customers:
-                if location != self.depot and self.catalogs[location][customer] == 1.:
+                if location != self.depot and self.catalogs[location][customer] == 1:
                     objective += self.rewards[period][location] * self.accumulated_demand(lastly[customer], period, customer)
                     lastly[customer] = period
 

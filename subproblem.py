@@ -27,7 +27,7 @@ class analytical(subproblem):
         for period1 in self.ins.periods_with_start:
             primal_solution[period1] = self.ins.finish
             for period2 in self.ins.periods:
-                if period1 < period2 and self.solution[period2] != self.ins.depot and self.ins.catalogs[self.solution[period2]][self.customer] == 1.:
+                if period1 < period2 and self.solution[period2] != self.ins.depot and self.ins.catalogs[self.solution[period2]][self.customer] == 1:
                     primal_solution[period1] = period2
                     break
 
@@ -197,7 +197,7 @@ class duality(subproblem):
         self.mip.addConstrs((self.var['p'][period2, location] + self.var['q'][period1] - self.var['q'][period2]
                         >= self.ins.rewards[period2][location] * self.ins.accumulated_demand(period1, period2, self.customer)
                         for period1 in self.ins.periods_with_start for period2 in self.ins.periods for location in self.ins.locations
-                        if period1 < period2 and self.ins.catalogs[location][self.customer] == 1.), name = 'c1')
+                        if period1 < period2 and self.ins.catalogs[location][self.customer] == 1), name = 'c1')
 
 class maxQ(duality):
 

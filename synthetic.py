@@ -49,7 +49,7 @@ class synthetic(ic.instance):
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                self.catalogs[location][customer] = 1. if location in consideration_sets[customer] or location == customer else 0.
+                self.catalogs[location][customer] = 1 if location in consideration_sets[customer] or location == customer else 0
 
         # Create rewards
         self.rewards = {}

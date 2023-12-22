@@ -38,7 +38,7 @@ class debugging(ic.instance):
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                self.catalogs[location][customer] = 1. if customer in collections[int(location)-1] else 0.
+                self.catalogs[location][customer] = 1 if customer in collections[int(location)-1] else 0
 
         self.rewards = {}
         for period in self.periods:
@@ -71,7 +71,7 @@ class debugging(ic.instance):
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                self.catalogs[location][customer] = 1. if customer in collections[int(location)-1] else 0.
+                self.catalogs[location][customer] = 1 if customer in collections[int(location)-1] else 0
 
         self.rewards = {}
         for period in self.periods:

@@ -33,9 +33,9 @@ class satisfiability(ic.instance):
             self.catalogs[location] = {}
             for index, customer in enumerate(self.customers):
                 if 'c' in customer:
-                    self.catalogs[location][customer] = 1. if location in clauses[int(customer.replace('c', '')) - 1] else 0.
+                    self.catalogs[location][customer] = 1 if location in clauses[int(customer.replace('c', '')) - 1] else 0
                 elif 'v' in customer:
-                    self.catalogs[location][customer] = 1. if int(customer.replace('v', '')) == int(location.replace('-','')) else 0.
+                    self.catalogs[location][customer] = 1 if int(customer.replace('v', '')) == int(location.replace('-','')) else 0
                 else:
                     print('customer: {}'.format(customer))
                     exit('Error, unexpected type of customer')
