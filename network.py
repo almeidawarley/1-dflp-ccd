@@ -14,7 +14,7 @@ class network(fm.formulation):
     def set_objective(self):
 
         self.mip.setObjective(
-            sum([self.ins.revenues[period2][location] *
+            sum([self.ins.rewards[period2][location] *
                 self.ins.accumulated_demand(period1, period2, customer) *
                 self.var['z'][period1, period2, location, customer]
                 for period1 in self.ins.periods_with_start

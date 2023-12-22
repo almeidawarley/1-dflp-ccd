@@ -63,7 +63,7 @@ class nonlinear(original):
     def set_objective(self):
 
         self.mip.setObjective(
-            sum([self.ins.revenues[period][location] *
+            sum([self.ins.rewards[period][location] *
                 self.ins.catalogs[location][customer] *
                 self.var['w'][period, customer] *
                 self.var['y'][period, location]
@@ -120,7 +120,7 @@ class linearized(original):
     def set_objective(self):
 
         self.mip.setObjective(
-            sum([self.ins.revenues[period][location] *
+            sum([self.ins.rewards[period][location] *
                 self.var['w'][period, location, customer]
                 for period in self.ins.periods
                 for location in self.ins.locations

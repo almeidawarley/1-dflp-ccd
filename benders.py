@@ -182,7 +182,7 @@ class benders(fm.formulation):
 
     def set_parameters(self):
 
-        # Maximize the total revenue
+        # Maximize the total reward
         self.mip.setAttr('ModelSense', -1)
         # Turn off GUROBI logs
         # mip.setParam('OutputFlag', 0)
