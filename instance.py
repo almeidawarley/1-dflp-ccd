@@ -124,12 +124,12 @@ class instance:
             for customer in self.customers:
                 self.catalogs[location][customer] = 1. if self.distances[location][customer] <= distance_threshold else 0.
 
-        # Create revenues
-        self.revenues = {}
+        # Create rewards
+        self.rewards = {}
         for period in self.periods:
-            self.revenues[period] = {}
+            self.rewards[period] = {}
             for location in self.locations:
-                self.revenues[period][location] = 1.
+                self.rewards[period][location] = 1.
 
     def create_rnd(self, folder = 'instances/synthetic'):
         # Create rnd-based instances
@@ -174,10 +174,10 @@ class instance:
             for customer in self.customers:
                 self.catalogs[location][customer] = 1. if location in consideration_sets[customer] or location == customer else 0.
 
-        # Create revenues
-        self.revenues = {}
+        # Create rewards
+        self.rewards = {}
         for period in self.periods:
-            self.revenues[period] = {}
+            self.rewards[period] = {}
             for location in self.locations:
                 popularity = sum([self.catalogs[location][customer] for customer in self.customers])
                 if self.parameters['rewards'] == 'identical':
@@ -186,7 +186,7 @@ class instance:
                     coefficient = 1. / popularity
                 else:
                     exit('Wrong value for rewards parameter')
-                self.revenues[period][location] = np.ceil(coefficient * len(self.locations))
+                self.rewards[period][location] = np.ceil(coefficient * len(self.locations))
 
         # Create parameters
         self.alphas = {}
@@ -248,14 +248,14 @@ class instance:
             for customer in self.customers:
                 self.catalogs[location][customer] = 1. if customer in collections[int(location)-1] else 0.
 
-        self.revenues = {}
+        self.rewards = {}
         for period in self.periods:
-            self.revenues[period] = {}
+            self.rewards[period] = {}
             for location in self.locations:
-                self.revenues[period][location] =  1/len(collections[int(location)-1])
+                self.rewards[period][location] =  1/len(collections[int(location)-1])
                 if location == '1':
                     # Avoid ambiguity for heuristic
-                    self.revenues[period][location] = 0.21
+                    self.rewards[period][location] = 0.21
 
         self.alphas = {}
         self.betas = {}
@@ -281,14 +281,14 @@ class instance:
             for customer in self.customers:
                 self.catalogs[location][customer] = 1. if customer in collections[int(location)-1] else 0.
 
-        self.revenues = {}
+        self.rewards = {}
         for period in self.periods:
-            self.revenues[period] = {}
+            self.rewards[period] = {}
             for location in self.locations:
-                self.revenues[period][location] =  1/len(collections[int(location)-1])
+                self.rewards[period][location] =  1/len(collections[int(location)-1])
                 if location == '3':
                     # Avoid ambiguity for heuristic
-                    self.revenues[period][location] = 0.51
+                    self.rewards[period][location] = 0.51
 
         self.alphas = {}
         self.betas = {}
@@ -332,11 +332,11 @@ class instance:
                     print('customer: {}'.format(customer))
                     exit('Error, unexpected type of customer')
 
-        self.revenues = {}
+        self.rewards = {}
         for period in self.periods:
-            self.revenues[period] = {}
+            self.rewards[period] = {}
             for location in self.locations:
-                self.revenues[period][location] =  1
+                self.rewards[period][location] =  1
 
         self.alphas = {}
         self.betas = {}
@@ -369,12 +369,12 @@ class instance:
             for customer in self.customers:
                 self.catalogs[location][customer] = 1 if location in considerations[customer] else 0
 
-        # Create revenues
-        self.revenues = {}
+        # Create rewards
+        self.rewards = {}
         for period in self.periods:
-            self.revenues[period] = {}
+            self.rewards[period] = {}
             for location in self.locations:
-                self.revenues[period][location] =  1
+                self.rewards[period][location] =  1
 
         # Create alphas
         self.alphas = {}
@@ -412,14 +412,14 @@ class instance:
             for customer in self.customers:
                 self.catalogs[location][customer] = 1 if location in considerations[customer] else 0
 
-        revenues = {'1': 4., '2': 4., '3': 4., '4': 3.}
+        rewards = {'1': 4., '2': 4., '3': 4., '4': 3.}
 
-        # Create revenues
-        self.revenues = {}
+        # Create rewards
+        self.rewards = {}
         for period in self.periods:
-            self.revenues[period] = {}
+            self.rewards[period] = {}
             for location in self.locations:
-                self.revenues[period][location] = revenues [location]
+                self.rewards[period][location] = rewards [location]
 
         # Create alphas
         self.alphas = {}
@@ -458,7 +458,7 @@ class instance:
 
         print('Locations: {}'.format(self.locations))
         for location in self.locations:
-            print('\t| {} ({}) : {}'.format(location, self.revenues['1'][location], self.captured_customers(location)))
+            print('\t| {} ({}) : {}'.format(location, self.rewards['1'][location], self.captured_customers(location)))
 
     def captured_customers(self, location):
         # Retrieve customers captured by some location
@@ -516,17 +516,17 @@ class instance:
 
     def evaluate_solution(self, solution):
 
-        fitness = 0.
+        objective = 0.
 
         lastly = {customer: self.start for customer in self.customers}
 
         for period, location in solution.items():
             for customer in self.customers:
                 if location != self.depot and self.catalogs[location][customer] == 1.:
-                    fitness += self.revenues[period][location] * self.accumulated_demand(lastly[customer], period, customer)
+                    objective += self.rewards[period][location] * self.accumulated_demand(lastly[customer], period, customer)
                     lastly[customer] = period
 
-        return round(fitness, 2)
+        return round(objective, 2)
 
     def copy_solution(self, solution):
 

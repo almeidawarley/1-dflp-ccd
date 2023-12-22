@@ -22,14 +22,23 @@ def main():
     record = rc.load_record(args.project, instance)
 
     mark_section('Solving with standard Benders')
-    benders1 = bd.benders(instance, 'duality')
-    metadata = benders1.solve_std('bsd')
+
+    mark_section('Analytical subproblems')
+    benders1 = bd.benders(instance, 'analytical')
+    metadata = benders1.solve_std('bsa')
     record = rc.update_record(record, metadata)
 
+    mark_section('Duality subproblems')
+    benders3 = bd.benders(instance, 'duality')
+    metadata = benders3.solve_std('bsd')
+    record = rc.update_record(record, metadata)
+
+    '''
     mark_section('Solving with branch-and-Benders')
     benders2 = bd.benders(instance, 'duality')
     metadata = benders2.solve_bbc('bdd')
     record = rc.update_record(record, metadata)
+    '''
 
     print(metadata)
 
