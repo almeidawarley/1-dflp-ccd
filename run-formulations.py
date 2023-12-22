@@ -1,14 +1,9 @@
-import instance as ic
 import argparse as ap
 import recording as rc
+import common as cm
 
 import network as nt
 import original as og
-
-def mark_section(title):
-    print('\n-----------------------------------------------------------------------------------\n')
-    print(title)
-    print('\n-----------------------------------------------------------------------------------\n')
 
 def main():
 
@@ -17,62 +12,62 @@ def main():
     parser.add_argument('-p', '--project', default = 'dsflp-c', type = str, help = 'Instance project name')
     args = parser.parse_args()
 
-    mark_section('Generating instance parameters')
-    instance = ic.instance(args.keyword, args.project)
+    cm.mark_section('Generating instance parameters')
+    instance = cm.load_instance(args.keyword, args.project)
     instance.print_instance()
     record = rc.load_record(args.project, instance)
 
-    mark_section('Identifying solution for warm start')
+    cm.mark_section('Identifying solution for warm start')
     if 'warm_solution' in record.keys():
         warm_solution = instance.unpack_solution(record['warm_solution'])
     else:
         warm_solution = instance.empty_solution()
 
-    mark_section('Solving the DSFLP-C-LRZ formulation')
+    cm.mark_section('Solving the DSFLP-C-LRZ formulation')
     formulation1 = og.linearized(instance)
 
-    mark_section('Cold MIP (i.e., without warm start)')
+    cm.mark_section('Cold MIP (i.e., without warm start)')
     metadata = formulation1.solve('cold_lrz')
     record = rc.update_record(record, metadata)
 
-    mark_section('Warm MIP (i.e., with a warm start)')
+    cm.mark_section('Warm MIP (i.e., with a warm start)')
     formulation1.heaten(warm_solution)
     metadata = formulation1.solve('warm_lrz')
     record = rc.update_record(record, metadata)
 
-    mark_section('Linear programming relaxation bound')
+    cm.mark_section('Linear programming relaxation bound')
     metadata = formulation1.bound('rlx_lrz')
     record = rc.update_record(record, metadata)
 
-    mark_section('Solving the DSFLP-C-NET formulation')
+    cm.mark_section('Solving the DSFLP-C-NET formulation')
     formulation2 = nt.network(instance)
 
-    mark_section('Cold MIP (i.e., without warm start)')
+    cm.mark_section('Cold MIP (i.e., without warm start)')
     metadata = formulation2.solve('cold_net')
     record = rc.update_record(record, metadata)
 
-    mark_section('Warm MIP (i.e., with a warm start)')
+    cm.mark_section('Warm MIP (i.e., with a warm start)')
     formulation2.heaten(warm_solution)
     metadata = formulation2.solve('warm_net')
     record = rc.update_record(record, metadata)
 
-    mark_section('Linear programming relaxation bound')
+    cm.mark_section('Linear programming relaxation bound')
     metadata = formulation2.bound('rlx_net')
     record = rc.update_record(record, metadata)
 
-    mark_section('Solving the DSFLP-C-NLR formulation')
+    cm.mark_section('Solving the DSFLP-C-NLR formulation')
     formulation3 = og.nonlinear(instance)
 
-    mark_section('Cold MIP (i.e., without warm start)')
+    cm.mark_section('Cold MIP (i.e., without warm start)')
     metadata = formulation3.solve('cold_nlr')
     record = rc.update_record(record, metadata)
 
-    mark_section('Warm MIP (i.e., with a warm start)')
+    cm.mark_section('Warm MIP (i.e., with a warm start)')
     formulation3.heaten(warm_solution)
     metadata = formulation3.solve('warm_nlr')
     record = rc.update_record(record, metadata)
 
-    # mark_section('Linear programming relaxation bound')
+    # cm.mark_section('Linear programming relaxation bound')
     # metadata = formulation3.bound('rlx_nlr')
     # record = rc.update_record(record, metadata)
 

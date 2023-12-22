@@ -1,13 +1,8 @@
-import instance as ic
 import argparse as ap
 import recording as rc
+import common as cm
 
 import heuristic as hr
-
-def mark_section(title):
-    print('\n-----------------------------------------------------------------------------------\n')
-    print(title)
-    print('\n-----------------------------------------------------------------------------------\n')
 
 def main():
 
@@ -16,15 +11,15 @@ def main():
     parser.add_argument('-p', '--project', default = 'dsflp-c', type = str, help = 'Instance project name')
     args = parser.parse_args()
 
-    mark_section('Generating instance parameters')
-    instance = ic.instance(args.keyword, args.project)
+    cm.mark_section('Generating instance parameters')
+    instance = cm.load_instance(args.keyword, args.project)
     instance.print_instance()
     record = rc.load_record(args.project, instance)
 
     warmest_solution = '-'.join(['0' for _ in instance.periods])
     warmest_objective = 0.
 
-    mark_section('Solving with the PRG heuristic')
+    cm.mark_section('Solving with the PRG heuristic')
     heuristic1 = hr.progressive(instance)
     metadata = heuristic1.solve('prg')
     record = rc.update_record(record, metadata)
@@ -32,7 +27,7 @@ def main():
         warmest_solution = metadata['prg_solution']
         warmest_objective = metadata['prg_objective']
 
-    mark_section('Solving with the FRW heuristic')
+    cm.mark_section('Solving with the FRW heuristic')
     heuristic2 = hr.forward(instance)
     metadata = heuristic2.solve('frw')
     record = rc.update_record(record, metadata)
@@ -40,7 +35,7 @@ def main():
         warmest_solution = metadata['frw_solution']
         warmest_objective = metadata['frw_objective']
 
-    mark_section('Solving with the BCW heuristic')
+    cm.mark_section('Solving with the BCW heuristic')
     heuristic3 = hr.backward(instance)
     metadata = heuristic3.solve('bcw')
     record = rc.update_record(record, metadata)
@@ -48,7 +43,7 @@ def main():
         warmest_solution = metadata['bcw_solution']
         warmest_objective = metadata['bcw_objective']
 
-    mark_section('Solving with the RND heuristic')
+    cm.mark_section('Solving with the RND heuristic')
     heuristic4 = hr.random(instance)
     metadata = heuristic4.solve('rnd')
     record = rc.update_record(record, metadata)
@@ -56,7 +51,7 @@ def main():
         warmest_solution = metadata['rnd_solution']
         warmest_objective = metadata['rnd_objective']
 
-    mark_section('Solving with the EML heuristic')
+    cm.mark_section('Solving with the EML heuristic')
     heuristic5 = hr.emulation(instance)
     metadata = heuristic5.solve('eml')
     record = rc.update_record(record, metadata)

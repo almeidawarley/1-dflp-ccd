@@ -25,7 +25,7 @@ graphs/*.tex
 # Instance files
 instances/exploratory/*.json
 instances/synthetic/*.json
-instances/3sat/*.cnf
+instances/satisfiability/*.cnf
 instances/slovakia/*
 
 # Script files
