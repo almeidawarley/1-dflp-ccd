@@ -37,15 +37,13 @@ def main():
 
     mark_section('Analytical subproblems')
     benders2 = bd.benders(instance, 'analytical')
-    metadata = benders2.solve_bbc('bda')
+    metadata = benders2.solve_bbc('bba')
     record = rc.update_record(record, metadata)
 
     mark_section('Duality subproblems')
     benders2 = bd.benders(instance, 'duality')
     metadata = benders2.solve_bbc('bdd')
     record = rc.update_record(record, metadata)
-
-    print(record)
 
 if __name__ == '__main__':
 

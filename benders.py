@@ -3,6 +3,7 @@ import subproblem as sb
 import gurobipy as gp
 import common as cm
 import time as tm
+import cProfile, pstats
 
 class benders(fm.formulation):
 
@@ -55,10 +56,17 @@ class benders(fm.formulation):
             # Solve subproblems
             start = tm.time()
             current_bound = 0.
+            # profiler = cProfile.Profile()
+            # profiler.enable()
             for customer in self.ins.customers:
                 dual_objective = self.add_inequality(solution, customer)
                 current_bound += dual_objective
             end = tm.time()
+            dual_objective, inequality = self.subproblems[customer].cut()
+            # profiler.disable()
+            # stats = pstats.Stats(profiler).sort_stats('ncalls')
+            # stats.print_stats()
+            # _ = input('wait...')
             time_elapsed += round(end - start, cm.PRECISION)
             time_subproblems += round(end - start, cm.PRECISION)
 
