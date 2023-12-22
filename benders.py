@@ -126,9 +126,7 @@ class benders(fm.formulation):
                 solution = model.cbGetSolution(self.var['y'])
 
                 # Format raw solution
-                incumbent = {}
-                for period in self.ins.periods:
-                    incumbent[period] = '0'
+                incumbent = self.ins.empty_solution()
                 for period in self.ins.periods:
                     for location in self.ins.locations:
                         value = solution[period, location]

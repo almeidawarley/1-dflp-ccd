@@ -27,7 +27,7 @@ class synthetic(ic.instance):
 
         self.locations = [str(i + 1) for i in range(number_locations)]
         self.customers = [str(i + 1) for i in range(number_customers)]
-        self.periods = [str(i + 1) for i in range(number_periods)]
+        self.periods = [int(i + 1) for i in range(number_periods)]
 
         if self.parameters['patronizing'] == 'small':
             patronizing = 1 / 2.01

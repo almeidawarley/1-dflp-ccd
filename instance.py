@@ -35,21 +35,21 @@ class instance:
         # Apply generator
         self.create_instance()
 
+        self.start = 0
+        self.finish = len(self.periods) + 1
+
         # Set proper big M values
         self.limits = {}
         for period in self.periods:
             self.limits[period] = {}
             for customer in self.customers:
-                limit = self.accumulated_demand('0', period, customer)
+                limit = self.accumulated_demand(self.start, period, customer)
                 self.limits[period][customer] = np.ceil(limit)
-
-        self.start = '0'
-        self.end = str(len(self.periods) + 1)
 
         # Set start and end periods
         self.periods_with_start = [self.start] + [period for period in self.periods]
-        self.periods_with_end = [period for period in self.periods] + [self.end]
-        self.periods_extended = [self.start] + [period for period in self.periods] + [self.end]
+        self.periods_with_end = [period for period in self.periods] + [self.finish]
+        self.periods_extended = [self.start] + [period for period in self.periods] + [self.finish]
 
         self.depot = '0'
         self.locations_extended = [self.depot] + self.locations
@@ -60,7 +60,7 @@ class instance:
             for period1 in self.periods_with_start:
                 self.acc_demand[customer][period1] = {}
                 for period2 in self.periods:
-                    if self.is_before(period1, period2):
+                    if period1 < period2:
                         self.acc_demand[customer][period1][period2] = self.accumulated_demand(period1, period2, customer)
 
         self.captured_locations = {}
@@ -71,14 +71,6 @@ class instance:
         self.captured_customers[self.depot] = []
         for location in self.locations:
             self.captured_customers[location] = self.served_customers(location)
-
-        self.past_periods = {}
-        for period in self.periods:
-            self.past_periods[period] = self.periods_before(period)
-
-        self.future_periods = {}
-        for period in self.periods:
-            self.future_periods[period] = self.periods_after(period)
 
     def print_instance(self):
         # Print stored instance
@@ -97,7 +89,7 @@ class instance:
 
         print('Locations: {}'.format(self.locations))
         for location in self.locations:
-            print('\t| {} ({}) : {}'.format(location, self.rewards['1'][location], self.served_customers(location) if self.keyword != 'slovakia' else len(self.served_customers(location))))
+            print('\t| {} ({}) : {}'.format(location, self.rewards[self.start + 1][location], self.served_customers(location) if self.keyword != 'slovakia' else len(self.served_customers(location))))
 
     def served_customers(self, location):
         # Retrieve customers captured by some location
@@ -129,39 +121,6 @@ class instance:
                 accumulated += self.alphas[customer] * accumulated + self.betas[customer]
 
         return round(accumulated, 8)
-
-    def periods_before(self, reference):
-        # Retrieve periods before certain period
-
-        return [period for period in self.periods_extended if self.is_before(period, reference)]
-
-    def periods_after(self, reference):
-        # Retrieve periods before certain period
-
-        return [period for period in self.periods_extended if self.is_after(period, reference)]
-
-    def previous_period(self, period):
-        # Retrieve previous period
-
-        assert period in self.periods_extended
-
-        return str(int(period) - 1)
-
-    def is_before(self, period1, period2):
-        # True if period1 < period2
-
-        # assert period1 in self.periods_extended
-        # assert period2 in self.periods_extended
-
-        return int(period1) < int(period2)
-
-    def is_after(self, period1, period2):
-        # True if period1 > period2
-
-        # assert period1 in self.periods_extended
-        # assert period2 in self.periods_extended
-
-        return int(period1) > int(period2)
 
     def evaluate_solution(self, solution):
 

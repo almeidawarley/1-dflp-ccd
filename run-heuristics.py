@@ -16,7 +16,7 @@ def main():
     instance.print_instance()
     record = rc.load_record(args.project, instance)
 
-    warmest_solution = '-'.join(['0' for _ in instance.periods])
+    warmest_solution = '-'.join([instance.depot for _ in instance.periods])
     warmest_objective = 0.
 
     cm.mark_section('Solving with the PRG heuristic')

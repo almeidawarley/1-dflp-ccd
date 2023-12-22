@@ -19,7 +19,7 @@ class slovakia(ic.instance):
         # Create input sets
         self.locations = []
         self.customers = []
-        self.periods = [str(period + 1) for period in range(0, number_periods)]
+        self.periods = [int(i + 1) for i in range(number_periods)]
 
         # Create parameters
         self.alphas = {}
@@ -41,7 +41,7 @@ class slovakia(ic.instance):
                 self.locations.append(customer)
             self.starts[customer] = 0
             self.alphas[customer] = 0
-            self.betas[customer] = row['residential_population'] / number_periods
+            self.betas[customer] = row['residential_population'] / 2
 
         self.distances = {}
         for customer1 in self.customers:

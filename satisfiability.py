@@ -26,7 +26,7 @@ class satisfiability(ic.instance):
 
         self.locations = [variable for variable in variables] + ['-' + variable for variable in variables]
         self.customers = ['c{}'.format(index + 1) for index, _ in enumerate(clauses)] + ['v{}'.format(variable) for variable in variables]
-        self.periods = [variable for variable in variables]
+        self.periods = [int(variable) for variable in variables]
 
         self.catalogs = {}
         for location in self.locations:

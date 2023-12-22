@@ -50,19 +50,19 @@ class network(fm.formulation):
     def create_c2(self):
         # Create constraint 2
 
-        self.mip.addConstrs((sum(self.var['z'][period1, period2, location, customer] for period1 in self.ins.periods_with_start if self.ins.is_before(period1, period2)) == self.ins.catalogs[location][customer] * self.var['y'][period2, location] for period2 in self.ins.periods for location in self.ins.locations for customer in self.ins.customers), name = 'c2')
+        self.mip.addConstrs((sum(self.var['z'][period1, period2, location, customer] for period1 in self.ins.periods_with_start if period1 < period2) == self.ins.catalogs[location][customer] * self.var['y'][period2, location] for period2 in self.ins.periods for location in self.ins.locations for customer in self.ins.customers), name = 'c2')
 
     def create_c3(self):
         # Create constraint 3
 
-        self.mip.addConstrs((sum(self.var['z'].sum(period1, period2, '*', customer) for period1 in self.ins.periods_with_start if self.ins.is_before(period1, period2)) == sum(self.var['z'].sum(period2, period1, '*', customer) for period1 in self.ins.periods_with_end if self.ins.is_after(period1, period2)) for period2 in self.ins.periods for customer in self.ins.customers), name = 'c3')
+        self.mip.addConstrs((sum(self.var['z'].sum(period1, period2, '*', customer) for period1 in self.ins.periods_with_start if period1 < period2) == sum(self.var['z'].sum(period2, period1, '*', customer) for period1 in self.ins.periods_with_end if period1 > period2) for period2 in self.ins.periods for customer in self.ins.customers), name = 'c3')
 
     def create_c4(self):
         # Create constraint 4
 
-        self.mip.addConstrs((self.var['z'].sum('0', '*', '*', customer) == 1 for customer in self.ins.customers), name = 'c4')
+        self.mip.addConstrs((self.var['z'].sum(self.ins.start, '*', '*', customer) == 1 for customer in self.ins.customers), name = 'c4')
 
     def create_c5(self):
         # Create constraint 5
 
-        self.mip.addConstrs((self.var['z'].sum('*', self.ins.end, '*', customer) == 1 for customer in self.ins.customers), name = 'c5')
+        self.mip.addConstrs((self.var['z'].sum('*', self.ins.finish, '*', customer) == 1 for customer in self.ins.customers), name = 'c5')

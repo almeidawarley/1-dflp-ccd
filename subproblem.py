@@ -25,9 +25,9 @@ class analytical(subproblem):
         # Retrieve primal solution from master solution
         primal_solution = {}
         for period1 in self.ins.periods_with_start:
-            primal_solution[period1] = self.ins.end
+            primal_solution[period1] = self.ins.finish
             for period2 in self.ins.periods:
-                if self.ins.is_before(period1, period2) and self.solution[period2] != self.ins.depot and self.ins.catalogs[self.solution[period2]][self.customer] == 1.:
+                if period1 < period2 and self.solution[period2] != self.ins.depot and self.ins.catalogs[self.solution[period2]][self.customer] == 1.:
                     primal_solution[period1] = period2
                     break
 
@@ -40,11 +40,11 @@ class analytical(subproblem):
         for period3 in reversed(self.ins.periods_with_start):
             for period1, period2 in primal_solution.items():
                 # compute Q for captured periods first  & check if it is not last period & check if it is not the same period & check precedence
-                if primal_solution[period3] != period2 and period2 != self.ins.end and period1 != period3 and self.ins.is_before(period3, period2):
+                if primal_solution[period3] != period2 and period2 != self.ins.finish and period1 != period3 and period3 < period2:
                     location = self.solution[period2]
                     # print('q{} through z[{} -> {}][{}]'.format(period3, period1, period2, location))
-                    current = self.ins.rewards[period2][location] * self.ins.accumulated_demand(period3, period2, self.customer)
-                    current -= self.ins.rewards[period2][location] * self.ins.accumulated_demand(period1, period2, self.customer)
+                    current = self.ins.rewards[period2][location] * self.ins.acc_demand[self.customer][period3][period2]  # self.ins.accumulated_demand(period3, period2, self.customer)
+                    current -= self.ins.rewards[period2][location] * self.ins.acc_demand[self.customer][period1][period2] # self.ins.accumulated_demand(period1, period2, self.customer)
                     current += dual_solution['q'][period1]
                     if current > dual_solution['q'][period3]:
                         dual_solution['q'][period3] = current
@@ -53,11 +53,11 @@ class analytical(subproblem):
         for period3 in reversed(self.ins.periods_with_start):
             for period1, period2 in primal_solution.items():
                 # compute Q for free periods second  & check if it is not last period & check if it is not the same period & check precedence
-                if primal_solution[period3] == period2 and period2 != self.ins.end and period1 != period3 and self.ins.is_before(period3, period2):
+                if primal_solution[period3] == period2 and period2 != self.ins.finish and period1 != period3 and period3 < period2:
                     location = self.solution[period2]
                     # print('q{} through z[{} -> {}][{}]'.format(period3, period1, period2, location))
-                    current = self.ins.rewards[period2][location] * self.ins.accumulated_demand(period3, period2, self.customer)
-                    current -= self.ins.rewards[period2][location] * self.ins.accumulated_demand(period1, period2, self.customer)
+                    current = self.ins.rewards[period2][location] * self.ins.acc_demand[self.customer][period3][period2]  # self.ins.accumulated_demand(period3, period2, self.customer)
+                    current -= self.ins.rewards[period2][location] * self.ins.acc_demand[self.customer][period1][period2] # self.ins.accumulated_demand(period1, period2, self.customer)
                     current += dual_solution['q'][period1]
                     if current > dual_solution['q'][period3]:
                         dual_solution['q'][period3] = current
@@ -68,13 +68,13 @@ class analytical(subproblem):
         for period2 in self.ins.periods:
             dual_solution['p'][period2] = {}
             for location in self.ins.locations:
-                current = self.ins.rewards[period2][location] * self.ins.accumulated_demand(self.ins.start, period2, self.customer)
+                current = self.ins.rewards[period2][location] * self.ins.acc_demand[self.customer][self.ins.start][period2] # self.ins.accumulated_demand(self.ins.start, period2, self.customer)
                 current += dual_solution['q'][period2]  - dual_solution['q'][self.ins.start]
                 current *= self.ins.catalogs[location][self.customer]
                 dual_solution['p'][period2][location] = current
                 for period1 in self.ins.periods_with_start:
-                    if self.ins.is_before(period1, period2):
-                        current = self.ins.rewards[period2][location] * self.ins.accumulated_demand(period1, period2, self.customer)
+                    if period1 < period2:
+                        current = self.ins.rewards[period2][location] * self.ins.acc_demand[self.customer][period1][period2] # self.ins.accumulated_demand(period1, period2, self.customer)
                         current += dual_solution['q'][period2] - dual_solution['q'][period1]
                         current *= self.ins.catalogs[location][self.customer]
                         if current > dual_solution['p'][period2][location]:
@@ -86,7 +86,7 @@ class analytical(subproblem):
         inequality = {}
         inequality['y'] = {}
         for period in self.ins.periods_extended:
-            if period != self.ins.start and period != self.ins.end:
+            if period != self.ins.start and period != self.ins.finish:
                 inequality['y'][period] = {}
                 for location in self.ins.locations:
                     inequality['y'][period][location] = dual_solution['p'][period][location]
@@ -122,7 +122,7 @@ class duality(subproblem):
         inequality = {}
         inequality['y'] = {}
         for period in self.ins.periods_extended:
-            if period != self.ins.start and period != self.ins.end:
+            if period != self.ins.start and period != self.ins.finish:
                 inequality['y'][period] = {}
                 for location in self.ins.locations:
                     inequality['y'][period][location] = self.var['p'][period, location].x
@@ -197,7 +197,7 @@ class duality(subproblem):
         self.mip.addConstrs((self.var['p'][period2, location] + self.var['q'][period1] - self.var['q'][period2]
                         >= self.ins.rewards[period2][location] * self.ins.accumulated_demand(period1, period2, self.customer)
                         for period1 in self.ins.periods_with_start for period2 in self.ins.periods for location in self.ins.locations
-                        if self.ins.is_before(period1, period2) and self.ins.catalogs[location][self.customer] == 1.), name = 'c1')
+                        if period1 < period2 and self.ins.catalogs[location][self.customer] == 1.), name = 'c1')
 
 class maxQ(duality):
 

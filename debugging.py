@@ -32,7 +32,7 @@ class debugging(ic.instance):
 
         self.locations = [str(i + 1) for i in range(0, len(collections))]
         self.customers = [e for e in elements]
-        self.periods = [str(i + 1) for i in range(0, K)]
+        self.periods = [int(i + 1) for i in range(0, K)]
 
         self.catalogs = {}
         for location in self.locations:
@@ -65,7 +65,7 @@ class debugging(ic.instance):
 
         self.locations = [str(i + 1) for i in range(0, len(collections))]
         self.customers = [e for e in elements]
-        self.periods = [str(i + 1) for i in range(0, K)]
+        self.periods = [int(i + 1) for i in range(0, K)]
 
         self.catalogs = {}
         for location in self.locations:
@@ -98,7 +98,7 @@ class debugging(ic.instance):
 
         self.locations = ['1', '2', '3']
         self.customers = ['A','B', 'C', 'D', 'E']
-        self.periods = ['1', '2']
+        self.periods = [1, 2]
 
         # Create catalogs
         considerations = {}
@@ -143,7 +143,7 @@ class debugging(ic.instance):
 
         self.locations = ['1', '2', '3', '4']
         self.customers = ['A', 'B', 'C']
-        self.periods = ['1', '2', '3', '4']
+        self.periods = [1, 2, 3, 4]
 
         # Create catalogs
         considerations = {}
