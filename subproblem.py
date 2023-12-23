@@ -31,6 +31,8 @@ class analytical(subproblem):
                     primal_solution[period1] = period2
                     break
 
+        dual_objective = 0.
+
         dual_solution = {}
 
         dual_solution['q'] = {period : 0. for period in self.ins.periods_with_start}
@@ -64,6 +66,8 @@ class analytical(subproblem):
 
             # print('q[{}] = {}'.format(period3, dual_solution['q'][period3]))
 
+        dual_objective += dual_solution['q'][self.ins.start]
+
         dual_solution['p'] = {}
         for period2 in self.ins.periods:
             dual_solution['p'][period2] = {}
@@ -79,6 +83,8 @@ class analytical(subproblem):
                         current *= self.ins.catalogs[location][self.customer]
                         if current > dual_solution['p'][period2][location]:
                             dual_solution['p'][period2][location] = current
+                if self.solution[period2] == location:
+                    dual_objective += dual_solution['p'][period2][location]
 
                 # print('p[{},{}] = {}'.format(period2, location, dual_solution['p'][period2][location]))
 
@@ -92,7 +98,7 @@ class analytical(subproblem):
                     inequality['y'][period][location] = dual_solution['p'][period][location]
         inequality['b'] = dual_solution['q'][self.ins.start]
 
-        dual_objective = dual_solution['q'][self.ins.start] + sum([dual_solution['p'][period][location] for period, location in self.solution.items() if location != self.ins.depot])
+        # assert dual_objective == dual_solution['q'][self.ins.start] + sum([dual_solution['p'][period][location] for period, location in self.solution.items() if location != self.ins.depot])
 
         # print('... with an objective of {}'.format(dual_objective))
         # print('Reference: {}'.format('-'.join(solution.values())))

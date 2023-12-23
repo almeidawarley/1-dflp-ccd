@@ -38,8 +38,12 @@ def main():
 
     cm.mark_section('Duality subproblems')
     benders2 = bd.benders(instance, 'duality')
-    metadata = benders2.solve_bbc('bdd')
+    metadata = benders2.solve_bbc('bbd')
     record = rc.update_record(record, metadata)
+
+    assert cm.compare_obj(record['bsa_objective'], record['bsd_objective'])
+    assert cm.compare_obj(record['bsa_objective'], record['bba_objective'])
+    assert cm.compare_obj(record['bsd_objective'], record['bbd_objective'])
 
     print(record)
 

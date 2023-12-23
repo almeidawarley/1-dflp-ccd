@@ -56,17 +56,22 @@ class benders(fm.formulation):
             # Solve subproblems
             start = tm.time()
             current_bound = 0.
-            # profiler = cProfile.Profile()
-            # profiler.enable()
             for customer in self.ins.customers:
                 dual_objective = self.add_inequality(solution, customer)
                 current_bound += dual_objective
             end = tm.time()
-            dual_objective, inequality = self.subproblems[customer].cut()
-            # profiler.disable()
-            # stats = pstats.Stats(profiler).sort_stats('ncalls')
-            # stats.print_stats()
-            # _ = input('wait...')
+
+            '''
+            profiler = cProfile.Profile()
+            profiler.enable()
+            for customer in self.ins.customers:
+                self.subproblems[customer].cut()
+            profiler.disable()
+            stats = pstats.Stats(profiler).sort_stats('tottime')
+            stats.print_stats()
+            _ = input('wait...')
+            '''
+
             time_elapsed += round(end - start, cm.PRECISION)
             time_subproblems += round(end - start, cm.PRECISION)
 
@@ -85,6 +90,7 @@ class benders(fm.formulation):
             print('Upper bound: {}'.format(upper_bound))
             print('Current solution: {}'.format('-'.join(solution.values())))
             print('Current incumbent: {}'.format('-'.join(incumbent.values())))
+            print('Optimality gap: {}'.format(cm.compute_gap(upper_bound, lower_bound)))
             print('\n\n-----------------------------------------------------------------------------------')
 
             # _ = input('next iteration...')
@@ -139,14 +145,13 @@ class benders(fm.formulation):
                     self.subproblems[customer].update(incumbent)
                     _, inequality = self.subproblems[customer].cut()
 
+                    rhs = inequality['b']
+                    for period in self.ins.periods:
+                        for location in self.ins.locations:
+                            rhs += inequality['y'][period][location] * self.ins.catalogs[location][customer] * self.var['y'][period, location]
+
                     # Add inequality for some customer
-                    model.cbLazy(self.var['v'][customer] <=
-                                        sum(inequality['y'][period][location] *
-                                        self.ins.catalogs[location][customer] *
-                                        self.var['y'][period, location]
-                                        for period in self.ins.periods
-                                        for location in self.ins.locations)
-                                        + inequality['b'])
+                    model.cbLazy(self.var['v'][customer] <= rhs)
                 end = tm.time()
                 data['time_subproblems'] += round(end - start, cm.PRECISION)
                 data['loop_counter'] += 1
@@ -177,13 +182,12 @@ class benders(fm.formulation):
         self.subproblems[customer].update(solution)
         dual_objective, inequality = self.subproblems[customer].cut()
 
-        self.mip.addConstr(self.var['v'][customer] <=
-                            sum(inequality['y'][period][location] *
-                            self.ins.catalogs[location][customer] *
-                            self.var['y'][period, location]
-                            for period in self.ins.periods
-                            for location in self.ins.locations)
-                            + inequality['b']).lazy = lazy
+        rhs = inequality['b']
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                rhs += inequality['y'][period][location] * self.ins.catalogs[location][customer] * self.var['y'][period, location]
+
+        self.mip.addConstr(self.var['v'][customer] <= rhs).lazy = lazy
 
         return dual_objective
 
