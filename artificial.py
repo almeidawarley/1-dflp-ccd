@@ -61,7 +61,7 @@ class artificial(ic.instance):
                     coefficient = 1. / popularity
                 else:
                     exit('Wrong value for rewards parameter')
-                self.rewards[period][location] = np.ceil(coefficient * len(self.customers))
+                self.rewards[period][location] = np.ceil(coefficient * len(self.locations))
 
         stored_f = {}
         def bass(t, p = 0.04, q = 0.4, m = 10):
