@@ -53,14 +53,6 @@ class benders(fm.formulation):
             time_elapsed += round(self.mip.runtime, cm.PRECISION)
             solution = self.ins.format_solution(self.var['y'])
 
-            # Solve subproblems
-            start = tm.time()
-            current_bound = 0.
-            for customer in self.ins.customers:
-                dual_objective = self.add_inequality(solution, customer)
-                current_bound += dual_objective
-            end = tm.time()
-
             '''
             profiler = cProfile.Profile()
             profiler.enable()
@@ -71,6 +63,14 @@ class benders(fm.formulation):
             stats.print_stats()
             _ = input('wait...')
             '''
+
+            # Solve subproblems
+            start = tm.time()
+            current_bound = 0.
+            for customer in self.ins.customers:
+                dual_objective = self.add_inequality(solution, customer)
+                current_bound += dual_objective
+            end = tm.time()
 
             time_elapsed += round(end - start, cm.PRECISION)
             time_subproblems += round(end - start, cm.PRECISION)

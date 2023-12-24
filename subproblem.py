@@ -20,73 +20,80 @@ class analytical(subproblem):
 
         super().__init__(instance, customer)
 
+        self.primal_solution = {}
+        for period in self.ins.periods_with_start:
+            self.primal_solution[period] = self.ins.finish
+
+        self.dual_solution = {}
+        self.dual_solution['q'] = {}
+        self.dual_solution['p'] = {}
+        for period in self.ins.periods_with_start:
+            self.dual_solution['q'][period] = 0.
+            self.dual_solution['p'][period] = {}
+            for location in self.ins.locations:
+                self.dual_solution['p'][period][location] = 0.
+
     def cut(self):
 
         # Retrieve primal solution from master solution
-        primal_solution = {}
         for period1 in self.ins.periods_with_start:
-            primal_solution[period1] = self.ins.finish
+            self.primal_solution[period1] = self.ins.finish
             for period2 in self.ins.periods:
                 if period1 < period2 and self.solution[period2] != self.ins.depot and self.ins.catalogs[self.solution[period2]][self.customer] == 1:
-                    primal_solution[period1] = period2
+                    self.primal_solution[period1] = period2
                     break
 
         dual_objective = 0.
 
-        dual_solution = {}
-
-        dual_solution['q'] = {period : 0. for period in self.ins.periods_with_start}
-
         # period1 l, period2 t period3 k
         # First pass, captured periods
         for period3 in reversed(self.ins.periods_with_start):
-            for period1, period2 in primal_solution.items():
+            self.dual_solution['q'][period3] = 0.
+            for period1, period2 in self.primal_solution.items():
                 # compute Q for captured periods first  & check if it is not last period & check if it is not the same period & check precedence
-                if primal_solution[period3] != period2 and period2 != self.ins.finish and period1 != period3 and period3 < period2:
+                if self.primal_solution[period3] != period2 and period2 != self.ins.finish and period1 != period3 and period3 < period2:
                     location = self.solution[period2]
                     # print('q{} through z[{} -> {}][{}]'.format(period3, period1, period2, location))
                     current = self.ins.rewards[period2][location] * self.ins.accumulated[period3][period2][self.customer]
                     current -= self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer]
-                    current += dual_solution['q'][period1]
-                    if current > dual_solution['q'][period3]:
-                        dual_solution['q'][period3] = current
+                    current += self.dual_solution['q'][period1]
+                    if current > self.dual_solution['q'][period3]:
+                        self.dual_solution['q'][period3] = current
 
         # Second pass, free periods
         for period3 in reversed(self.ins.periods_with_start):
-            for period1, period2 in primal_solution.items():
+            for period1, period2 in self.primal_solution.items():
                 # compute Q for free periods second  & check if it is not last period & check if it is not the same period & check precedence
-                if primal_solution[period3] == period2 and period2 != self.ins.finish and period1 != period3 and period3 < period2:
+                if self.primal_solution[period3] == period2 and period2 != self.ins.finish and period1 != period3 and period3 < period2:
                     location = self.solution[period2]
                     # print('q{} through z[{} -> {}][{}]'.format(period3, period1, period2, location))
                     current = self.ins.rewards[period2][location] * self.ins.accumulated[period3][period2][self.customer]
                     current -= self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer]
-                    current += dual_solution['q'][period1]
-                    if current > dual_solution['q'][period3]:
-                        dual_solution['q'][period3] = current
+                    current += self.dual_solution['q'][period1]
+                    if current > self.dual_solution['q'][period3]:
+                        self.dual_solution['q'][period3] = current
 
-            # print('q[{}] = {}'.format(period3, dual_solution['q'][period3]))
+            # print('q[{}] = {}'.format(period3, self.dual_solution['q'][period3]))
 
-        dual_objective += dual_solution['q'][self.ins.start]
+        dual_objective += self.dual_solution['q'][self.ins.start]
 
-        dual_solution['p'] = {}
         for period2 in self.ins.periods:
-            dual_solution['p'][period2] = {}
             for location in self.ins.locations:
                 current = self.ins.rewards[period2][location] * self.ins.accumulated[self.ins.start][period2][self.customer]
-                current += dual_solution['q'][period2]  - dual_solution['q'][self.ins.start]
+                current += self.dual_solution['q'][period2]  - self.dual_solution['q'][self.ins.start]
                 current *= self.ins.catalogs[location][self.customer]
-                dual_solution['p'][period2][location] = current
+                self.dual_solution['p'][period2][location] = current
                 for period1 in self.ins.periods_with_start:
                     if period1 < period2:
                         current = self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer]
-                        current += dual_solution['q'][period2] - dual_solution['q'][period1]
+                        current += self.dual_solution['q'][period2] - self.dual_solution['q'][period1]
                         current *= self.ins.catalogs[location][self.customer]
-                        if current > dual_solution['p'][period2][location]:
-                            dual_solution['p'][period2][location] = current
+                        if current > self.dual_solution['p'][period2][location]:
+                            self.dual_solution['p'][period2][location] = current
                 if self.solution[period2] == location:
-                    dual_objective += dual_solution['p'][period2][location]
+                    dual_objective += self.dual_solution['p'][period2][location]
 
-                # print('p[{},{}] = {}'.format(period2, location, dual_solution['p'][period2][location]))
+                # print('p[{},{}] = {}'.format(period2, location, self.dual_solution['p'][period2][location]))
 
         # Build cut for some customer
         inequality = {}
@@ -95,10 +102,10 @@ class analytical(subproblem):
             if period != self.ins.start and period != self.ins.finish:
                 inequality['y'][period] = {}
                 for location in self.ins.locations:
-                    inequality['y'][period][location] = dual_solution['p'][period][location]
-        inequality['b'] = dual_solution['q'][self.ins.start]
+                    inequality['y'][period][location] = self.dual_solution['p'][period][location]
+        inequality['b'] = self.dual_solution['q'][self.ins.start]
 
-        # assert dual_objective == dual_solution['q'][self.ins.start] + sum([dual_solution['p'][period][location] for period, location in self.solution.items() if location != self.ins.depot])
+        # assert dual_objective == self.dual_solution['q'][self.ins.start] + sum([self.dual_solution['p'][period][location] for period, location in self.solution.items() if location != self.ins.depot])
 
         # print('... with an objective of {}'.format(dual_objective))
         # print('Reference: {}'.format('-'.join(solution.values())))
