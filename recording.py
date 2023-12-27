@@ -42,8 +42,6 @@ def update_record(record, updates):
 def write_record(record):
 
     with open('records/{}.csv'.format(record['keyword']), 'w') as output:
-        head = ','.join([str(key) for key in record.keys()])
-        row  = ','.join([str(value) for value in record.values()])
         output.write(format_record(record))
 
 def format_record(record):

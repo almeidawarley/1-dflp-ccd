@@ -60,12 +60,12 @@ class instance:
 
         self.captured_locations = {}
         for customer in self.customers:
-            self.captured_locations[customer] = self.attended_locations(customer)
+            self.captured_locations[customer] = [location for location in self.locations if self.catalogs[location][customer] == 1]
 
         self.captured_customers = {}
         self.captured_customers[self.depot] = []
         for location in self.locations:
-            self.captured_customers[location] = self.served_customers(location)
+            self.captured_customers[location] = [customer for customer in self.customers if self.catalogs[location][customer] == 1]
 
         # Set proper big M values
         self.limits = {}
@@ -85,36 +85,29 @@ class instance:
         for customer in self.customers:
             print('\t| {}: {}\t{}'.format(
                 customer,
-                len(self.attended_locations(customer)),
-                self.attended_locations(customer) if self.keyword != 'slovakia' else '[..]'))
+                len(self.captured_locations[customer]),
+                self.captured_locations[customer] if len(self.locations) <= 100 else '[...]'))
 
         print('Locations: {}'.format(self.locations))
         for location in self.locations:
-            print('\t| {} ({}) : {}'.format(location, self.rewards[self.start + 1][location], self.served_customers(location) if self.keyword != 'slovakia' else len(self.served_customers(location))))
-
-    def served_customers(self, location):
-        # Retrieve customers captured by some location
-
-        return [customer for customer in self.customers if self.catalogs[location][customer] == 1]
-
-    def attended_locations(self, customer):
-        # Retrieve locations capturing some customer
-
-        return [location for location in self.locations if self.catalogs[location][customer] == 1]
+            print('\t| {} ({}) : {}'.format(
+                location,
+                self.rewards[self.start + 1][location],
+                self.captured_customers[location] if len(self.customers) <= 100 else len(self.captured_customers[location])))
 
     def evaluate_solution(self, solution):
 
         objective = 0.
 
-        lastly = {customer: self.start for customer in self.customers}
+        latest = {customer: self.start for customer in self.customers}
 
         for period, location in solution.items():
             if location != self.depot:
                 for customer in self.captured_customers[location]:
-                    objective += self.rewards[period][location] * self.accumulated[lastly[customer]][period][customer]
-                    lastly[customer] = period
+                    objective += self.rewards[period][location] * self.accumulated[latest[customer]][period][customer]
+                    latest[customer] = period
 
-        return round(objective, 2)
+        return objective
 
     def copy_solution(self, solution):
 

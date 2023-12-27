@@ -37,7 +37,7 @@ class benders(fm.formulation):
         lower_bound, upper_bound = 0., gp.GRB.INFINITY
         incumbent = self.ins.empty_solution()
         time_elapsed, time_remaining = 0., cm.TIMELIMIT
-        time_subproblems = 0.
+        time_subprbs = 0.
         loop_counter = 0
 
         while not cm.compare_obj(upper_bound, lower_bound) and time_remaining > cm.TIMENOUGH:
@@ -46,12 +46,12 @@ class benders(fm.formulation):
             self.mip.setParam('TimeLimit', time_remaining)
             self.heaten(incumbent)
             self.mip.optimize()
-            # self.mip.write('master-{}.lp'.format(loop_counter))
+            # self.mip.write('master_i{}.lp'.format(loop_counter))
 
             # Update upper bound
-            proven_bound = round(self.mip.objBound, cm.PRECISION)
+            proven_bound = self.mip.objBound
             upper_bound = min(upper_bound, proven_bound)
-            time_elapsed += round(self.mip.runtime, cm.PRECISION)
+            time_elapsed += self.mip.runtime
             solution = self.ins.format_solution(self.var['y'])
 
             '''
@@ -73,11 +73,10 @@ class benders(fm.formulation):
                 current_bound += dual_objective
             end = tm.time()
 
-            time_elapsed += round(end - start, cm.PRECISION)
-            time_subproblems += round(end - start, cm.PRECISION)
+            time_elapsed += end - start
+            time_subprbs += end - start
 
             # Update lower bound
-            current_bound = round(current_bound, 2)
             if current_bound > lower_bound:
                 lower_bound = current_bound
                 incumbent = self.ins.copy_solution(solution)
@@ -101,8 +100,8 @@ class benders(fm.formulation):
         metadata = {
             '{}iterations'.format(label): loop_counter,
             '{}objective'.format(label): lower_bound,
-            '{}runtime'.format(label): time_elapsed,
-            '{}subtime'.format(label): time_subproblems,
+            '{}runtime'.format(label): round(time_elapsed, cm.PRECISION),
+            '{}subtime'.format(label): round(time_subprbs, cm.PRECISION),
             '{}optgap'.format(label): cm.compute_gap(upper_bound, lower_bound),
             '{}solution'.format(label): self.ins.pack_solution(incumbent)
         }
@@ -124,7 +123,7 @@ class benders(fm.formulation):
         self.mip.setParam('LazyConstraints', 1)
 
         data = {}
-        data['time_subproblems'] = 0.
+        data['time_subprbs'] = 0.
         data['loop_counter'] = 0
 
         def callback(model, where):
@@ -155,31 +154,29 @@ class benders(fm.formulation):
                     # Add inequality for some customer
                     model.cbLazy(self.var['v'][customer] <= rhs)
                 end = tm.time()
-                data['time_subproblems'] += round(end - start, cm.PRECISION)
+                data['time_subprbs'] += end - start
                 data['loop_counter'] += 1
 
         self.mip.optimize(callback)
 
-        objective = round(self.mip.objVal, 2)
         incumbent = self.ins.format_solution(self.var['y'])
         try:
             optgap = round(self.mip.MIPGap, cm.PRECISION)
         except:
             optgap = 1.
-        time_elapsed = round(self.mip.runtime, cm.PRECISION)
 
         metadata = {
             '{}iterations'.format(label): data['loop_counter'],
-            '{}objective'.format(label): objective,
-            '{}runtime'.format(label): time_elapsed,
-            '{}subtime'.format(label): data['time_subproblems'],
+            '{}objective'.format(label): self.mip.objVal,
+            '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
+            '{}subtime'.format(label): round(data['time_subprbs'], cm.PRECISION),
             '{}optgap'.format(label): optgap,
             '{}solution'.format(label): self.ins.pack_solution(incumbent)
         }
 
         return metadata
 
-    def add_inequality(self, solution, customer, lazy = 3):
+    def add_inequality(self, solution, customer, lazy = 1):
 
         self.subproblems[customer].update(solution)
         dual_objective, inequality = self.subproblems[customer].cut()
@@ -212,8 +209,8 @@ class benders(fm.formulation):
     def set_objective(self):
 
         self.mip.setObjective(
-            sum([self.var['v'][customer]
-                for customer in self.ins.customers]))
+            self.var['v'].sum('*')
+        )
 
     def set_constraints(self):
 

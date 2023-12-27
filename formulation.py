@@ -22,11 +22,13 @@ class formulation:
 
         solution = self.ins.format_solution(self.var['y'])
 
-        assert self.mip.status != gp.GRB.OPTIMAL or cm.compare_obj(self.mip.objVal, self.ins.evaluate_solution(solution))
+        objective = self.ins.evaluate_solution(solution)
+
+        assert cm.compare_obj(self.mip.objVal, objective)
 
         metadata = {
             '{}status'.format(label): self.mip.status,
-            '{}objective'.format(label): round(self.mip.objVal, cm.PRECISION),
+            '{}objective'.format(label): self.mip.objVal,
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
             '{}optgap'.format(label): self.mip.MIPGap,
             '{}solution'.format(label): self.ins.pack_solution(solution)
@@ -48,7 +50,7 @@ class formulation:
 
         metadata = {
             '{}status'.format(label): self.mip.status,
-            '{}objective'.format(label): round(self.mip.objVal, cm.PRECISION),
+            '{}objective'.format(label): self.mip.objVal,
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION)
         }
 
@@ -64,7 +66,7 @@ class formulation:
 
         for period in self.ins.periods:
             for location in self.ins.locations:
-                self.var['y'][period, location].start  = 1 if location == solution[period] else 0
+                self.var['y'][period, location].start = 1 if location == solution[period] else 0
 
     def set_parameters(self):
 
@@ -95,4 +97,10 @@ class formulation:
     def create_c1(self):
         # Create constraint 1
 
-        self.mip.addConstrs((self.var['y'].sum(period, '*') <= 1 for period in self.ins.periods), name = 'c1')
+        self.mip.addConstrs(
+            (
+                self.var['y'].sum(period, '*') <= 1
+                for period in self.ins.periods
+            ),
+            name = 'c1'
+        )
