@@ -65,11 +65,9 @@ class analytical(subproblem):
             for period1, period2 in self.primal_solution.items():
                 if self.primal_solution[period3] != period2 and period2 != self.ins.finish and period1 != period3 and period3 < period2:
                     location = self.solution[period2]
-                    current = (
-                        self.ins.rewards[period2][location] * self.ins.accumulated[period3][period2][self.customer] -
-                        self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer] +
-                        self.dual_solution['q'][period1]
-                    )
+                    current = self.ins.rewards[period2][location] * self.ins.accumulated[period3][period2][self.customer] 
+                    current -= self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer]
+                    current += self.dual_solution['q'][period1]
                     if current > self.dual_solution['q'][period3]:
                         self.dual_solution['q'][period3] = current
 
@@ -78,11 +76,9 @@ class analytical(subproblem):
             for period1, period2 in self.primal_solution.items():
                 if self.primal_solution[period3] == period2 and period2 != self.ins.finish and period1 != period3 and period3 < period2:
                     location = self.solution[period2]
-                    current = (
-                        self.ins.rewards[period2][location] * self.ins.accumulated[period3][period2][self.customer] -
-                        self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer] +
-                        self.dual_solution['q'][period1]
-                    )
+                    current = self.ins.rewards[period2][location] * self.ins.accumulated[period3][period2][self.customer] 
+                    current -= self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer] 
+                    current += self.dual_solution['q'][period1]
                     if current > self.dual_solution['q'][period3]:
                         self.dual_solution['q'][period3] = current
 
@@ -92,18 +88,14 @@ class analytical(subproblem):
         for period2 in self.ins.periods:
             for location in self.ins.captured_locations[self.customer]:
                 # Start with max as start period
-                current = (
-                    self.ins.rewards[period2][location] * self.ins.accumulated[self.ins.start][period2][self.customer] +
-                    self.dual_solution['q'][period2]  - self.dual_solution['q'][self.ins.start]
-                )
+                current = self.ins.rewards[period2][location] * self.ins.accumulated[self.ins.start][period2][self.customer] 
+                current += self.dual_solution['q'][period2]  - self.dual_solution['q'][self.ins.start]
                 self.dual_solution['p'][period2][location] = current
                 # Parse through other periods
                 for period1 in self.ins.periods:
                     if period1 < period2:
-                        current = (
-                            self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer] +
-                            self.dual_solution['q'][period2] - self.dual_solution['q'][period1]
-                        )
+                        current = self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer] 
+                        current += self.dual_solution['q'][period2] - self.dual_solution['q'][period1]
                         if current > self.dual_solution['p'][period2][location]:
                             self.dual_solution['p'][period2][location] = current
                 if self.solution[period2] == location:
@@ -258,4 +250,17 @@ class maxQ(duality):
                 for location in self.ins.captured_locations[self.customer]
             ) + self.var['q'][self.ins.start] ==  dual_objective,
             name = 'c2'
+        )
+
+        self.mip.write('maxQ-{}.lp'.format(self.customer))
+
+    def set_objective(self):
+
+        self.mip.setObjective(
+            sum(
+                self.var['p'][period, location] *
+                (1 if self.solution[period] == location else 0)
+                for period in self.ins.periods
+                for location in self.ins.captured_locations[self.customer]
+            ) + self.var['q'][self.ins.start] # + self.var['q'][self.ins.finish-1]
         )
