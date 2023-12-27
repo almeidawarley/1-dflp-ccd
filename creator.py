@@ -45,9 +45,9 @@ for seed in features['seed']:
                             with open('{}/{}.json'.format('instances/artificial', keyword), 'w') as output:
                                 js.dump(parameters, output)
 
-                            _ = cm.load_instance(keyword, 'validation')
+                            # _ = cm.load_instance(keyword, 'validation')
 
-                            with open('{}/{}.sh'.format('scripts', keyword), 'w') as output:
+                            with open('{}/{}_{}.sh'.format('scripts', script, keyword), 'w') as output:
 
                                 output.write('#!/bin/bash\n')
 
@@ -63,8 +63,8 @@ for seed in features['seed']:
                                 output.write('cd ~/shortcut/\n')
                                 output.write('python {}.py -p {} {}\n'.format(script, project, keyword))
 
-                            commands.write('dos2unix ../scripts/{}.sh\n'.format(keyword))
-                            commands.write('sbatch ../scripts/{}.sh\n'.format(keyword))
+                            commands.write('dos2unix ../scripts/{}_{}.sh\n'.format(script, keyword))
+                            commands.write('sbatch ../scripts/{}_{}.sh\n'.format(script, keyword))
 
                             print(keyword)
                             counter += 1
