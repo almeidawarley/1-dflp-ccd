@@ -109,8 +109,8 @@ class instance:
         lastly = {customer: self.start for customer in self.customers}
 
         for period, location in solution.items():
-            for customer in self.customers:
-                if location != self.depot and self.catalogs[location][customer] == 1:
+            if location != self.depot:
+                for customer in self.captured_customers[location]:
                     objective += self.rewards[period][location] * self.accumulated[lastly[customer]][period][customer]
                     lastly[customer] = period
 

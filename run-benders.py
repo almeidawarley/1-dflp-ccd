@@ -45,7 +45,8 @@ def main():
     assert cm.compare_obj(record['bsa_objective'], record['bba_objective'])
     assert cm.compare_obj(record['bsd_objective'], record['bbd_objective'])
 
-    print(record)
+    print('{} < {} ?'.format(record['bsa_runtime'], record['bsd_runtime']))
+    print('{} < {} ?'.format(record['bba_runtime'], record['bbd_runtime']))
 
 if __name__ == '__main__':
 

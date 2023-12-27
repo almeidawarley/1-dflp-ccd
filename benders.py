@@ -46,6 +46,7 @@ class benders(fm.formulation):
             self.mip.setParam('TimeLimit', time_remaining)
             self.heaten(incumbent)
             self.mip.optimize()
+            # self.mip.write('master-{}.lp'.format(loop_counter))
 
             # Update upper bound
             proven_bound = round(self.mip.objBound, cm.PRECISION)
@@ -95,6 +96,8 @@ class benders(fm.formulation):
 
             # _ = input('next iteration...')
 
+            time_remaining = cm.TIMELIMIT - time_elapsed
+
         metadata = {
             '{}iterations'.format(label): loop_counter,
             '{}objective'.format(label): lower_bound,
@@ -104,7 +107,6 @@ class benders(fm.formulation):
             '{}solution'.format(label): self.ins.pack_solution(incumbent)
         }
 
-        time_remaining = cm.TIMELIMIT - time_elapsed
 
         return metadata
 
@@ -147,8 +149,8 @@ class benders(fm.formulation):
 
                     rhs = inequality['b']
                     for period in self.ins.periods:
-                        for location in self.ins.locations:
-                            rhs += inequality['y'][period][location] * self.ins.catalogs[location][customer] * self.var['y'][period, location]
+                        for location in self.ins.captured_locations[customer]:
+                            rhs += inequality['y'][period][location] * self.var['y'][period, location]
 
                     # Add inequality for some customer
                     model.cbLazy(self.var['v'][customer] <= rhs)
@@ -184,8 +186,8 @@ class benders(fm.formulation):
 
         rhs = inequality['b']
         for period in self.ins.periods:
-            for location in self.ins.locations:
-                rhs += inequality['y'][period][location] * self.ins.catalogs[location][customer] * self.var['y'][period, location]
+            for location in self.ins.captured_locations[customer]:
+                rhs += inequality['y'][period][location] * self.var['y'][period, location]
 
         self.mip.addConstr(self.var['v'][customer] <= rhs).lazy = lazy
 

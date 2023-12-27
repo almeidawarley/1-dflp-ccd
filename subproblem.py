@@ -10,6 +10,14 @@ class subproblem:
         self.customer = customer
         self.solution = self.ins.empty_solution()
 
+        self.inequality = {}
+        self.inequality['b'] = 0.
+        self.inequality['y'] = {}
+        for period in self.ins.periods:
+            self.inequality['y'][period] = {}
+            for location in self.ins.captured_locations[self.customer]:
+                self.inequality['y'][period][location] = 0.
+
     def update(self, solution):
 
         self.solution = solution
@@ -30,7 +38,7 @@ class analytical(subproblem):
         for period in self.ins.periods_with_start:
             self.dual_solution['q'][period] = 0.
             self.dual_solution['p'][period] = {}
-            for location in self.ins.locations:
+            for location in self.ins.captured_locations[self.customer]:
                 self.dual_solution['p'][period][location] = 0.
 
     def cut(self):
@@ -42,6 +50,8 @@ class analytical(subproblem):
                 if period1 < period2 and self.solution[period2] != self.ins.depot and self.ins.catalogs[self.solution[period2]][self.customer] == 1:
                     self.primal_solution[period1] = period2
                     break
+
+        # CATALOGS: I cannot get rid of the one above :-/
 
         dual_objective = 0.
 
@@ -96,21 +106,17 @@ class analytical(subproblem):
                 # print('p[{},{}] = {}'.format(period2, location, self.dual_solution['p'][period2][location]))
 
         # Build cut for some customer
-        inequality = {}
-        inequality['y'] = {}
-        for period in self.ins.periods_extended:
-            if period != self.ins.start and period != self.ins.finish:
-                inequality['y'][period] = {}
-                for location in self.ins.locations:
-                    inequality['y'][period][location] = self.dual_solution['p'][period][location]
-        inequality['b'] = self.dual_solution['q'][self.ins.start]
+        for period in self.ins.periods:
+            for location in self.ins.captured_locations[self.customer]:
+                self.inequality['y'][period][location] = self.dual_solution['p'][period][location]
+        self.inequality['b'] = self.dual_solution['q'][self.ins.start]
 
-        # assert dual_objective == self.dual_solution['q'][self.ins.start] + sum([self.dual_solution['p'][period][location] for period, location in self.solution.items() if location != self.ins.depot])
+        # assert dual_objective == self.dual_solution['q'][self.ins.start] + sum(self.dual_solution['p'][period][location] for period, location in self.solution.items() if location != self.ins.depot)
 
         # print('... with an objective of {}'.format(dual_objective))
         # print('Reference: {}'.format('-'.join(solution.values())))
 
-        return dual_objective, inequality
+        return dual_objective, self.inequality
 
 class duality(subproblem):
 
@@ -132,18 +138,14 @@ class duality(subproblem):
         self.mip.optimize()
 
         # Build cut for some customer
-        inequality = {}
-        inequality['y'] = {}
-        for period in self.ins.periods_extended:
-            if period != self.ins.start and period != self.ins.finish:
-                inequality['y'][period] = {}
-                for location in self.ins.locations:
-                    inequality['y'][period][location] = self.var['p'][period, location].x
-        inequality['b'] = self.var['q'][self.ins.start].x
+        for period in self.ins.periods:
+            for location in self.ins.captured_locations[self.customer]:
+                self.inequality['y'][period][location] = self.var['p'][period, location].x
+        self.inequality['b'] = self.var['q'][self.ins.start].x
 
-        dual_objective = round(self.mip.objVal, 2)
+        dual_objective = self.mip.objVal
 
-        return dual_objective, inequality
+        return dual_objective, self.inequality
 
     def set_parameters(self):
 
@@ -236,6 +238,8 @@ class maxQ(duality):
             self.mip.remove(self.normalization)
         except:
             pass
+
+        # CATALOGS: I can get rid of this one :-)
 
         self.normalization = self.mip.addConstr(
             sum([self.var['p'][period, location] *
