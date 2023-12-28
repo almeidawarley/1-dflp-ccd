@@ -23,7 +23,7 @@ class benders(fm.formulation):
             else:
                 exit('Invalid method for solving suproblems')
 
-    def solve_std(self, label = '', cutoff = 0.):
+    def solve_std(self, label = '', cutoff = 0., incumbent = {}):
 
         # Standard Benders implementation
         '''
@@ -43,8 +43,12 @@ class benders(fm.formulation):
 
         label = label + '_' if len(label) > 0 else label
 
-        lower_bound, upper_bound = 0., gp.GRB.INFINITY
-        incumbent = self.ins.empty_solution()
+        if len(incumbent) > 0:
+            lower_bound, upper_bound = cutoff, gp.GRB.INFINITY
+            incumbent = self.ins.copy_solution(incumbent)
+        else:
+            lower_bound, upper_bound = 0., gp.GRB.INFINITY
+            incumbent = self.ins.empty_solution()
         time_elapsed, time_remaining = 0., cm.TIMELIMIT
         time_subprbs = 0.
         loop_counter = 0
@@ -119,15 +123,15 @@ class benders(fm.formulation):
 
         return metadata
 
-    def solve_bbc(self, label = '', cutoff = 0.):
+    def solve_bbc(self, label = '', cutoff = 0., incumbent = {}):
 
         # Branch-and-Benders cut
 
         label = label + '_' if len(label) > 0 else label
 
-        incumbent = self.ins.empty_solution()
+        empty = self.ins.empty_solution()
         for customer in self.ins.customers:
-            self.add_inequality(incumbent, customer)
+            self.add_inequality(empty, customer)
 
         '''
         for location in self.ins.locations:
@@ -177,6 +181,7 @@ class benders(fm.formulation):
                 data['loop_counter'] += 1
 
         self.mip.setParam('Cutoff', cutoff)
+        self.heaten(incumbent)
         self.mip.optimize(callback)
 
         incumbent = self.ins.format_solution(self.var['y'])

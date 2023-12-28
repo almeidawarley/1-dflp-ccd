@@ -20,31 +20,33 @@ def main():
     cm.mark_section('Identifying solution for warm start')
     if 'warm_objective' in record.keys():
         cutoff = float(record['warm_objective'])
+        incumbent = instance.unpack_solution(record['warm_solution'])
     else:
         cutoff = 0.
+        incumbent = instance.empty_solution()
 
     cm.mark_section('Solving with branch-and-Benders')
 
     cm.mark_section('Analytical subproblems')
     benders1 = bd.benders(instance, 'analytical')
-    metadata = benders1.solve_bbc('bba', cutoff)
+    metadata = benders1.solve_bbc('bba', cutoff, incumbent)
     record = rc.update_record(record, metadata)
 
     cm.mark_section('Duality subproblems')
     benders2 = bd.benders(instance, 'duality')
-    metadata = benders2.solve_bbc('bbd', cutoff)
+    metadata = benders2.solve_bbc('bbd', cutoff, incumbent)
     record = rc.update_record(record, metadata)
 
     cm.mark_section('Solving with standard Benders')
 
     cm.mark_section('Analytical subproblems')
     benders3 = bd.benders(instance, 'analytical')
-    metadata = benders3.solve_std('bsa', cutoff)
+    metadata = benders3.solve_std('bsa', cutoff, incumbent)
     record = rc.update_record(record, metadata)
 
     cm.mark_section('Duality subproblems')
     benders4 = bd.benders(instance, 'duality')
-    metadata = benders4.solve_std('bsd', cutoff)
+    metadata = benders4.solve_std('bsd', cutoff, incumbent)
     record = rc.update_record(record, metadata)
 
     for approach in ['bba', 'bbd', 'bsa', 'bsd']:
