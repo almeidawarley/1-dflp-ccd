@@ -60,7 +60,8 @@ def main():
         warmest_objective = metadata['eml_objective']
 
     record = rc.update_record(record, {
-        'warm_solution': warmest_solution
+        'warm_solution': warmest_solution,
+        'warm_objective': warmest_objective
     })
 
     for approach in ['rnd', 'eml', 'frw', 'bcw', 'prg']:

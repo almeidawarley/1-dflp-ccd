@@ -23,13 +23,22 @@ class benders(fm.formulation):
             else:
                 exit('Invalid method for solving suproblems')
 
-    def solve_std(self, label = ''):
+    def solve_std(self, label = '', cutoff = 0.):
 
         # Standard Benders implementation
         '''
         for customer in self.ins.customers:
             self.add_inequality(self.ins.unpack_solution('0-3'), customer)
         self.mip.write('refactoring-master.lp')
+        '''
+
+        '''
+        for location in self.ins.locations:
+            incumbent = self.ins.stable_solution(location)
+            # incumbent = self.ins.empty_solution()
+            # incumbent[self.ins.finish-1] = location
+            for customer in self.ins.customers:
+                self.add_inequality(incumbent, customer)
         '''
 
         label = label + '_' if len(label) > 0 else label
@@ -44,9 +53,11 @@ class benders(fm.formulation):
 
             # Optimize master problem
             self.mip.setParam('TimeLimit', time_remaining)
+            if loop_counter > 0:
+                self.mip.setParam('Cutoff', max(lower_bound, cutoff))
             self.heaten(incumbent)
             self.mip.optimize()
-            # self.mip.write('master_i{}.lp'.format(loop_counter))
+            # self.mip.write('master-i{}.lp'.format(loop_counter))
 
             # Update upper bound
             proven_bound = self.mip.objBound
@@ -106,10 +117,9 @@ class benders(fm.formulation):
             '{}solution'.format(label): self.ins.pack_solution(incumbent)
         }
 
-
         return metadata
 
-    def solve_bbc(self, label = ''):
+    def solve_bbc(self, label = '', cutoff = 0.):
 
         # Branch-and-Benders cut
 
@@ -118,6 +128,15 @@ class benders(fm.formulation):
         incumbent = self.ins.empty_solution()
         for customer in self.ins.customers:
             self.add_inequality(incumbent, customer)
+
+        '''
+        for location in self.ins.locations:
+            incumbent = self.ins.stable_solution(location)
+            # incumbent = self.ins.empty_solution()
+            # incumbent[self.ins.finish-1] = location
+            for customer in self.ins.customers:
+                self.add_inequality(incumbent, customer)
+        '''
 
         # Activate lazy constraints
         self.mip.setParam('LazyConstraints', 1)
@@ -157,6 +176,7 @@ class benders(fm.formulation):
                 data['time_subprbs'] += end - start
                 data['loop_counter'] += 1
 
+        self.mip.setParam('Cutoff', cutoff)
         self.mip.optimize(callback)
 
         incumbent = self.ins.format_solution(self.var['y'])

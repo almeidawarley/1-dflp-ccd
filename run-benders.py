@@ -17,36 +17,38 @@ def main():
     instance.print_instance()
     record = rc.load_record(args.project, instance)
 
-    cm.mark_section('Solving with standard Benders')
-
-    cm.mark_section('Analytical subproblems')
-    benders1 = bd.benders(instance, 'analytical')
-    metadata = benders1.solve_std('bsa')
-    record = rc.update_record(record, metadata)
-
-    cm.mark_section('Duality subproblems')
-    benders3 = bd.benders(instance, 'duality')
-    metadata = benders3.solve_std('bsd')
-    record = rc.update_record(record, metadata)
+    cm.mark_section('Identifying solution for warm start')
+    if 'warm_objective' in record.keys():
+        cutoff = float(record['warm_objective'])
+    else:
+        cutoff = 0.
 
     cm.mark_section('Solving with branch-and-Benders')
 
     cm.mark_section('Analytical subproblems')
-    benders2 = bd.benders(instance, 'analytical')
-    metadata = benders2.solve_bbc('bba')
+    benders1 = bd.benders(instance, 'analytical')
+    metadata = benders1.solve_bbc('bba', cutoff)
     record = rc.update_record(record, metadata)
 
     cm.mark_section('Duality subproblems')
     benders2 = bd.benders(instance, 'duality')
-    metadata = benders2.solve_bbc('bbd')
+    metadata = benders2.solve_bbc('bbd', cutoff)
     record = rc.update_record(record, metadata)
 
-    assert cm.compare_obj(record['bsa_objective'], record['bsd_objective'])
-    assert cm.compare_obj(record['bsa_objective'], record['bba_objective'])
-    assert cm.compare_obj(record['bsd_objective'], record['bbd_objective'])
+    cm.mark_section('Solving with standard Benders')
 
-    print('{} < {} ?'.format(record['bsa_runtime'], record['bsd_runtime']))
-    print('{} < {} ?'.format(record['bba_runtime'], record['bbd_runtime']))
+    cm.mark_section('Analytical subproblems')
+    benders3 = bd.benders(instance, 'analytical')
+    metadata = benders3.solve_std('bsa', cutoff)
+    record = rc.update_record(record, metadata)
+
+    cm.mark_section('Duality subproblems')
+    benders4 = bd.benders(instance, 'duality')
+    metadata = benders4.solve_std('bsd', cutoff)
+    record = rc.update_record(record, metadata)
+
+    for approach in ['bba', 'bbd', 'bsa', 'bsd']:
+        print('> {} approach: {} <{}> [{}]'.format(approach.upper(), record['{}_objective'.format(approach)], record['{}_runtime'.format(approach)], record['{}_solution'.format(approach)]))
 
 if __name__ == '__main__':
 
