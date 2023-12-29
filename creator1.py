@@ -12,14 +12,14 @@ features = {
     'characters': ['homogeneous', 'heterogeneous']
 }
 
-project = 'paper1'
+project = 'p1artificial'
 
 script = sys.argv[1]
 hours = sys.argv[2]
 
 parameters = {}
 
-commands = open('commands-{}-{}.sh'.format(script, project), 'w')
+commands = open('commands_{}_{}.sh'.format(script, project), 'w')
 
 counter = 0
 
@@ -52,8 +52,8 @@ for seed in features['seed']:
                                 output.write('#!/bin/bash\n')
 
                                 output.write('#SBATCH --time={}:00:00\n'.format(hours))
-                                output.write('#SBATCH --job-name={}.job\n'.format(keyword))
-                                output.write('#SBATCH --output={}.out\n'.format(keyword))
+                                output.write('#SBATCH --job-name={}_{}.job\n'.format(script, keyword))
+                                output.write('#SBATCH --output={}_{}.out\n'.format(script, keyword))
                                 output.write('#SBATCH --account=def-mxm\n')
                                 output.write('#SBATCH --mem=30GB\n')
                                 output.write('#SBATCH --cpus-per-task=1\n')
@@ -61,7 +61,7 @@ for seed in features['seed']:
                                 output.write('#SBATCH --mail-type=FAIL\n')
 
                                 output.write('cd ~/shortcut/\n')
-                                output.write('python {}.py -p {} {}\n'.format(script, project, keyword))
+                                output.write('python run-{}.py -p {} {}\n'.format(script, project, keyword))
 
                             commands.write('dos2unix ../scripts/{}_{}.sh\n'.format(script, keyword))
                             commands.write('sbatch ../scripts/{}_{}.sh\n'.format(script, keyword))
