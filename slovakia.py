@@ -25,7 +25,6 @@ class slovakia(ic.instance):
         np.random.seed(self.parameters['seed'])
 
         number_periods = self.parameters['periods']
-        population_threshold = self.parameters['population']
         distance_threshold = self.parameters['distance']
 
         # Create input sets
@@ -42,6 +41,9 @@ class slovakia(ic.instance):
 
         # Create amplitude
         self.amplitudes = {}
+
+        number_locations = int(np.ceil(0.01 * len(content)))
+        population_threshold = content['residential_population'].nlargest(number_locations).iloc[-1]
 
         for _, row in content.iterrows():
 
@@ -78,7 +80,8 @@ class slovakia(ic.instance):
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                self.catalogs[location][customer] = np.random.choice([0, 1], p = [0.05, 0.95]) * (1 if self.distances[location][customer] <= distance_threshold else 0)
+                # self.catalogs[location][customer] = np.random.choice([0, 1], p = [0.05, 0.95]) * (1 if self.distances[location][customer] <= distance_threshold else 0)
+                self.catalogs[location][customer] = (1 if self.distances[location][customer] <= distance_threshold else 0)
 
         # Create rewards
         self.rewards = {}
