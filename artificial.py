@@ -71,12 +71,12 @@ class artificial(ic.instance):
             stored_f[period] = bass(period)
 
         # Create amplitude
-        self.amplitude = {}
+        self.amplitudes = {}
         for customer in self.customers:
             if self.parameters['characters'] == 'heterogeneous':
-                self.amplitude[customer] = np.random.choice([10, 15, 20, 25, 30])
+                self.amplitudes[customer] = np.random.choice([10, 15, 20, 25, 30])
             elif self.parameters['characters'] == 'homogeneous':
-                self.amplitude[customer] = 20
+                self.amplitudes[customer] = 20
             else:
                 exit('Wrong value for behaviour parameter')
 
@@ -86,15 +86,15 @@ class artificial(ic.instance):
             self.spawning[period] = {}
             for customer in self.customers:
                 if self.parameters['demands'] == 'constant':
-                    self.spawning[period][customer] = self.amplitude[customer]
+                    self.spawning[period][customer] = self.amplitudes[customer]
                 elif self.parameters['demands'] == 'seasonal':
-                    self.spawning[period][customer] = (self.amplitude[customer] / 2) * np.cos(period) + (self.amplitude[customer] / 2)
+                    self.spawning[period][customer] = (self.amplitudes[customer] / 2) * np.cos(period) + (self.amplitudes[customer] / 2)
                 elif self.parameters['demands'] == 'increasing':
-                    self.spawning[period][customer] = (period / number_periods) * self.amplitude[customer]
+                    self.spawning[period][customer] = (period / number_periods) * self.amplitudes[customer]
                 elif self.parameters['demands'] == 'decreasing':
-                    self.spawning[period][customer] = ((number_periods - period + 1)/ number_periods) * self.amplitude[customer]
+                    self.spawning[period][customer] = ((number_periods - period + 1)/ number_periods) * self.amplitudes[customer]
                 elif self.parameters['demands'] == 'bass':
-                    self.spawning[period][customer] = stored_f[period] * self.amplitude[customer]
+                    self.spawning[period][customer] = stored_f[period] * self.amplitudes[customer]
                 else:
                     exit('Wrong value for demand behaviour')
                 self.spawning[period][customer] = np.ceil(self.spawning[period][customer])

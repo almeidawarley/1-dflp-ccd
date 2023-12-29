@@ -39,7 +39,7 @@ def load_instance(keyword, project):
     #     instance = sy.synthetic(keyword, project)
     elif 'art' in keyword:
         instance = ar.artificial(keyword, project)
-    elif keyword == 'slovakia':
+    elif 'slv' in keyword:
         instance = sl.slovakia(keyword, project)
     else:
         exit('Invalid instance keyword')
