@@ -23,7 +23,7 @@ class benders(fm.formulation):
             else:
                 exit('Invalid method for solving suproblems')
 
-    def solve_std(self, label = '', cutoff = 0., incumbent = {}):
+    def solve_std(self, label = '', cutoff = 0.):
 
         # Standard Benders implementation
         '''
@@ -43,12 +43,8 @@ class benders(fm.formulation):
 
         label = label + '_' if len(label) > 0 else label
 
-        if len(incumbent) > 0:
-            lower_bound, upper_bound = cutoff, gp.GRB.INFINITY
-            incumbent = self.ins.copy_solution(incumbent)
-        else:
-            lower_bound, upper_bound = 0., gp.GRB.INFINITY
-            incumbent = self.ins.empty_solution()
+        lower_bound, upper_bound = 0., gp.GRB.INFINITY
+        incumbent = self.ins.empty_solution()
         time_elapsed, time_remaining = 0., cm.TIMELIMIT
         time_subprbs = 0.
         loop_counter = 0
@@ -123,7 +119,7 @@ class benders(fm.formulation):
 
         return metadata
 
-    def solve_bbc(self, label = '', cutoff = 0., incumbent = {}):
+    def solve_bbc(self, label = '', cutoff = 0.):
 
         # Branch-and-Benders cut
 
@@ -197,7 +193,6 @@ class benders(fm.formulation):
                 data['loop_counter'] += 1
 
         self.mip.setParam('Cutoff', cutoff)
-        self.heaten(incumbent)
         self.mip.optimize(callback)
 
         incumbent = self.ins.format_solution(self.var['y'])
