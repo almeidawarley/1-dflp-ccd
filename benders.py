@@ -145,9 +145,21 @@ class benders(fm.formulation):
         # Activate lazy constraints
         self.mip.setParam('LazyConstraints', 1)
 
+        '''
+        self.mip.setParam('Cuts', 0)
+        self.mip.setParam('Heuristics', 0)
+        self.mip.setParam('RINS', 0)
+        self.mip.setParam('Presolve', 0)
+        self.mip.setParam('Aggregate', 0)
+        self.mip.setParam('Symmetry', 0)
+        self.mip.setParam('Disconnected', 0)
+        '''
+
         data = {}
         data['time_subprbs'] = 0.
         data['loop_counter'] = 0
+
+        # content = open('cuts-{}.txt'.format(label), 'w')
 
         def callback(model, where):
 
@@ -163,6 +175,8 @@ class benders(fm.formulation):
                         if cm.is_equal_to(value, 1.):
                             incumbent[period] = location
 
+                # content.write('#{} {}\n'.format(data['loop_counter'], self.ins.pack_solution(incumbent)))
+
                 start = tm.time()
                 for customer in self.ins.customers:
 
@@ -173,6 +187,8 @@ class benders(fm.formulation):
                     for period in self.ins.periods:
                         for location in self.ins.captured_locations[customer]:
                             rhs += inequality['y'][period][location] * self.var['y'][period, location]
+
+                    # content.write('{} {}\n'.format(customer, inequality))
 
                     # Add inequality for some customer
                     model.cbLazy(self.var['v'][customer] <= rhs)
@@ -198,6 +214,8 @@ class benders(fm.formulation):
             '{}optgap'.format(label): optgap,
             '{}solution'.format(label): self.ins.pack_solution(incumbent)
         }
+
+        # content.close()
 
         return metadata
 

@@ -67,6 +67,8 @@ class formulation:
         for period in self.ins.periods:
             for location in self.ins.locations:
                 self.var['y'][period, location].start = 1 if location == solution[period] else 0
+                # self.var['y'][period, location].ub = 1 if location == solution[period] else 0
+                # self.var['y'][period, location].lb = 1 if location == solution[period] else 0
 
     def set_parameters(self):
 
