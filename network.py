@@ -9,7 +9,7 @@ class network(fm.formulation):
     def set_variables(self):
 
         self.create_vry()
-        self.create_vrz()
+        self.create_vrx()
 
     def set_objective(self):
 
@@ -34,19 +34,20 @@ class network(fm.formulation):
         self.create_c4()
         self.create_c5()
 
-    def create_vrz(self):
-        # Create z^{kt}_{ij} variables
+    def create_vrx(self):
+        # Create x^{kt}_{ij} variables
 
-        lowers = [0. for _ in self.ins.periods_with_start for _ in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
-        uppers = [1. for _ in self.ins.periods_with_start for _ in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
-        coefs = [0. for _ in self.ins.periods_with_start for _ in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
-        types = ['C' for _ in self.ins.periods_with_start for _ in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
+        lowers = [0. for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
+        uppers = [1. for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
+        coefs = [0. for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
+        types = ['C' for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
         names = [
-            'z~{}_{}_{}_{}'.format(period1, period2, location, customer)
+            'x~{}_{}_{}_{}'.format(period1, period2, location, customer)
             for period1 in self.ins.periods_with_start
             for period2 in self.ins.periods_with_end
             for customer in self.ins.customers
             for location in self.ins.captured_locations[customer]
+            if period1 < period2
         ]
         tuples = [
             (period1, period2, location, customer)
@@ -54,6 +55,7 @@ class network(fm.formulation):
             for period2 in self.ins.periods_with_end
             for customer in self.ins.customers
             for location in self.ins.captured_locations[customer]
+            if period1 < period2
         ]
 
         self.var['z'] = self.mip.addVars(tuples, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
