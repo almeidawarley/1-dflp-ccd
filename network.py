@@ -17,7 +17,7 @@ class network(fm.formulation):
             sum(
                 self.ins.rewards[period2][location] *
                 self.ins.accumulated[period1][period2][customer] *
-                self.var['z'][period1, period2, location, customer]
+                self.var['x'][period1, period2, location, customer]
                 for period1 in self.ins.periods_with_start
                 for period2 in self.ins.periods
                 for customer in self.ins.customers
@@ -58,7 +58,7 @@ class network(fm.formulation):
             if period1 < period2
         ]
 
-        self.var['z'] = self.mip.addVars(tuples, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+        self.var['x'] = self.mip.addVars(tuples, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
     def create_c2(self):
         # Create constraint 2
@@ -66,7 +66,7 @@ class network(fm.formulation):
         self.mip.addConstrs(
             (
                 sum(
-                    self.var['z'][period1, period2, location, customer]
+                    self.var['x'][period1, period2, location, customer]
                     for period1 in self.ins.periods_with_start
                     if period1 < period2
                 ) == self.var['y'][period2, location]
@@ -83,12 +83,12 @@ class network(fm.formulation):
         self.mip.addConstrs(
             (
                 sum(
-                    self.var['z'].sum(period1, period2, '*', customer)
+                    self.var['x'].sum(period1, period2, '*', customer)
                     for period1 in self.ins.periods_with_start
                     if period1 < period2
                 ) ==
                 sum(
-                    self.var['z'].sum(period2, period1, '*', customer)
+                    self.var['x'].sum(period2, period1, '*', customer)
                     for period1 in self.ins.periods_with_end
                     if period1 > period2
                 )
@@ -103,7 +103,7 @@ class network(fm.formulation):
 
         self.mip.addConstrs(
             (
-                self.var['z'].sum(self.ins.start, '*', '*', customer) == 1
+                self.var['x'].sum(self.ins.start, '*', '*', customer) == 1
                 for customer in self.ins.customers
             ),
             name = 'c4'
@@ -114,7 +114,7 @@ class network(fm.formulation):
 
         self.mip.addConstrs(
             (
-                self.var['z'].sum('*', self.ins.finish, '*', customer) == 1
+                self.var['x'].sum('*', self.ins.finish, '*', customer) == 1
                 for customer in self.ins.customers
             ),
             name = 'c5'
