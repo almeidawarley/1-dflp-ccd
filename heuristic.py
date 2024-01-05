@@ -131,6 +131,14 @@ class emulation(heuristic):
 
         candidate = self.ins.empty_solution()
 
+        # Store previously calculated solutions
+        stored = {}
+
+        for period in self.ins.periods_with_start:
+            stored[period] = {}
+            for location in self.ins.locations_extended:
+                    stored[period][location] = 0.
+
         for reference in self.ins.periods:
 
             local_objective = 0.
@@ -141,6 +149,9 @@ class emulation(heuristic):
                 # Insert location
                 candidate[reference] = location
                 objective = self.ins.evaluate_solution(candidate)
+                # Offset objective accordingly
+                stored[reference][location] = objective
+                objective -= stored[reference - 1][location]
                 # Insert location
                 candidate[reference] = self.ins.depot
 
