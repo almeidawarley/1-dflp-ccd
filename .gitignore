@@ -6,12 +6,12 @@
 *.lp
 *.txt
 *.sh
+*.csv
 main.py
 things/*
 
 # Results folder
-results/*.sh
-results/*.zip
+results/*
 
 # Outputs folder
 outputs/*.out
