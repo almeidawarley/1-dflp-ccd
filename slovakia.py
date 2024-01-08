@@ -83,6 +83,10 @@ class slovakia(ic.instance):
                 # self.catalogs[location][customer] = np.random.choice([0, 1], p = [0.05, 0.95]) * (1 if self.distances[location][customer] <= distance_threshold else 0)
                 self.catalogs[location][customer] = (1 if self.distances[location][customer] <= distance_threshold else 0)
 
+        for customer in self.customers:
+            if sum([self.catalogs[location][customer] for location in self.locations]) == 0:
+                print('Warning: Targeted customer {} not covered by candidate locations'.format(customer))
+
         # Create rewards
         self.rewards = {}
         for period in self.periods:

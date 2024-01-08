@@ -5,7 +5,7 @@ import sys
 features = {
     'maps': ['ke', 'pa'],
     'periods': [6, 12],
-    'distances': [50, 100, 200],
+    'distances': [50, 100],
     'rewards': ['identical', 'inversely'],
     'demands': ['constant', 'seasonal']
 }
