@@ -55,6 +55,12 @@ def main():
     heuristic5 = hr.emulation(instance)
     metadata = heuristic5.solve('eml')
     record = rc.update_record(record, metadata)
+    try:
+        record['warm_objective']
+        if metadata['eml_objective'] > float(record['warm_objective']):
+            exit('Run everything again, EML gives warmest objevtive')
+    except Exception as e:
+        print('Exception: {}'.format(e))
     if metadata['eml_objective'] > warmest_objective:
         warmest_solution = metadata['eml_solution']
         warmest_objective = metadata['eml_objective']
