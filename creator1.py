@@ -8,7 +8,7 @@ features = {
     'periods': [10],
     'preferences': ['small', 'large'],
     'rewards': ['identical', 'inversely'],
-    'demands': ['constant', 'increasing', 'decreasing', 'bass', 'seasonal'],
+    'demands': ['constant', 'seasonal'],
     'characters': ['homogeneous', 'heterogeneous']
 }
 
