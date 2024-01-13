@@ -92,7 +92,7 @@ class slovakia(ic.instance):
         for period in self.periods:
             self.rewards[period] = {}
             for location in self.locations:
-                popularity = sum([self.catalogs[location][customer] for customer in self.customers])
+                popularity = sum(self.catalogs[location][customer] for customer in self.customers)
                 if self.parameters['rewards'] == 'identical':
                     coefficient = 1.
                 elif self.parameters['rewards'] == 'inversely':
