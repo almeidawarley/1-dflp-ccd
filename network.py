@@ -32,7 +32,7 @@ class network(fm.formulation):
         self.create_c2()
         self.create_c3()
         self.create_c4()
-        self.create_c5()
+        # self.create_c5()
 
     def create_vrx(self):
         # Create x^{kt}_{ij} variables
