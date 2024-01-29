@@ -1,64 +1,57 @@
 import pandas as pd
 import common as cm
 
-tolerance = 0.0001
-
 content = pd.read_csv('results/paper1/summary.csv')
 
-content['cold_lrz_optimal'] = content.apply(lambda row: cm.compare_obj(row['upper_bound'], row['cold_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
-content['cold_net_optimal'] = content.apply(lambda row: cm.compare_obj(row['upper_bound'], row['cold_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
-content['warm_lrz_optimal'] = content.apply(lambda row: cm.compare_obj(row['upper_bound'], row['warm_lrz_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
-content['warm_net_optimal'] = content.apply(lambda row: cm.compare_obj(row['upper_bound'], row['warm_net_objective']) and (row['cold_lrz_status'] == 2 or row['warm_lrz_status'] == 2 or row['warm_net_status'] == 2 or row['cold_net_status'] == 2), axis = 1)
+exact_approaches = ['cold_lrz', 'warm_lrz', 'cold_net', 'warm_net', 'cold_nlr', 'warm_nlr', 'bbd', 'bba', 'bsd', 'bsa']
 
-content = content.set_index('keyword')
+content['best_objective'] = content.apply(lambda row: max(row['{}_objective'.format(approach)] for approach in exact_approaches), axis = 1)
+content['best_optgap'] = content.apply(lambda row: min(row['{}_optgap'.format(approach)] for approach in exact_approaches), axis = 1)
+content['best_optimal'] = content.apply(lambda row: (row['best_optgap'] <= cm.TOLERANCE), axis = 1)
 
-benders = pd.read_csv('results/paper1/benders.csv')
-benders = benders.set_index('keyword')
-benders = benders.drop(['project', 'created', 'seed', 'locations', 'customers', 'periods', 'patronizing', 'rewards', 'replenishment', 'character', 'updated', 'commit', 'branch'], axis = 1)
+for approach in ['rnd', 'eml', 'frw', 'bcw', 'prg']:
+    content['{}_optgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['best_objective'], row['{}_objective'.format(approach)]), axis = 1)
 
-content = pd.concat([content, benders], axis = 1, join = 'inner')
-# content.to_csv('debugging.csv')
+for approach in exact_approaches:
+    content['{}_optimal'.format(approach)] = content.apply(lambda row: (row['{}_optgap'.format(approach)] <= cm.TOLERANCE), axis = 1)
+
+for approach in ['lrz', 'net']:
+    content['{}_intgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['rlx_{}_objective'.format(approach)], row['best_objective']), axis = 1)
+
+content.to_csv('debugging.csv')
 
 characteristics = {
-    'project': ['paper1'],
-    'locations': [10, 50, 100],
-    'periods': [5, 10],
-    'patronizing': ['small', 'medium', 'large'],
+    'periods': [10],
+    'locations': [50, 100],
+    'preferences': ['small', 'large'],
     'rewards': ['identical', 'inversely'],
-    'character': ['homogeneous', 'heterogeneous'],
-    'replenishment': ['absolute', 'relative', 'mixed']
+    'demands': ['constant', 'seasonal'],
+    'characters': ['homogeneous', 'heterogeneous']
 }
 
 labels = {
-    'project': {
-        'paper1': 'Complete benchmark'
-    },
     'periods': {
-        5: '5 time periods',
-        10: '10 time periods',
+        10: 'Full benchmark',
     },
     'locations': {
-        10: '10 locations/customers',
-        50: '50 locations/customers',
-        100: '100 locations/customers',
+        50: '50 locations',
+        100: '100 locations',
     },
-    'patronizing': {
-        'small': 'Small patronizing',
-        'medium': 'Medium patronizing',
-        'large': 'Large patronizing'
+    'preferences': {
+        'small': 'Small consideration',
+        'large': 'Large consideration'
     },
     'rewards':{
         'identical': 'Identical rewards',
         'inversely': 'Inversely rewards'
     },
-    'character': {
-        'homogeneous': 'Homogeneous customer',
-        'heterogeneous': 'Heterogeneous customer'
+    'demands': {
+        'constant': 'Constant demand',
+        'seasonal': 'Seasonal demand'
     },
-    'replenishment': {
-        'absolute': 'Absolute replenishment',
-        'relative': 'Relative replenishment',
-        'mixed': 'Mixed replenishment'
+    'characters': {
+        'homogeneous': 'Identical amplitudes',
+        'heterogeneous': 'Sampled amplitudes'
     }
 }
 
@@ -68,12 +61,17 @@ def table1(descriptor = 'paper'):
 
         for value in values:
 
-            filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
-
             if descriptor == 'paper':
-                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'cold_net_runtime'] # 'cold_nlr_runtime'
+                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'cold_net_runtime']
+                filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
+            elif descriptor == 'warmcold':
+                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'warm_lrz_runtime', 'cold_net_runtime', 'warm_net_runtime']
+                filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['warm_lrz_optimal'] == True) & (content['cold_net_optimal'] == True) & (content['warm_net_optimal'] == True)
+            elif descriptor == 'withnlr':
+                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'warm_lrz_runtime', 'cold_net_runtime', 'warm_net_runtime', 'cold_nlr_runtime', 'warm_nlr_runtime']
+                filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['warm_lrz_optimal'] == True) & (content['cold_net_optimal'] == True) & (content['warm_net_optimal'] == True) & (content['cold_nlr_optimal'] == True) & (content['warm_nlr_optimal'] == True)
             else:
-                exit('Wrong descriptor for table 2')
+                exit('Wrong descriptor for table 1')
 
             averages = {}
             deviations = {}
@@ -95,18 +93,52 @@ def table1(descriptor = 'paper'):
 
     print('**************************************************************************************************')
 
+def table1b(descriptor = 'paper'):
+
+    for characteristic, values in characteristics.items():
+
+        for value in values:
+
+            if descriptor == 'paper':
+                columns = ['cold_lrz_optgap', 'cold_net_optgap']
+                filter = (content[characteristic] == value) & ((content['cold_lrz_optimal'] == False) | (content['cold_net_optimal'] == False))
+            else:
+                exit('Wrong descriptor for table 1b')
+
+            averages = {}
+            deviations = {}
+            maximums = {}
+            feasibles = {}
+
+            for column in columns:
+                averages[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                deviations[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                # maximums[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                feasibles[column] = content[filter & (content[column] > cm.TOLERANCE)][column].count()
+
+            count = len(content[filter].index)
+
+            print('{}&{}&{}{}{}'.
+            format(labels[characteristic][value], count, '&'.join(['$[{}]\,{:.2f}\pm{:.2f}$'.format(feasibles[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+        print('\\midrule')
+
+    _ = input('table1b {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
 def table2(descriptor = 'paper'):
 
     for characteristic, values in characteristics.items():
 
         for value in values:
 
-            filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
+            filter = (content[characteristic] == value) & (content['best_optimal'] == True)
 
             if descriptor == 'paper':
-                columns = ['em1_optgap', 'em2_optgap', 'rnd_optgap', 'frw_optgap']
+                columns = ['eml_optgap', 'rnd_optgap', 'frw_optgap']
             else:
-                exit('Wrong descriptor for table 3')
+                exit('Wrong descriptor for table 2')
 
             averages = {}
             deviations = {}
@@ -134,14 +166,11 @@ def table3(descriptor = 'paper'):
 
         for value in values:
 
-            filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
-
             if descriptor == 'paper':
-                # columns = ['fix_optgap', 'frw_optgap', 'prg_optgap', 'bcw_optgap',]
-                columns = ['frw_optgap', 'prg_optgap', 'bcw_optgap',]
+                filter = (content[characteristic] == value) & (content['best_optimal'] == True)
+                columns = ['frw_optgap', 'bcw_optgap', 'prg_optgap']
             else:
-                exit('Wrong descriptor for table 4')
-
+                exit('Wrong descriptor for table 3')
 
             averages = {}
             deviations = {}
@@ -169,12 +198,15 @@ def table4(descriptor = 'paper'):
 
         for value in values:
 
-            # filter = (content[characteristic] == value) & (content['cold_lrz_optgap'] <= tolerance) & (content['cold_net_optgap'] <= tolerance) & (content['bds_optgap'] <= tolerance) & (content['bdl_optgap'] <= tolerance)
-            filter = (content[characteristic] == value) & (content['cold_lrz_optgap'] <= tolerance) & (content['cold_net_optgap'] <= tolerance) & (content['bdl_optgap'] <= tolerance)
-
             if descriptor == 'paper':
-                # columns = ['cold_lrz_runtime', 'cold_net_runtime', 'bds_runtime', 'bdl_runtime']
-                columns = ['cold_lrz_runtime', 'cold_net_runtime', 'bdl_runtime']
+                columns = ['cold_net_runtime', 'bbd_runtime', 'bba_runtime']
+                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
+            elif descriptor == 'duality':
+                columns = ['cold_net_runtime', 'bbd_runtime', 'bsd_runtime']
+                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bsd_optimal'] == True)
+            elif descriptor == 'analytical':
+                columns = ['cold_net_runtime', 'bba_runtime', 'bsa_runtime']
+                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bba_optimal'] == True) & (content['bsa_optimal'] == True)
             else:
                 exit('Wrong descriptor for table 4')
 
@@ -204,12 +236,9 @@ def table5(descriptor = 'paper'):
 
         for value in values:
 
-            # filter = (content[characteristic] == value) & ((content['cold_lrz_optgap'] > tolerance) | (content['cold_net_optgap'] > tolerance) | (content['bds_optgap'] > tolerance) | (content['bdl_optgap'] > tolerance))
-            filter = (content[characteristic] == value) & ((content['cold_lrz_optgap'] > tolerance) | (content['cold_net_optgap'] > tolerance) | (content['bdl_optgap'] > tolerance))
-
             if descriptor == 'paper':
-                # columns = ['cold_lrz_optgap', 'cold_net_optgap', 'bds_optgap', 'bdl_optgap']
-                columns = ['cold_lrz_optgap', 'cold_net_optgap', 'bdl_optgap']
+                columns = ['cold_net_optgap', 'bbd_optgap', 'bba_optgap']
+                filter = (content[characteristic] == value) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bba_optimal'] == False))
             else:
                 exit('Wrong descriptor for table 5')
 
@@ -219,10 +248,10 @@ def table5(descriptor = 'paper'):
             feasibles = {}
 
             for column in columns:
-                averages[column] = round(content[filter & (content[column] > tolerance)][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                deviations[column] = round(content[filter & (content[column] > tolerance)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                # maximums[column] = round(content[filter & (content[column] > tolerance)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                feasibles[column] = content[filter & (content[column] > tolerance)][column].count()
+                averages[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                deviations[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                # maximums[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                feasibles[column] = content[filter & (content[column] > cm.TOLERANCE)][column].count()
 
             count = len(content[filter].index)
 
@@ -308,9 +337,10 @@ def graph1(descriptor = 'paper'):
 
                 print('Exported graph to graphs/graph_{}_{}.tex'.format(characteristic, value))
 
-# table1('paper')
-# table2('paper')
-# table3('paper')
+table1('paper')
+table1b('paper')
+table2('paper')
+table3('paper')
 table4('paper')
 table5('paper')
 # graph1('paper')
