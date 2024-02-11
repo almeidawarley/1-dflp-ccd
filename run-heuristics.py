@@ -9,6 +9,7 @@ def main():
     parser = ap.ArgumentParser(description = 'Run relevant heuristics for some DSFLP-C instance')
     parser.add_argument('keyword', type = str, help = 'Instance keyword following established patterns')
     parser.add_argument('-p', '--project', default = 'dsflp-c', type = str, help = 'Instance project name')
+    parser.add_argument('-m', '--methods', default = '0', type = str, help = 'Method identification number')
     args = parser.parse_args()
 
     cm.mark_section('Generating instance parameters')
