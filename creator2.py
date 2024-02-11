@@ -23,12 +23,12 @@ commands = open('commands_{}_{}.sh'.format(script, project), 'w')
 
 counter = 0
 
-for map in features['maps']:
-    for periods in features['periods']:
-        for distance in features['distances']:
-            for rewards in features['rewards']:
-                for demands in features['demands']:
-                    for method in methods:
+for method in methods:
+    for map in features['maps']:
+        for periods in features['periods']:
+            for distance in features['distances']:
+                for rewards in features['rewards']:
+                    for demands in features['demands']:
 
                         parameters['seed'] = 0
                         parameters['map'] = map
