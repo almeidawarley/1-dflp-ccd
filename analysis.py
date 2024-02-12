@@ -31,7 +31,7 @@ characteristics = {
 
 labels = {
     'periods': {
-        10: 'Full benchmark',
+        10: 'Complete benchmark',
     },
     'locations': {
         50: '50 locations',
@@ -43,7 +43,7 @@ labels = {
     },
     'rewards':{
         'identical': 'Identical rewards',
-        'inversely': 'Inversely rewards'
+        'inversely': 'Different rewards'
     },
     'demands': {
         'constant': 'Constant demand',
@@ -93,7 +93,7 @@ def table1(descriptor = 'paper'):
 
     print('**************************************************************************************************')
 
-def table1b(descriptor = 'paper'):
+def table2(descriptor = 'paper'):
 
     for characteristic, values in characteristics.items():
 
@@ -103,7 +103,7 @@ def table1b(descriptor = 'paper'):
                 columns = ['cold_lrz_optgap', 'cold_net_optgap']
                 filter = (content[characteristic] == value) & ((content['cold_lrz_optimal'] == False) | (content['cold_net_optimal'] == False))
             else:
-                exit('Wrong descriptor for table 1b')
+                exit('Wrong descriptor for table 2')
 
             averages = {}
             deviations = {}
@@ -123,39 +123,6 @@ def table1b(descriptor = 'paper'):
 
         print('\\midrule')
 
-    _ = input('table1b {}'.format(descriptor))
-
-    print('**************************************************************************************************')
-
-def table2(descriptor = 'paper'):
-
-    for characteristic, values in characteristics.items():
-
-        for value in values:
-
-            filter = (content[characteristic] == value) & (content['best_optimal'] == True)
-
-            if descriptor == 'paper':
-                columns = ['eml_optgap', 'rnd_optgap', 'frw_optgap']
-            else:
-                exit('Wrong descriptor for table 2')
-
-            averages = {}
-            deviations = {}
-            maximums = {}
-
-            for column in columns:
-                averages[column] = round(content[filter][column].mean() * 100, 2)
-                deviations[column] = round(content[filter][column].std() * 100, 2)
-                # maximums[column] = round(content[filter][column].max() * 100, 2)
-
-            count = len(content[filter].index)
-
-            print('{}&{}&{}{}{}'.
-            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
-
-        print('\\midrule')
-
     _ = input('table2 {}'.format(descriptor))
 
     print('**************************************************************************************************')
@@ -166,9 +133,10 @@ def table3(descriptor = 'paper'):
 
         for value in values:
 
+            filter = (content[characteristic] == value) & (content['best_optimal'] == True)
+
             if descriptor == 'paper':
-                filter = (content[characteristic] == value) & (content['best_optimal'] == True)
-                columns = ['frw_optgap', 'bcw_optgap', 'prg_optgap']
+                columns = ['eml_optgap', 'rnd_optgap', 'frw_optgap', 'bcw_optgap', 'prg_optgap']
             else:
                 exit('Wrong descriptor for table 3')
 
@@ -268,14 +236,11 @@ def table5(descriptor = 'paper'):
 def graph1(descriptor = 'paper'):
 
     methods = {
-        'rnd' : 'orange',
+        'rnd' : 'gray',
         'frw' : 'red',
         'bcw' : 'blue',
         'prg' : 'olive',
-        'em1': 'pink',
-        #'fix' : 'gray',
-        'em2' : 'magenta',
-        'warm_lrz' : 'black'
+        'eml': 'orange'
     }
 
     for characteristic, values in characteristics.items():
@@ -309,11 +274,7 @@ def graph1(descriptor = 'paper'):
 
                     for x in range(1,101):
 
-                        if method == 'warm_lrz':
-                            prev_y = 100
-                            y = 100
-                        else:
-                            y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x/100)])/len(content[filter]))
+                        y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x/100)])/len(content[filter]))
                         output.write('\draw[color={}] ({},{})--({},{});'.format(color, prev_x/10, prev_y/10, x/10, y/10))
 
                         prev_x = x
@@ -321,15 +282,12 @@ def graph1(descriptor = 'paper'):
 
                 output.write('\n')
 
-                output.write('\draw[color=black!100] (10, 5.0) node[anchor=mid] {MIP};\n')
-                output.write('\draw[color=blue!100] (10, 4.5) node[anchor=mid] {BCW};\n')
-                output.write('\draw[color=olive!100] (10, 4.0) node[anchor=mid] {PRG};\n')
+                output.write('\draw[color=orange!100] (10, 4.5) node[anchor=mid] {DSFLP};\n')
+                output.write('\draw[color=gray!100] (10, 4.0) node[anchor=mid] {RND};\n')
                 output.write('\draw[color=red!100] (10, 3.5) node[anchor=mid] {FRW};\n')
-                output.write('\draw[color=orange!100] (10, 3.0) node[anchor=mid] {RND};\n')
-                output.write('\draw[color=gray!100] (10, 2.5) node[anchor=mid] {FIX};\n')
-                output.write('\draw[color=magenta!100] (10, 2.0) node[anchor=mid] {EML-$2$};\n')
-                output.write('\draw[color=pink!100] (10, 1.5) node[anchor=mid] {EML-$1$};\n')
-                output.write('\draw (9,5.5)--(11,5.5)--(11,1.0)--(9,1.0)--(9,5.5);\n')
+                output.write('\draw[color=olive!100] (10, 3.0) node[anchor=mid] {PRG};\n')
+                output.write('\draw[color=blue!100] (10, 2.5) node[anchor=mid] {BCW};\n')
+                output.write('\draw (9,5.0)--(11,5.0)--(11,2.0)--(9,2.0)--(9,5.0);\n')
 
                 output.write('\end{tikzpicture}\n')
                 # output.write('\caption{}Performance overview in terms of optimality gap of proposed heuristics for {}.{}\n'.format('{', labels[characteristic][value].lower(), '}'))
@@ -338,9 +296,8 @@ def graph1(descriptor = 'paper'):
                 print('Exported graph to graphs/graph_{}_{}.tex'.format(characteristic, value))
 
 table1('paper')
-table1b('paper')
 table2('paper')
 table3('paper')
 table4('paper')
 table5('paper')
-# graph1('paper')
+graph1('paper')
