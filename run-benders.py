@@ -44,13 +44,13 @@ def main():
 
     cm.mark_section('Solving with standard Benders')
 
-    if args.methods == '3' or args.methods == '0':
+    if args.methods == '0':
         cm.mark_section('Analytical subproblems')
         benders3 = bd.benders(instance, 'analytical')
         metadata = benders3.solve_std('bsa')
         record = rc.update_record(record, metadata)
 
-    if args.methods == '4' or args.methods == '0':
+    if args.methods == '0':
         cm.mark_section('Duality subproblems')
         benders4 = bd.benders(instance, 'duality')
         metadata = benders4.solve_std('bsd')

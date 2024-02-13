@@ -10,7 +10,7 @@ features = {
     'demands': ['constant', 'seasonal']
 }
 
-methods = [1,2,3,4]
+methods = [1,2]
 
 project = 'p1slovakia'
 

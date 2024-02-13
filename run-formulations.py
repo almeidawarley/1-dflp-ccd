@@ -24,8 +24,9 @@ def main():
     else:
         warm_solution = instance.empty_solution()
 
-    cm.mark_section('Solving the DSFLP-C-LRZ formulation')
-    formulation1 = og.linearized(instance)
+    if args.methods == '1' or args.methods == '0':
+        cm.mark_section('Solving the DSFLP-C-LRZ formulation')
+        formulation1 = og.linearized(instance)
 
     if args.methods == '1' or args.methods == '0':
         cm.mark_section('Cold MIP (i.e., without warm start)')
@@ -38,15 +39,16 @@ def main():
         metadata = formulation1.solve('warm_lrz')
         record = rc.update_record(record, metadata)
 
-    if args.methods == '2' or args.methods == '0':
+    if args.methods == '0':
         cm.mark_section('Linear programming relaxation bound')
         metadata = formulation1.bound('rlx_lrz')
         record = rc.update_record(record, metadata)
 
-    cm.mark_section('Solving the DSFLP-C-NET formulation')
-    formulation2 = nt.network(instance)
+    if args.methods == '2' or args.methods == '0':
+        cm.mark_section('Solving the DSFLP-C-NET formulation')
+        formulation2 = nt.network(instance)
 
-    if args.methods == '3' or args.methods == '0':
+    if args.methods == '2' or args.methods == '0':
         cm.mark_section('Cold MIP (i.e., without warm start)')
         metadata = formulation2.solve('cold_net')
         record = rc.update_record(record, metadata)
@@ -57,15 +59,15 @@ def main():
         metadata = formulation2.solve('warm_net')
         record = rc.update_record(record, metadata)
 
-    if args.methods == '4' or args.methods == '0':
+    if args.methods == '0':
         cm.mark_section('Linear programming relaxation bound')
         metadata = formulation2.bound('rlx_net')
         record = rc.update_record(record, metadata)
 
-    cm.mark_section('Solving the DSFLP-C-NLR formulation')
-    formulation3 = og.nonlinear(instance)
-
     if args.methods == '0':
+
+        cm.mark_section('Solving the DSFLP-C-NLR formulation')
+        formulation3 = og.nonlinear(instance)
 
         cm.mark_section('Cold MIP (i.e., without warm start)')
         metadata = formulation3.solve('cold_nlr')
