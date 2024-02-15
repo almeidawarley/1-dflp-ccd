@@ -86,7 +86,7 @@ class debugging(ic.instance):
         for period in self.periods:
             self.spawning[period] = {}
             for customer in self.customers:
-                self.spawning[period][customer] = 1. if period == 1 else 0.
+                self.spawning[period][customer] = 1.
 
     '''
         Create instance used for approximation proof
