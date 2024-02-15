@@ -87,6 +87,8 @@ def table1(descriptor = 'paper'):
             print('{}&{}&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
+            # print('Ratio {}: {}'.format(value, averages['lrz_intgap'] / averages['net_intgap']))
+
         print('\\midrule')
 
     _ = input('table1 {}'.format(descriptor))
@@ -186,6 +188,8 @@ def table4(descriptor = 'paper'):
                 averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+
+            # print('Ratio {}: {}'.format(value, averages['bbd_runtime'] / averages['bba_runtime']))
 
             count = len(content[filter].index)
 
