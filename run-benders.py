@@ -28,7 +28,8 @@ def main():
         incumbent = instance.empty_solution()
     '''
 
-    cm.mark_section('Solving with branch-and-Benders')
+    if args.methods == '1' or args.methods == '2' or args.methods == '0':
+        cm.mark_section('Solving with branch-and-Benders')
 
     if args.methods == '1' or args.methods == '0':
         cm.mark_section('Analytical subproblems')
@@ -42,7 +43,8 @@ def main():
         metadata = benders2.solve_bbc('bbd')
         record = rc.update_record(record, metadata)
 
-    cm.mark_section('Solving with standard Benders')
+    if args.methods == '0':
+        cm.mark_section('Solving with standard Benders')
 
     if args.methods == '0':
         cm.mark_section('Analytical subproblems')
