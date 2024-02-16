@@ -236,6 +236,39 @@ def table5(descriptor = 'paper'):
 
     print('**************************************************************************************************')
 
+def table6(descriptor = 'paper'):
+
+    for characteristic, values in characteristics.items():
+
+        for value in values:
+
+            if descriptor == 'paper':
+                columns = ['bbd_iterations', 'bba_iterations']
+                filter = (content[characteristic] == value) #& (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
+            else:
+                exit('Wrong descriptor for table 6')
+
+            averages = {}
+            deviations = {}
+            maximums = {}
+            feasibles = {}
+
+            for column in columns:
+                averages[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                deviations[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                # maximums[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+
+            count = len(content[filter].index)
+
+            print('{}&{}&{}{}{}'.
+            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+        print('\\midrule')
+
+    _ = input('table6 {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
 
 def graph1(descriptor = 'paper'):
 
@@ -305,3 +338,4 @@ table3('paper')
 table4('paper')
 table5('paper')
 graph1('paper')
+table6('paper')
