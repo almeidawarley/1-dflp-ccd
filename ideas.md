@@ -41,3 +41,6 @@ x~2_3_3_C = 1.0
 
 # 2nd project:
 
+compute and discuss Shapley values
+Bounded rationality >>> colaboration
+analyze how often pessimistic case would arise

@@ -7,6 +7,7 @@
 *.txt
 *.sh
 *.csv
+*.sol
 main.py
 things/*
 
