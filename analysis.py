@@ -111,17 +111,26 @@ def table2(descriptor = 'paper'):
             deviations = {}
             maximums = {}
             feasibles = {}
+            optimals = {}
 
+            '''
             for column in columns:
                 averages[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 deviations[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 # maximums[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 feasibles[column] = content[filter & (content[column] > cm.TOLERANCE)][column].count()
+            '''
+
+            for column in columns:
+                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                optimals[column] = content[filter & (content[column] <= cm.TOLERANCE)][column].count()
 
             count = len(content[filter].index)
 
             print('{}&{}&{}{}{}'.
-            format(labels[characteristic][value], count, '&'.join(['$[{}]\,{:.2f}\pm{:.2f}$'.format(feasibles[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+            format(labels[characteristic][value], count, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
 
@@ -138,7 +147,7 @@ def table3(descriptor = 'paper'):
             filter = (content[characteristic] == value) & (content['best_optimal'] == True)
 
             if descriptor == 'paper':
-                columns = ['eml_optgap', 'rnd_optgap', 'frw_optgap', 'bcw_optgap', 'prg_optgap']
+                columns = ['eml_optgap', 'rnd_optgap', 'frw_optgap', 'bcw_optgap'] #, 'prg_optgap']
             else:
                 exit('Wrong descriptor for table 3')
 
@@ -218,17 +227,26 @@ def table5(descriptor = 'paper'):
             deviations = {}
             maximums = {}
             feasibles = {}
+            optimals = {}
 
+            '''
             for column in columns:
                 averages[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 deviations[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 # maximums[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 feasibles[column] = content[filter & (content[column] > cm.TOLERANCE)][column].count()
+            '''
+
+            for column in columns:
+                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                optimals[column] = content[filter & (content[column] <= cm.TOLERANCE)][column].count()
 
             count = len(content[filter].index)
 
             print('{}&{}&{}{}{}'.
-            format(labels[characteristic][value], count, '&'.join(['$[{}]\,{:.2f}\pm{:.2f}$'.format(feasibles[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+            format(labels[characteristic][value], count, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
 
@@ -272,12 +290,20 @@ def table6(descriptor = 'paper'):
 
 def graph1(descriptor = 'paper'):
 
-    methods = {
+    methods = ['rnd', 'frw', 'bcw', 'eml']
+
+    colors = {
         'rnd' : 'gray',
-        'frw' : 'red',
-        'bcw' : 'blue',
-        'prg' : 'olive',
-        'eml': 'orange'
+        'frw' : 'blue',
+        'bcw' : 'orange',
+        'eml': 'red'
+    }
+
+    styles = {
+        'rnd' : 'dotted',
+        'frw' : 'dashdotted',
+        'bcw' : 'solid',
+        'eml': 'dashed'
     }
 
     for characteristic, values in characteristics.items():
@@ -295,7 +321,7 @@ def graph1(descriptor = 'paper'):
                 output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
 
                 output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-                output.write('\draw (10,0.5) node[anchor=mid] {optimality gap (\%)};\n')
+                output.write('\draw (9,0.5) node[anchor=mid] {opportunity gap (\%)};\n')
                 output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
                 for x in range(1,11):
@@ -304,27 +330,30 @@ def graph1(descriptor = 'paper'):
                     output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
 
 
-                for method, color in methods.items():
+                for method in methods:
 
                     prev_x = 0
                     prev_y = 0
 
-                    for x in range(1,101):
+                    for x in range(1,101,5):
 
                         y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x/100)])/len(content[filter]))
-                        output.write('\draw[color={}] ({},{})--({},{});'.format(color, prev_x/10, prev_y/10, x/10, y/10))
+                        output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x/10, prev_y/10, x/10, y/10))
 
                         prev_x = x
                         prev_y = y
 
                 output.write('\n')
 
-                output.write('\draw[color=orange!100] (10, 4.5) node[anchor=mid] {DSFLP};\n')
-                output.write('\draw[color=gray!100] (10, 4.0) node[anchor=mid] {RND};\n')
-                output.write('\draw[color=red!100] (10, 3.5) node[anchor=mid] {FRW};\n')
-                output.write('\draw[color=olive!100] (10, 3.0) node[anchor=mid] {PRG};\n')
-                output.write('\draw[color=blue!100] (10, 2.5) node[anchor=mid] {BCW};\n')
-                output.write('\draw (9,5.0)--(11,5.0)--(11,2.0)--(9,2.0)--(9,5.0);\n')
+                output.write('\draw[red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
+                output.write('\draw[red] (9.0, 3.5) node[anchor=west] {DSFLP};\n')
+                output.write('\draw[gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
+                output.write('\draw[gray] (9.0, 3.0) node[anchor=west] {RND};\n')
+                output.write('\draw[blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
+                output.write('\draw[blue] (9.0, 2.5) node[anchor=west] {FRW};\n')
+                output.write('\draw[orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
+                output.write('\draw[orange] (9.0, 2.0) node[anchor=west] {BCW};\n')
+                # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
 
                 output.write('\end{tikzpicture}\n')
                 # output.write('\caption{}Performance overview in terms of optimality gap of proposed heuristics for {}.{}\n'.format('{', labels[characteristic][value].lower(), '}'))
