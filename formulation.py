@@ -54,6 +54,9 @@ class formulation:
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION)
         }
 
+        # self.mip.write('relaxed-{}.lp'.format(label))
+        # self.mip.write('relaxed-{}.sol'.format(label))
+
         self.mip.reset()
 
         for period in self.ins.periods:

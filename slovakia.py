@@ -1,6 +1,7 @@
 import instance as ic
 import pandas as pd
 import numpy as np
+import networkx as nx
 import json as js
 
 class slovakia(ic.instance):
@@ -55,33 +56,60 @@ class slovakia(ic.instance):
                 self.amplitudes[customer] = row['residential_population']
 
         self.distances = {}
-        for customer1 in self.customers:
-            self.distances[customer1] = {}
-            for customer2 in self.customers:
-                self.distances[customer1][customer2] = 0.
+        if self.parameters['map'] in ['pa', 'ke']:
+            for location in self.locations:
+                self.distances[location] = {}
+                for customer in self.customers:
+                    self.distances[location][customer] = 0.
+            with open ('{}/csv/Dmatrix.txt'.format(folder), 'r') as content:
+                content.readline()
+                content.readline()
+                customer1 = 1
+                customer2 = 1
+                for line in content:
+                    try:
+                        self.distances[str(customer1)][str(customer2)] = float(line.strip())
+                    except:
+                        pass
+                    customer2 += 1
+                    if customer2 == len(self.customers) + 1:
+                        customer2 = 1
+                        customer1 += 1
 
-        with open ('{}/csv/Dmatrix.txt'.format(folder), 'r') as content:
-            content.readline()
-            content.readline()
-            customer1 = 1
-            customer2 = 1
-            for line in content:
-                try:
-                    self.distances[str(customer1)][str(customer2)] = float(line.strip())
-                except:
-                    pass
-                customer2 += 1
-                if customer2 == len(self.customers) + 1:
-                    customer2 = 1
-                    customer1 += 1
+        elif self.parameters['map'] in ['sr', 'za']:
+            graph = nx.DiGraph()
+            with open ('{}/csv/nodes.csv'.format(folder), 'r') as content:
+                content.readline()
+                for line in content:
+                    node, _, _, _, _ = line.strip().split(',')
+                    graph.add_node(customer)
+            with open ('{}/csv/edges.csv'.format(folder), 'r') as content:
+                content.readline()
+                for line in content:
+                    origin, destination, distance, _, direction, _ = line.strip().split(',')
+                    graph.add_edge(origin, destination, weight = distance)
+                    if direction != 'yes':
+                        graph.add_edge(destination, origin, weight = distance)
+            for location in self.locations:
+                self.distances[location] = {}
+                print('location: {} / {}'.format(location, self.locations))
+                for customer in self.customers:
+                    try:
+                        self.distances[location][customer] = nx.shortest_path_length(graph, source = customer, target = location, method='dijkstra')
+                    except Exception as e:
+                        print(e, end = '_')
+                        self.distances[location][customer] = 10**10
+        else:
+            exit('Wrong value for map parameter')
 
         # Create catalogs
         self.catalogs = {}
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                # self.catalogs[location][customer] = np.random.choice([0, 1], p = [0.05, 0.95]) * (1 if self.distances[location][customer] <= distance_threshold else 0)
-                self.catalogs[location][customer] = (1 if self.distances[location][customer] <= distance_threshold else 0)
+                # print( self.distances[location][customer])
+                self.catalogs[location][customer] = np.random.choice([0, 1], p = [0.05, 0.95]) * (1 if self.distances[location][customer] <= distance_threshold else 0)
+                # self.catalogs[location][customer] = (1 if self.distances[location][customer] <= distance_threshold else 0)
 
         for customer in self.customers:
             if sum([self.catalogs[location][customer] for location in self.locations]) == 0:
