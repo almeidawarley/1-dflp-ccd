@@ -306,65 +306,205 @@ def graph1(descriptor = 'paper'):
         'eml': 'dashed'
     }
 
-    for characteristic, values in characteristics.items():
+    filter = (content['periods'] == 10)
 
-        for value in values:
+    with open ('graphs/heuristic.tex', 'w') as output:
 
-            # filter = (content['project'] == 'paper1')
-            filter = (content[characteristic] == value)
+        # output.write('\\begin{figure}[!ht]\n\centering\n')
+        output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
+        output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
+        output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
 
-            with open ('graphs/graph1_{}_{}.tex'.format(characteristic, value), 'w') as output:
+        output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
+        output.write('\draw (9,0.5) node[anchor=mid] {opportunity gap (\%)};\n')
+        output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
-                # output.write('\\begin{figure}[!ht]\n\centering\n')
-                output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
-                output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
-                output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
-
-                output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-                output.write('\draw (9,0.5) node[anchor=mid] {opportunity gap (\%)};\n')
-                output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
-
-                for x in range(1,11):
-                    output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x, '{$', x * 10,'$}'))
-                for y in range(1,11):
-                    output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
+        for x in range(1,11):
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x, '{$', x * 10,'$}'))
+        for y in range(1,11):
+            output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
 
 
-                for method in methods:
+        for method in methods:
 
-                    prev_x = 0
-                    prev_y = 0
+            prev_x = 0
+            prev_y = 0
 
-                    for x in range(1,101,5):
+            for x in range(1,102,5):
 
-                        y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x/100)])/len(content[filter]))
-                        output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x/10, prev_y/10, x/10, y/10))
+                y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x/100)])/len(content[filter]))
+                output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x/10, prev_y/10, x/10, y/10))
 
-                        prev_x = x
-                        prev_y = y
+                prev_x = x
+                prev_y = y
 
-                output.write('\n')
+        output.write('\n')
 
-                output.write('\draw[red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
-                output.write('\draw[red] (9.0, 3.5) node[anchor=west] {DSFLP};\n')
-                output.write('\draw[gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
-                output.write('\draw[gray] (9.0, 3.0) node[anchor=west] {RND};\n')
-                output.write('\draw[blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
-                output.write('\draw[blue] (9.0, 2.5) node[anchor=west] {FRW};\n')
-                output.write('\draw[orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
-                output.write('\draw[orange] (9.0, 2.0) node[anchor=west] {BCW};\n')
-                # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
+        output.write('\draw[red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
+        output.write('\draw[red] (9.0, 3.5) node[anchor=west] {DSFLP};\n')
+        output.write('\draw[gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
+        output.write('\draw[gray] (9.0, 3.0) node[anchor=west] {RND};\n')
+        output.write('\draw[blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
+        output.write('\draw[blue] (9.0, 2.5) node[anchor=west] {FRW};\n')
+        output.write('\draw[orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
+        output.write('\draw[orange] (9.0, 2.0) node[anchor=west] {BCW};\n')
+        # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
 
-                output.write('\end{tikzpicture}\n')
-                # output.write('\caption{}Performance overview in terms of optimality gap of proposed heuristics for {}.{}\n'.format('{', labels[characteristic][value].lower(), '}'))
-                # output.write('\end{figure}')
+        output.write('\end{tikzpicture}\n')
+        # output.write('\caption{}Performance overview in terms of optimality gap of proposed heuristics for {}.{}\n'.format('{', labels[characteristic][value].lower(), '}'))
+        # output.write('\end{figure}')
 
-                print('Exported graph to graphs/graph_{}_{}.tex'.format(characteristic, value))
+        print('Exported graph to graphs/heuristic.tex')
 
+def graph2(descriptor = 'paper'):
+
+    methods = ['cold_lrz', 'cold_net', 'bbd', 'bba']
+
+    colors = {
+        'cold_lrz' : 'red',
+        'cold_net' : 'gray',
+        'bbd': 'blue',
+        'bba' : 'orange'
+    }
+
+    styles = {
+        'cold_lrz' : 'dashed',
+        'cold_net' : 'dotted',
+        'bbd': 'dashdotted',
+        'bba' : 'solid'
+    }
+
+    filter = (content['periods'] == 10) # & (content['best_optgap'] > cm.TOLERANCE)
+
+    with open ('graphs/formulations.tex', 'w') as output:
+
+        # output.write('\\begin{figure}[!ht]\n\centering\n')
+        output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
+        output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
+        output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
+
+        output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
+        output.write('\draw (9,0.5) node[anchor=mid] {optimality gap (\%)};\n')
+        output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
+
+        for x in range(1,11):
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x, '{$', x * 10,'$}'))
+        for y in range(1,11):
+            output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
+
+
+        for method in methods:
+
+            prev_x = 0
+            prev_y = 0
+
+            for x in range(1,102,5):
+
+                y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x/100)])/len(content[filter]))
+                output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x/10, prev_y/10, x/10, y/10))
+
+                prev_x = x
+                prev_y = y
+
+        output.write('\n')
+
+        output.write('\draw[red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
+        output.write('\draw[red] (9.0, 3.5) node[anchor=west] {GRB-$F1$};\n')
+        output.write('\draw[gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
+        output.write('\draw[gray] (9.0, 3.0) node[anchor=west] {GRB-$F2$};\n')
+        output.write('\draw[blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
+        output.write('\draw[blue] (9.0, 2.5) node[anchor=west] {BDS-$D$};\n')
+        output.write('\draw[orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
+        output.write('\draw[orange] (9.0, 2.0) node[anchor=west] {BDS-$A$};\n')
+        # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
+
+        output.write('\end{tikzpicture}\n')
+        # output.write('\caption{}Performance overview in terms of optimality gap of proposed heuristics for {}.{}\n'.format('{', labels[characteristic][value].lower(), '}'))
+        # output.write('\end{figure}')
+
+        print('Exported graph to graphs/formulations.tex')
+
+def graph3(descriptor = 'paper'):
+
+    methods = ['cold_lrz', 'cold_net', 'bbd', 'bba']
+
+    colors = {
+        'cold_lrz' : 'red',
+        'cold_net' : 'gray',
+        'bbd': 'blue',
+        'bba' : 'orange'
+    }
+
+    styles = {
+        'cold_lrz' : 'dashed',
+        'cold_net' : 'dotted',
+        'bbd': 'dashdotted',
+        'bba' : 'solid'
+    }
+
+    filter = (content['periods'] == 10)
+
+    with open ('graphs/runtime.tex', 'w') as output:
+
+        # output.write('\\begin{figure}[!ht]\n\centering\n')
+        output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
+        output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
+        output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
+
+        output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
+        output.write('\draw (9,0.5) node[anchor=mid] {time limit (\%)};\n')
+        output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
+
+        for x in range(1,11):
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x, '{$', x * 10,'$}'))
+        for y in range(1,11):
+            output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
+
+
+        for method in methods:
+
+            prev_x = 0
+            prev_y = 0
+
+            for x in range(1,102,5):
+
+                y = int(100 * len(content[filter & (content['best_optgap'] <= cm.TOLERANCE) & (content['{}_runtime'.format(method)] <= (x/100) * 5 * 60 * 60)])/len(content[filter]))
+                output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x/10, prev_y/10, x/10, y/10))
+
+                prev_x = x
+                prev_y = y
+
+        output.write('\n')
+
+        output.write('\draw[red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
+        output.write('\draw[red] (9.0, 3.5) node[anchor=west] {GRB-$F1$};\n')
+        output.write('\draw[gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
+        output.write('\draw[gray] (9.0, 3.0) node[anchor=west] {GRB-$F2$};\n')
+        output.write('\draw[blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
+        output.write('\draw[blue] (9.0, 2.5) node[anchor=west] {BDS-$D$};\n')
+        output.write('\draw[orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
+        output.write('\draw[orange] (9.0, 2.0) node[anchor=west] {BDS-$A$};\n')
+        # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
+
+        output.write('\end{tikzpicture}\n')
+        # output.write('\caption{}Performance overview in terms of optimality gap of proposed heuristics for {}.{}\n'.format('{', labels[characteristic][value].lower(), '}'))
+        # output.write('\end{figure}')
+
+        print('Exported graph to graphs/runtime.tex')
+
+
+'''
 table1('paper')
 table2('paper')
 table3('paper')
 table4('paper')
 table5('paper')
-graph1('paper')
 table6('paper')
+'''
+graph1('paper')
+graph2('paper')
+graph3('paper')
+
+
+# filter = (content['locations'] == 50) & ((content['cold_lrz_optimal'] == False) | (content['cold_net_optimal'] == False))
+# content[filter].to_csv('debugging.csv')
