@@ -18,6 +18,19 @@ for approach in exact_approaches:
 for approach in ['lrz', 'net']:
     content['{}_intgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['rlx_{}_objective'.format(approach)], row['best_objective']), axis = 1)
 
+exact_approaches = ['cold_lrz', 'cold_net', 'bbd', 'bba']
+
+content['refr_objective'] = content.apply(lambda row: max(row['{}_objective'.format(approach)] for approach in exact_approaches), axis = 1)
+content['refr_runtime'] = content.apply(lambda row: min(row['{}_runtime'.format(approach)] for approach in exact_approaches), axis = 1)
+
+for approach in exact_approaches:
+    # content['{}_ratio_objective'.format(approach)] = content['refr_objective'] / content['{}_objective'.format(approach)]
+    # content['{}_ratio_runtime'.format(approach)] = content['{}_runtime'.format(approach)] / content['refr_runtime']
+    content['{}_ratio_objective'.format(approach)] = content.apply(lambda row: round(row['refr_objective'] / row['{}_objective'.format(approach)], 3), axis = 1)
+    content['{}_ratio_runtime'.format(approach)] = content.apply(lambda row: round(row['{}_runtime'.format(approach)] / row['refr_runtime'], 3), axis = 1)
+
+# content[((content['bba_ratio_runtime'] <= 4) & (content['bbd_ratio_runtime'] > 4)) | ((content['bbd_ratio_runtime'] <= 4) & (content['bba_ratio_runtime'] > 4))].to_csv('filtered.csv')
+
 content.to_csv('debugging.csv')
 
 characteristics = {
@@ -315,13 +328,13 @@ def graph1(descriptor = 'paper'):
         output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
         output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
 
-        output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
+        # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
         output.write('\draw (9,0.5) node[anchor=mid] {opportunity gap (\%)};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
-        for x in range(1,11):
+        for x in range(0,11):
             output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x, '{$', x * 10,'$}'))
-        for y in range(1,11):
+        for y in range(0,11):
             output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
 
 
@@ -376,32 +389,32 @@ def graph2(descriptor = 'paper'):
 
     filter = (content['periods'] == 10) # & (content['best_optgap'] > cm.TOLERANCE)
 
-    with open ('graphs/formulations.tex', 'w') as output:
+    with open ('graphs/objectives.tex', 'w') as output:
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
         output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
         output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
 
-        output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9,0.5) node[anchor=mid] {optimality gap (\%)};\n')
+        # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
+        output.write('\draw (9,0.5) node[anchor=mid] {objective ratio};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
-        for x in range(1,11):
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x, '{$', x * 10,'$}'))
-        for y in range(1,11):
+        for x in range(0,11):
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x - 1, '{$', str(x) + '0^{-3}','$}'))
+        for y in range(0,11):
             output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
 
 
         for method in methods:
 
-            prev_x = 0
-            prev_y = 0
+            prev_x = 1
+            prev_y = int(100 * len(content[filter & (content['{}_ratio_objective'.format(method)] <= (prev_x + 10**3)/ 10**3)])/len(content[filter]))
 
-            for x in range(1,102,5):
+            for x in range(1,11,1):
 
-                y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x/100)])/len(content[filter]))
-                output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x/10, prev_y/10, x/10, y/10))
+                y = int(100 * len(content[filter & (content['{}_ratio_objective'.format(method)] <= (x + 10**3)/ 10**3)])/len(content[filter]))
+                output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x - 1, prev_y/10, x - 1, y/10))
 
                 prev_x = x
                 prev_y = y
@@ -422,7 +435,7 @@ def graph2(descriptor = 'paper'):
         # output.write('\caption{}Performance overview in terms of optimality gap of proposed heuristics for {}.{}\n'.format('{', labels[characteristic][value].lower(), '}'))
         # output.write('\end{figure}')
 
-        print('Exported graph to graphs/formulations.tex')
+        print('Exported graph to graphs/objectives.tex')
 
 def graph3(descriptor = 'paper'):
 
@@ -451,25 +464,25 @@ def graph3(descriptor = 'paper'):
         output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
         output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
 
-        output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9,0.5) node[anchor=mid] {time limit (\%)};\n')
+        # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
+        output.write('\draw (9,0.5) node[anchor=mid] {time ratio};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
-        for x in range(1,11):
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x, '{$', x * 10,'$}'))
-        for y in range(1,11):
+        for x in range(0,11):
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x - 1, '{$', x,'$}'))
+        for y in range(0,11):
             output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
 
 
         for method in methods:
 
-            prev_x = 0
-            prev_y = 0
+            prev_x = 1
+            prev_y = int(100 * len(content[filter & (content['{}_ratio_runtime'.format(method)] <= prev_x)])/len(content[filter]))
 
-            for x in range(1,102,5):
+            for x in range(1,11,1):
 
-                y = int(100 * len(content[filter & (content['best_optgap'] <= cm.TOLERANCE) & (content['{}_runtime'.format(method)] <= (x/100) * 5 * 60 * 60)])/len(content[filter]))
-                output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x/10, prev_y/10, x/10, y/10))
+                y = int(100 * len(content[filter & (content['{}_ratio_runtime'.format(method)] <= x)])/len(content[filter]))
+                output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x - 1, prev_y/10, x - 1, y/10))
 
                 prev_x = x
                 prev_y = y
