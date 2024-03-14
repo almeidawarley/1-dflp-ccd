@@ -109,3 +109,20 @@ class formulation:
             ),
             name = 'c1'
         )
+
+    def create_si(self):
+        # Create strong? inequality
+
+        self.mip.addConstrs(
+            (
+                sum(
+                    self.var['y'][local, location]
+                    for local in range(period, period + length)
+                    if local < self.ins.finish
+                ) <= length - 1
+                for period in self.ins.periods
+                for location in self.ins.locations
+                for length in range(2, 3)# len(self.ins.periods))
+            ),
+            name = 'si'
+        )

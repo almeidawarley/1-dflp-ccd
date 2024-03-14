@@ -397,11 +397,11 @@ def graph2(descriptor = 'paper'):
         output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9,0.5) node[anchor=mid] {objective ratio};\n')
+        output.write('\draw (9,0.5) node[anchor=mid] {objective ratio ($10^{-3}$)};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
         for x in range(0,11):
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x - 1, '{$', str(x) + '0^{-3}','$}'))
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x - 1, '{$', x,'$}'))
         for y in range(0,11):
             output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
 
@@ -465,7 +465,7 @@ def graph3(descriptor = 'paper'):
         output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9,0.5) node[anchor=mid] {time ratio};\n')
+        output.write('\draw (9,0.5) node[anchor=mid] {time ratio ($10^{0}$)};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
         for x in range(0,11):
