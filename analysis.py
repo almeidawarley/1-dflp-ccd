@@ -3,7 +3,8 @@ import common as cm
 
 content = pd.read_csv('results/paper1/summary.csv')
 
-exact_approaches = ['cold_lrz', 'warm_lrz', 'cold_net', 'warm_net', 'cold_nlr', 'warm_nlr', 'bbd', 'bba', 'bsd', 'bsa']
+# exact_approaches = ['cold_lrz', 'warm_lrz', 'cold_net', 'warm_net', 'cold_nlr', 'warm_nlr', 'bbd', 'bba', 'bsd', 'bsa']
+exact_approaches = ['cold_lrz', 'cold_net', 'bbd', 'bba']
 
 content['best_objective'] = content.apply(lambda row: max(row['{}_objective'.format(approach)] for approach in exact_approaches), axis = 1)
 content['best_optgap'] = content.apply(lambda row: min(row['{}_optgap'.format(approach)] for approach in exact_approaches), axis = 1)
@@ -17,8 +18,6 @@ for approach in exact_approaches:
 
 for approach in ['lrz', 'net']:
     content['{}_intgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['rlx_{}_objective'.format(approach)], row['best_objective']), axis = 1)
-
-exact_approaches = ['cold_lrz', 'cold_net', 'bbd', 'bba']
 
 content['refr_objective'] = content.apply(lambda row: max(row['{}_objective'.format(approach)] for approach in exact_approaches), axis = 1)
 content['refr_runtime'] = content.apply(lambda row: min(row['{}_runtime'.format(approach)] for approach in exact_approaches), axis = 1)
@@ -47,12 +46,12 @@ labels = {
         10: 'Complete benchmark',
     },
     'locations': {
-        50: '50 locations',
-        100: '100 locations',
+        50: '50 locations / customers',
+        100: '100 locations / customers',
     },
     'preferences': {
-        'small': 'Small consideration',
-        'large': 'Large consideration'
+        'small': 'Small consideration sets',
+        'large': 'Large consideration sets'
     },
     'rewards':{
         'identical': 'Identical rewards',
@@ -455,7 +454,7 @@ def graph3(descriptor = 'paper'):
         'bba' : 'solid'
     }
 
-    filter = (content['periods'] == 10)
+    filter = (content['periods'] == 10) # & abs((content['best_objective'] - content['bba_objective']) <= cm.TOLERANCE)
 
     with open ('graphs/runtime.tex', 'w') as output:
 
@@ -505,15 +504,12 @@ def graph3(descriptor = 'paper'):
 
         print('Exported graph to graphs/runtime.tex')
 
-
-'''
 table1('paper')
 table2('paper')
 table3('paper')
 table4('paper')
 table5('paper')
 table6('paper')
-'''
 graph1('paper')
 graph2('paper')
 graph3('paper')
