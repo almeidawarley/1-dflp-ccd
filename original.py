@@ -95,6 +95,7 @@ class nonlinear(original):
         self.create_c3()
         self.create_c4()
         self.create_c5()
+        self.create_si()
 
     def create_vrw(self):
         # Create w^{t}_{j} variables
