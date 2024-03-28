@@ -33,11 +33,13 @@ def main():
         metadata = formulation1.solve('cold_lrz')
         record = rc.update_record(record, metadata)
 
+    '''
     if args.methods == '0':
         cm.mark_section('Warm MIP (i.e., with a warm start)')
         formulation1.heaten(warm_solution)
         metadata = formulation1.solve('warm_lrz')
         record = rc.update_record(record, metadata)
+    '''
 
     if args.methods == '0':
         cm.mark_section('Linear programming relaxation bound')
@@ -53,17 +55,20 @@ def main():
         metadata = formulation2.solve('cold_net')
         record = rc.update_record(record, metadata)
 
+    '''
     if args.methods == '0':
         cm.mark_section('Warm MIP (i.e., with a warm start)')
         formulation2.heaten(warm_solution)
         metadata = formulation2.solve('warm_net')
         record = rc.update_record(record, metadata)
+    '''
 
     if args.methods == '0':
         cm.mark_section('Linear programming relaxation bound')
         metadata = formulation2.bound('rlx_net')
         record = rc.update_record(record, metadata)
 
+    '''
     if args.methods == '0':
 
         cm.mark_section('Solving the DSFLP-C-NLR formulation')
@@ -85,6 +90,7 @@ def main():
     if args.methods == '0':
         for approach in ['lrz', 'nlr', 'net']:
             print('> {} formulation: {} [{}]'.format(approach.upper(), record['cold_{}_objective'.format(approach)], record['cold_{}_solution'.format(approach)]))
+    '''
 
 if __name__ == '__main__':
 

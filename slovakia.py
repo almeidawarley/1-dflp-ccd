@@ -1,7 +1,7 @@
 import instance as ic
 import pandas as pd
 import numpy as np
-import networkx as nx
+# import networkx as nx
 import json as js
 
 class slovakia(ic.instance):

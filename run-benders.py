@@ -43,6 +43,7 @@ def main():
         metadata = benders2.solve_bbc('bbd')
         record = rc.update_record(record, metadata)
 
+    '''
     if args.methods == '0':
         cm.mark_section('Solving with standard Benders')
 
@@ -61,6 +62,7 @@ def main():
     if args.methods == '0':
         for approach in ['bba', 'bbd', 'bsa', 'bsd']:
             print('> {} approach: {} <{}> [{}]'.format(approach.upper(), record['{}_objective'.format(approach)], record['{}_runtime'.format(approach)], record['{}_solution'.format(approach)]))
+    '''
 
 if __name__ == '__main__':
 
