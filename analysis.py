@@ -1,5 +1,6 @@
 import pandas as pd
 import common as cm
+import matplotlib.pyplot as plt
 
 content = pd.read_csv('results/paper1/summary.csv')
 
@@ -50,8 +51,8 @@ labels = {
         100: '100 locations / customers',
     },
     'preferences': {
-        'small': 'Small consideration sets',
-        'large': 'Large consideration sets'
+        'small': 'Small choice sets',
+        'large': 'Large choice sets'
     },
     'rewards':{
         'identical': 'Identical rewards',
@@ -94,9 +95,9 @@ def table1(descriptor = 'paper'):
                 deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
 
-            count = len(content[filter].index)
+            count = 100 * len(content[filter].index) / len(content.index)
 
-            print('{}&{}&{}{}{}'.
+            print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
             # print('Ratio {}: {}'.format(value, averages['lrz_intgap'] / averages['net_intgap']))
@@ -139,9 +140,9 @@ def table2(descriptor = 'paper'):
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 optimals[column] = content[filter & (content[column] <= cm.TOLERANCE)][column].count()
 
-            count = len(content[filter].index)
+            count = 100 * len(content[filter].index) / len(content.index)
 
-            print('{}&{}&{}{}{}'.
+            print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
@@ -172,9 +173,9 @@ def table3(descriptor = 'paper'):
                 deviations[column] = round(content[filter][column].std() * 100, 2)
                 # maximums[column] = round(content[filter][column].max() * 100, 2)
 
-            count = len(content[filter].index)
+            count = 100 * len(content[filter].index) / len(content.index)
 
-            print('{}&{}&{}{}{}'.
+            print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
@@ -192,6 +193,8 @@ def table4(descriptor = 'paper'):
             if descriptor == 'paper':
                 columns = ['cold_net_runtime', 'bbd_runtime', 'bba_runtime']
                 filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
+                # columns = ['bbd_runtime', 'bba_runtime']
+                # filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
             elif descriptor == 'duality':
                 columns = ['cold_net_runtime', 'bbd_runtime', 'bsd_runtime']
                 filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bsd_optimal'] == True)
@@ -212,9 +215,9 @@ def table4(descriptor = 'paper'):
 
             # print('Ratio {}: {}'.format(value, averages['bbd_runtime'] / averages['bba_runtime']))
 
-            count = len(content[filter].index)
+            count = 100 * len(content[filter].index) / len(content.index)
 
-            print('{}&{}&{}{}{}'.
+            print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
@@ -232,6 +235,8 @@ def table5(descriptor = 'paper'):
             if descriptor == 'paper':
                 columns = ['cold_net_optgap', 'bbd_optgap', 'bba_optgap']
                 filter = (content[characteristic] == value) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bba_optimal'] == False))
+                # columns = ['bbd_optgap', 'bba_optgap']
+                # filter = (content[characteristic] == value) & ((content['bbd_optimal'] == False) | (content['bba_optimal'] == False))
             else:
                 exit('Wrong descriptor for table 5')
 
@@ -255,9 +260,9 @@ def table5(descriptor = 'paper'):
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 optimals[column] = content[filter & (content[column] <= cm.TOLERANCE)][column].count()
 
-            count = len(content[filter].index)
+            count = 100 * len(content[filter].index) / len(content.index)
 
-            print('{}&{}&{}{}{}'.
+            print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
@@ -274,7 +279,7 @@ def table6(descriptor = 'paper'):
 
             if descriptor == 'paper':
                 columns = ['bbd_iterations', 'bba_iterations']
-                filter = (content[characteristic] == value) #& (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
+                filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
             else:
                 exit('Wrong descriptor for table 6')
 
@@ -288,9 +293,9 @@ def table6(descriptor = 'paper'):
                 deviations[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 # maximums[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
 
-            count = len(content[filter].index)
+            count = 100 * len(content[filter].index) / len(content.index)
 
-            print('{}&{}&{}{}{}'.
+            print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
@@ -324,8 +329,8 @@ def graph1(descriptor = 'paper'):
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
-        output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
-        output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (10.5,0);\n')
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,10.5);\n')
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
         output.write('\draw (9,0.5) node[anchor=mid] {opportunity gap (\%)};\n')
@@ -345,21 +350,21 @@ def graph1(descriptor = 'paper'):
             for x in range(1,102,5):
 
                 y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x/100)])/len(content[filter]))
-                output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x/10, prev_y/10, x/10, y/10))
+                output.write('\draw[line width=0.5mm,{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x/10, prev_y/10, x/10, y/10))
 
                 prev_x = x
                 prev_y = y
 
         output.write('\n')
 
-        output.write('\draw[red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
-        output.write('\draw[red] (9.0, 3.5) node[anchor=west] {DSFLP};\n')
-        output.write('\draw[gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
-        output.write('\draw[gray] (9.0, 3.0) node[anchor=west] {RND};\n')
-        output.write('\draw[blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
-        output.write('\draw[blue] (9.0, 2.5) node[anchor=west] {FRW};\n')
-        output.write('\draw[orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
-        output.write('\draw[orange] (9.0, 2.0) node[anchor=west] {BCW};\n')
+        output.write('\draw[line width=0.5mm,red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
+        output.write('\draw[line width=0.5mm,red] (9.0, 3.5) node[anchor=west] {DSFLP};\n')
+        output.write('\draw[line width=0.5mm,gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
+        output.write('\draw[line width=0.5mm,gray] (9.0, 3.0) node[anchor=west] {RND};\n')
+        output.write('\draw[line width=0.5mm,blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
+        output.write('\draw[line width=0.5mm,blue] (9.0, 2.5) node[anchor=west] {FRW};\n')
+        output.write('\draw[line width=0.5mm,orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
+        output.write('\draw[line width=0.5mm,orange] (9.0, 2.0) node[anchor=west] {BCW};\n')
         # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
 
         output.write('\end{tikzpicture}\n')
@@ -392,42 +397,43 @@ def graph2(descriptor = 'paper'):
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
-        output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
-        output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (10.5,0);\n')
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,10.5);\n')
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
+        output.write('\draw (-1,-0.5) node[anchor=mid] {$(+1)$};\n')
         output.write('\draw (9,0.5) node[anchor=mid] {objective ratio ($10^{-3}$)};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
         for x in range(0,11):
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x - 1, '{$', x,'$}'))
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x, '{$', x,'$}'))
         for y in range(0,11):
-            output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
+            output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', 90 + y,'$}'))
 
 
         for method in methods:
 
-            prev_x = 1
+            prev_x = 0
             prev_y = int(100 * len(content[filter & (content['{}_ratio_objective'.format(method)] <= (prev_x + 10**3)/ 10**3)])/len(content[filter]))
 
             for x in range(1,11,1):
 
                 y = int(100 * len(content[filter & (content['{}_ratio_objective'.format(method)] <= (x + 10**3)/ 10**3)])/len(content[filter]))
-                output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x - 1, prev_y/10, x - 1, y/10))
+                output.write('\draw[line width=0.5mm,line width=0.5mm,{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x, (prev_y - 90), x, (y - 90)))
 
                 prev_x = x
                 prev_y = y
 
         output.write('\n')
 
-        output.write('\draw[red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
-        output.write('\draw[red] (9.0, 3.5) node[anchor=west] {GRB-$F1$};\n')
-        output.write('\draw[gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
-        output.write('\draw[gray] (9.0, 3.0) node[anchor=west] {GRB-$F2$};\n')
-        output.write('\draw[blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
-        output.write('\draw[blue] (9.0, 2.5) node[anchor=west] {BDS-$D$};\n')
-        output.write('\draw[orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
-        output.write('\draw[orange] (9.0, 2.0) node[anchor=west] {BDS-$A$};\n')
+        output.write('\draw[line width=0.5mm,red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
+        output.write('\draw[line width=0.5mm,red] (9.0, 3.5) node[anchor=west] {GRB-$F1$};\n')
+        output.write('\draw[line width=0.5mm,gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
+        output.write('\draw[line width=0.5mm,gray] (9.0, 3.0) node[anchor=west] {GRB-$F2$};\n')
+        output.write('\draw[line width=0.5mm,blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
+        output.write('\draw[line width=0.5mm,blue] (9.0, 2.5) node[anchor=west] {BDS-$D$};\n')
+        output.write('\draw[line width=0.5mm,orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
+        output.write('\draw[line width=0.5mm,orange] (9.0, 2.0) node[anchor=west] {BDS-$A$};\n')
         # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
 
         output.write('\end{tikzpicture}\n')
@@ -460,8 +466,8 @@ def graph3(descriptor = 'paper'):
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
-        output.write('\draw[thick,->] (0,0) -- (10.5,0);\n')
-        output.write('\draw[thick,->] (0,0) -- (0,10.5);\n')
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (10.5,0);\n')
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,10.5);\n')
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
         output.write('\draw (9,0.5) node[anchor=mid] {time ratio ($10^{0}$)};\n')
@@ -481,21 +487,21 @@ def graph3(descriptor = 'paper'):
             for x in range(1,11,1):
 
                 y = int(100 * len(content[filter & (content['{}_ratio_runtime'.format(method)] <= x)])/len(content[filter]))
-                output.write('\draw[{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x - 1, prev_y/10, x - 1, y/10))
+                output.write('\draw[line width=0.5mm,{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x - 1, prev_y/10, x - 1, y/10))
 
                 prev_x = x
                 prev_y = y
 
         output.write('\n')
 
-        output.write('\draw[red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
-        output.write('\draw[red] (9.0, 3.5) node[anchor=west] {GRB-$F1$};\n')
-        output.write('\draw[gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
-        output.write('\draw[gray] (9.0, 3.0) node[anchor=west] {GRB-$F2$};\n')
-        output.write('\draw[blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
-        output.write('\draw[blue] (9.0, 2.5) node[anchor=west] {BDS-$D$};\n')
-        output.write('\draw[orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
-        output.write('\draw[orange] (9.0, 2.0) node[anchor=west] {BDS-$A$};\n')
+        output.write('\draw[line width=0.5mm,red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
+        output.write('\draw[line width=0.5mm,red] (9.0, 3.5) node[anchor=west] {GRB-$F1$};\n')
+        output.write('\draw[line width=0.5mm,gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
+        output.write('\draw[line width=0.5mm,gray] (9.0, 3.0) node[anchor=west] {GRB-$F2$};\n')
+        output.write('\draw[line width=0.5mm,blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
+        output.write('\draw[line width=0.5mm,blue] (9.0, 2.5) node[anchor=west] {BDS-$D$};\n')
+        output.write('\draw[line width=0.5mm,orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
+        output.write('\draw[line width=0.5mm,orange] (9.0, 2.0) node[anchor=west] {BDS-$A$};\n')
         # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
 
         output.write('\end{tikzpicture}\n')
@@ -504,6 +510,10 @@ def graph3(descriptor = 'paper'):
 
         print('Exported graph to graphs/runtime.tex')
 
+graph1('paper')
+graph2('paper')
+graph3('paper')
+'''
 table1('paper')
 table2('paper')
 table3('paper')
@@ -513,7 +523,13 @@ table6('paper')
 graph1('paper')
 graph2('paper')
 graph3('paper')
+'''
 
+'''
+figure = plt.figure()
+boxsplot = content[(content['bbd_optimal'] == True) & (content['bba_optimal'] == True) & (content['cold_net_optimal'] == True)].boxplot(column = ['bbd_runtime', 'bba_runtime'])
+figure.savefig('boxsplots-bbd-bba-runtime.png')
+'''
 
 # filter = (content['locations'] == 50) & ((content['cold_lrz_optimal'] == False) | (content['cold_net_optimal'] == False))
 # content[filter].to_csv('debugging.csv')
