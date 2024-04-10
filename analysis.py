@@ -3,9 +3,25 @@ import common as cm
 import matplotlib.pyplot as plt
 
 content = pd.read_csv('results/paper1/summary.csv')
+supervl = pd.read_csv('results/paper1/supervalid.csv')
+
+content['index'] = content['keyword']
+content = content.set_index('index')
+supervl['index'] = supervl['keyword']
+supervl = supervl.set_index('index')
 
 # exact_approaches = ['cold_lrz', 'warm_lrz', 'cold_net', 'warm_net', 'cold_nlr', 'warm_nlr', 'bbd', 'bba', 'bsd', 'bsa']
 exact_approaches = ['cold_lrz', 'cold_net', 'bbd', 'bba']
+
+for approach in exact_approaches:
+    for column in supervl.columns:
+        if approach in column:
+            supervl = supervl.rename({column: column.replace(approach, 'sv_' + approach)}, axis = 1)
+        if 'rlx' in column:
+            supervl = supervl.drop(column, axis = 1)
+supervl = supervl.drop(['project','keyword','created','seed','locations','customers','periods','preferences','rewards','demands','characters','updated','commit','branch'], axis = 1)
+
+content = pd.concat([content, supervl], axis = 1, join = 'inner')
 
 content['best_objective'] = content.apply(lambda row: max(row['{}_objective'.format(approach)] for approach in exact_approaches), axis = 1)
 content['best_optgap'] = content.apply(lambda row: min(row['{}_optgap'.format(approach)] for approach in exact_approaches), axis = 1)
@@ -47,8 +63,8 @@ labels = {
         10: 'Complete benchmark',
     },
     'locations': {
-        50: '50 locations / customers',
-        100: '100 locations / customers',
+        50: '50 locations, customers',
+        100: '100 locations, customers',
     },
     'preferences': {
         'small': 'Small choice sets',
@@ -68,6 +84,49 @@ labels = {
     }
 }
 
+def table0(descriptor = 'paper'):
+
+    for characteristic, values in characteristics.items():
+
+        for value in values:
+
+            if descriptor == 'paper':
+                columns = ['cold_net_runtime', 'bbd_runtime', 'bba_runtime', 'sv_cold_net_runtime', 'sv_bbd_runtime', 'sv_bba_runtime']
+                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
+                # columns = ['bbd_runtime', 'bba_runtime']
+                # filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
+            elif descriptor == 'duality':
+                columns = ['cold_net_runtime', 'bbd_runtime', 'bsd_runtime']
+                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bsd_optimal'] == True)
+            elif descriptor == 'analytical':
+                columns = ['cold_net_runtime', 'bba_runtime', 'bsa_runtime']
+                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bba_optimal'] == True) & (content['bsa_optimal'] == True)
+            else:
+                exit('Wrong descriptor for table 0')
+
+            averages = {}
+            deviations = {}
+            maximums = {}
+
+            for column in columns:
+                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+
+            # print('Ratio {}: {}'.format(value, averages['bbd_runtime'] / averages['bba_runtime']))
+
+            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+
+            print('{}&${:.2f}$&{}{}{}'.
+            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+        print('\\midrule')
+
+    _ = input('table0 {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
+
 def table1(descriptor = 'paper'):
 
     for characteristic, values in characteristics.items():
@@ -75,7 +134,7 @@ def table1(descriptor = 'paper'):
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'cold_net_runtime']
+                columns = ['lrz_intgap', 'cold_lrz_runtime', 'net_intgap', 'cold_net_runtime']
                 filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
             elif descriptor == 'warmcold':
                 columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'warm_lrz_runtime', 'cold_net_runtime', 'warm_net_runtime']
@@ -95,7 +154,7 @@ def table1(descriptor = 'paper'):
                 deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
 
-            count = 100 * len(content[filter].index) / len(content.index)
+            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
 
             print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
@@ -140,7 +199,7 @@ def table2(descriptor = 'paper'):
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 optimals[column] = content[filter & (content[column] <= cm.TOLERANCE)][column].count()
 
-            count = 100 * len(content[filter].index) / len(content.index)
+            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
 
             print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
@@ -173,7 +232,7 @@ def table3(descriptor = 'paper'):
                 deviations[column] = round(content[filter][column].std() * 100, 2)
                 # maximums[column] = round(content[filter][column].max() * 100, 2)
 
-            count = 100 * len(content[filter].index) / len(content.index)
+            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
 
             print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
@@ -215,7 +274,7 @@ def table4(descriptor = 'paper'):
 
             # print('Ratio {}: {}'.format(value, averages['bbd_runtime'] / averages['bba_runtime']))
 
-            count = 100 * len(content[filter].index) / len(content.index)
+            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
 
             print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
@@ -260,7 +319,7 @@ def table5(descriptor = 'paper'):
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 optimals[column] = content[filter & (content[column] <= cm.TOLERANCE)][column].count()
 
-            count = 100 * len(content[filter].index) / len(content.index)
+            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
 
             print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
@@ -273,12 +332,15 @@ def table5(descriptor = 'paper'):
 
 def table6(descriptor = 'paper'):
 
+    content['bbd_proportion'] = content.apply(lambda row: row['bbd_subtime'] / row['bbd_runtime'], axis = 1)
+    content['bba_proportion'] = content.apply(lambda row: row['bba_subtime'] / row['bba_runtime'], axis = 1)
+
     for characteristic, values in characteristics.items():
 
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['bbd_iterations', 'bba_iterations']
+                columns = ['bbd_iterations', 'bbd_proportion', 'bba_iterations', 'bba_proportion']
                 filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
             else:
                 exit('Wrong descriptor for table 6')
@@ -293,10 +355,10 @@ def table6(descriptor = 'paper'):
                 deviations[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 # maximums[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
 
-            count = 100 * len(content[filter].index) / len(content.index)
+            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
 
             print('{}&${:.2f}$&{}{}{}'.
-            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+            format(labels[characteristic][value], count, '&'.join(['${:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
 
@@ -510,20 +572,21 @@ def graph3(descriptor = 'paper'):
 
         print('Exported graph to graphs/runtime.tex')
 
+'''
+table0('paper')
 graph1('paper')
 graph2('paper')
 graph3('paper')
 '''
 table1('paper')
-table2('paper')
-table3('paper')
-table4('paper')
-table5('paper')
+# table2('paper')
+# table3('paper')
+# table4('paper')
+# table5('paper')
 table6('paper')
-graph1('paper')
-graph2('paper')
-graph3('paper')
-'''
+# graph1('paper')
+# graph2('paper')
+# graph3('paper')
 
 '''
 figure = plt.figure()
