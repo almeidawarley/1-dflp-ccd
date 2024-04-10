@@ -18,8 +18,6 @@ class benders(fm.formulation):
                 self.subproblems[customer] = sb.analytical(self.ins, customer)
             elif type == 'duality':
                 self.subproblems[customer] = sb.duality(self.ins, customer)
-            elif type == 'maxQ':
-                self.subproblems[customer] = sb.maxQ(self.ins, customer)
             else:
                 exit('Invalid method for solving suproblems')
 
