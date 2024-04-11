@@ -2,6 +2,8 @@ import json as js
 import numpy as np
 import pandas as pd
 import common as cm
+from ctypes import *
+# c_int, c_float, cdll, pointer
 
 class instance:
 
@@ -74,6 +76,31 @@ class instance:
             for customer in self.customers:
                 limit = self.accumulated[self.start][period][customer]
                 self.limits[period][customer] = np.ceil(limit)
+
+        # Prepare proper ctypes
+
+        self.c_nb_locations = c_int(len(self.locations))
+        self.c_nb_customers = c_int(len(self.customers))
+        self.c_nb_periods = c_int(len(self.periods))
+
+        self.c_dt_catalogs = (c_int * (len(self.locations) * len(self.customers)))()
+
+        for location in self.locations:
+            for customer in self.customers:
+                self.c_dt_catalogs[(int(location) - 1) * len(self.customers) + int(customer) - 1] = c_int(self.catalogs[location][customer])
+
+        self.c_dt_rewards = (c_float * (len(self.periods) * len(self.locations)))()
+
+        for period in self.periods:
+            for location in self.locations:
+                self.c_dt_rewards[(int(period) - 1) * len(self.locations) + int(location) - 1] = self.rewards[period][location]
+
+        self.c_dt_accumulated = (c_int * (len(self.periods_with_start) * len(self.periods) * len(self.customers)))()
+
+        for period1 in self.periods_with_start:
+            for period2 in self.periods:
+                for customer in self.customers:
+                    self.c_dt_accumulated[int(period1) * len(self.periods) * len(self.customers) + (int(period2) - 1)* len(self.customers) + int(customer) - 1] = int(self.accumulated[period1][period2][customer]) if period1 < period2 else 0
 
     def print_instance(self):
         # Print stored instance

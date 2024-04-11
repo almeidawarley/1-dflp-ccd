@@ -16,6 +16,8 @@ class benders(fm.formulation):
         for customer in self.ins.customers:
             if type == 'analytical':
                 self.subproblems[customer] = sb.analytical(self.ins, customer)
+            elif type == 'external':
+                self.subproblems[customer] = sb.external(self.ins, customer)
             elif type == 'duality':
                 self.subproblems[customer] = sb.duality(self.ins, customer)
             else:

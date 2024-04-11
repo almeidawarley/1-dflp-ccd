@@ -1,6 +1,8 @@
 
 import gurobipy as gp
 import common as cm
+from ctypes import *
+#c_int, c_float, cdll, pointer
 
 class subproblem:
 
@@ -106,6 +108,48 @@ class analytical(subproblem):
             for location in self.ins.captured_locations[self.customer]:
                 self.inequality['y'][period][location] = self.dual_solution['p'][period][location]
         self.inequality['b'] = self.dual_solution['q'][self.ins.start]
+
+        return dual_objective, self.inequality
+
+class external(subproblem):
+
+    def __init__(self, instance, customer):
+
+        super().__init__(instance, customer)
+
+        self.sequence = (c_int * len(self.ins.periods))()
+        self.dual_q = (c_float * (len(self.ins.periods_with_start)))()
+        self.dual_p = (c_float * (len(self.ins.periods) * len(self.ins.locations)))()
+        self.library = cdll.LoadLibrary('./libanalytical.so')
+
+    def cut(self):
+
+        # gcc -Wall -g -shared -o libanalytical.so -fPIC analytical.c
+
+        # Update sequence
+        for period in self.ins.periods:
+            self.sequence[period - 1] = int(self.solution[period])
+
+        # Call external implementation in C
+        dual_objective = self.library.procedure(
+            self.ins.c_nb_locations,
+            self.ins.c_nb_customers,
+            self.ins.c_nb_periods,
+            pointer(self.ins.c_dt_catalogs),
+            pointer(self.ins.c_dt_rewards),
+            pointer(self.ins.c_dt_accumulated),
+            int(self.customer),
+            pointer(self.sequence),
+            pointer(self.dual_q),
+            pointer(self.dual_p),
+            0
+        )
+
+        # Build optimality cut
+        for period in self.ins.periods:
+            for location in self.ins.captured_locations[self.customer]:
+                self.inequality['y'][period][location] = self.dual_p[(int(period) - 1) * len(self.ins.locations) + int(location) - 1]
+        self.inequality['b'] = self.dual_q[self.ins.start]
 
         return dual_objective, self.inequality
 
