@@ -135,13 +135,13 @@ class external(subproblem):
             self.ins.c_nb_locations,
             self.ins.c_nb_customers,
             self.ins.c_nb_periods,
-            pointer(self.ins.c_dt_catalogs),
-            pointer(self.ins.c_dt_rewards),
-            pointer(self.ins.c_dt_accumulated),
+            byref(self.ins.c_dt_catalogs),
+            byref(self.ins.c_dt_rewards),
+            byref(self.ins.c_dt_accumulated),
             int(self.customer),
-            pointer(self.sequence),
-            pointer(self.dual_q),
-            pointer(self.dual_p),
+            byref(self.sequence),
+            byref(self.dual_q),
+            byref(self.dual_p),
             0
         )
 
