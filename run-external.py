@@ -20,7 +20,7 @@ def main():
     cm.mark_section('Solving with branch-and-Benders')
 
     cm.mark_section('External subproblems')
-    benders1 = bd.benders(instance, 'analytical')
+    benders1 = bd.benders(instance, 'external')
     metadata = benders1.solve_bbc('bbe')
     record = rc.update_record(record, metadata)
 
