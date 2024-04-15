@@ -10,8 +10,7 @@ content = content.set_index('index')
 supervl['index'] = supervl['keyword']
 supervl = supervl.set_index('index')
 
-# exact_approaches = ['cold_lrz', 'warm_lrz', 'cold_net', 'warm_net', 'cold_nlr', 'warm_nlr', 'bbd', 'bba', 'bsd', 'bsa']
-exact_approaches = ['cold_lrz', 'cold_net', 'bbd', 'bba']
+exact_approaches = ['cold_lrz', 'cold_net', 'bbd', 'bbe']
 
 for approach in exact_approaches:
     for column in supervl.columns:
@@ -40,12 +39,8 @@ content['refr_objective'] = content.apply(lambda row: max(row['{}_objective'.for
 content['refr_runtime'] = content.apply(lambda row: min(row['{}_runtime'.format(approach)] for approach in exact_approaches), axis = 1)
 
 for approach in exact_approaches:
-    # content['{}_ratio_objective'.format(approach)] = content['refr_objective'] / content['{}_objective'.format(approach)]
-    # content['{}_ratio_runtime'.format(approach)] = content['{}_runtime'.format(approach)] / content['refr_runtime']
     content['{}_ratio_objective'.format(approach)] = content.apply(lambda row: round(row['refr_objective'] / row['{}_objective'.format(approach)], 3), axis = 1)
     content['{}_ratio_runtime'.format(approach)] = content.apply(lambda row: round(row['{}_runtime'.format(approach)] / row['refr_runtime'], 3), axis = 1)
-
-# content[((content['bba_ratio_runtime'] <= 4) & (content['bbd_ratio_runtime'] > 4)) | ((content['bbd_ratio_runtime'] <= 4) & (content['bba_ratio_runtime'] > 4))].to_csv('filtered.csv')
 
 content.to_csv('debugging.csv')
 
@@ -84,49 +79,6 @@ labels = {
     }
 }
 
-def table0(descriptor = 'paper'):
-
-    for characteristic, values in characteristics.items():
-
-        for value in values:
-
-            if descriptor == 'paper':
-                columns = ['cold_net_runtime', 'bbd_runtime', 'bba_runtime', 'sv_cold_net_runtime', 'sv_bbd_runtime', 'sv_bba_runtime']
-                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
-                # columns = ['bbd_runtime', 'bba_runtime']
-                # filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
-            elif descriptor == 'duality':
-                columns = ['cold_net_runtime', 'bbd_runtime', 'bsd_runtime']
-                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bsd_optimal'] == True)
-            elif descriptor == 'analytical':
-                columns = ['cold_net_runtime', 'bba_runtime', 'bsa_runtime']
-                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bba_optimal'] == True) & (content['bsa_optimal'] == True)
-            else:
-                exit('Wrong descriptor for table 0')
-
-            averages = {}
-            deviations = {}
-            maximums = {}
-
-            for column in columns:
-                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-
-            # print('Ratio {}: {}'.format(value, averages['bbd_runtime'] / averages['bba_runtime']))
-
-            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
-
-            print('{}&${:.2f}$&{}{}{}'.
-            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
-
-        print('\\midrule')
-
-    _ = input('table0 {}'.format(descriptor))
-
-    print('**************************************************************************************************')
-
-
 def table1(descriptor = 'paper'):
 
     for characteristic, values in characteristics.items():
@@ -136,12 +88,6 @@ def table1(descriptor = 'paper'):
             if descriptor == 'paper':
                 columns = ['lrz_intgap', 'cold_lrz_runtime', 'net_intgap', 'cold_net_runtime']
                 filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
-            elif descriptor == 'warmcold':
-                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'warm_lrz_runtime', 'cold_net_runtime', 'warm_net_runtime']
-                filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['warm_lrz_optimal'] == True) & (content['cold_net_optimal'] == True) & (content['warm_net_optimal'] == True)
-            elif descriptor == 'withnlr':
-                columns = ['lrz_intgap', 'net_intgap', 'cold_lrz_runtime', 'warm_lrz_runtime', 'cold_net_runtime', 'warm_net_runtime', 'cold_nlr_runtime', 'warm_nlr_runtime']
-                filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['warm_lrz_optimal'] == True) & (content['cold_net_optimal'] == True) & (content['warm_net_optimal'] == True) & (content['cold_nlr_optimal'] == True) & (content['warm_nlr_optimal'] == True)
             else:
                 exit('Wrong descriptor for table 1')
 
@@ -158,8 +104,6 @@ def table1(descriptor = 'paper'):
 
             print('{}&${:.2f}$&{}{}{}'.
             format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
-
-            # print('Ratio {}: {}'.format(value, averages['lrz_intgap'] / averages['net_intgap']))
 
         print('\\midrule')
 
@@ -184,14 +128,6 @@ def table2(descriptor = 'paper'):
             maximums = {}
             feasibles = {}
             optimals = {}
-
-            '''
-            for column in columns:
-                averages[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                deviations[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                # maximums[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                feasibles[column] = content[filter & (content[column] > cm.TOLERANCE)][column].count()
-            '''
 
             for column in columns:
                 averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
@@ -250,16 +186,8 @@ def table4(descriptor = 'paper'):
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['cold_net_runtime', 'bbd_runtime', 'bba_runtime']
-                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
-                # columns = ['bbd_runtime', 'bba_runtime']
-                # filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
-            elif descriptor == 'duality':
-                columns = ['cold_net_runtime', 'bbd_runtime', 'bsd_runtime']
-                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bsd_optimal'] == True)
-            elif descriptor == 'analytical':
-                columns = ['cold_net_runtime', 'bba_runtime', 'bsa_runtime']
-                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bba_optimal'] == True) & (content['bsa_optimal'] == True)
+                columns = ['cold_net_runtime', 'bbd_runtime', 'bbe_runtime']
+                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bbe_optimal'] == True)
             else:
                 exit('Wrong descriptor for table 4')
 
@@ -271,8 +199,6 @@ def table4(descriptor = 'paper'):
                 averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-
-            # print('Ratio {}: {}'.format(value, averages['bbd_runtime'] / averages['bba_runtime']))
 
             count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
 
@@ -292,10 +218,8 @@ def table5(descriptor = 'paper'):
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['cold_net_optgap', 'bbd_optgap', 'bba_optgap']
-                filter = (content[characteristic] == value) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bba_optimal'] == False))
-                # columns = ['bbd_optgap', 'bba_optgap']
-                # filter = (content[characteristic] == value) & ((content['bbd_optimal'] == False) | (content['bba_optimal'] == False))
+                columns = ['cold_net_optgap', 'bbd_optgap', 'bbe_optgap']
+                filter = (content[characteristic] == value) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bbe_optimal'] == False))
             else:
                 exit('Wrong descriptor for table 5')
 
@@ -304,14 +228,6 @@ def table5(descriptor = 'paper'):
             maximums = {}
             feasibles = {}
             optimals = {}
-
-            '''
-            for column in columns:
-                averages[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                deviations[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                # maximums[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                feasibles[column] = content[filter & (content[column] > cm.TOLERANCE)][column].count()
-            '''
 
             for column in columns:
                 averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
@@ -333,15 +249,15 @@ def table5(descriptor = 'paper'):
 def table6(descriptor = 'paper'):
 
     content['bbd_proportion'] = content.apply(lambda row: row['bbd_subtime'] / row['bbd_runtime'], axis = 1)
-    content['bba_proportion'] = content.apply(lambda row: row['bba_subtime'] / row['bba_runtime'], axis = 1)
+    content['bbe_proportion'] = content.apply(lambda row: row['bbe_subtime'] / row['bbe_runtime'], axis = 1)
 
     for characteristic, values in characteristics.items():
 
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['bbd_iterations', 'bbd_proportion', 'bba_iterations', 'bba_proportion']
-                filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True)
+                columns = ['bbd_iterations', 'bbd_proportion', 'bbe_iterations', 'bbe_proportion']
+                filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bbe_optimal'] == True)
             else:
                 exit('Wrong descriptor for table 6')
 
@@ -437,20 +353,20 @@ def graph1(descriptor = 'paper'):
 
 def graph2(descriptor = 'paper'):
 
-    methods = ['cold_lrz', 'cold_net', 'bbd', 'bba']
+    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbe']
 
     colors = {
         'cold_lrz' : 'red',
         'cold_net' : 'gray',
         'bbd': 'blue',
-        'bba' : 'orange'
+        'bbe' : 'orange'
     }
 
     styles = {
         'cold_lrz' : 'dashed',
         'cold_net' : 'dotted',
         'bbd': 'dashdotted',
-        'bba' : 'solid'
+        'bbe' : 'solid'
     }
 
     filter = (content['periods'] == 10) # & (content['best_optgap'] > cm.TOLERANCE)
@@ -495,7 +411,7 @@ def graph2(descriptor = 'paper'):
         output.write('\draw[line width=0.5mm,blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
         output.write('\draw[line width=0.5mm,blue] (9.0, 2.5) node[anchor=west] {BSD};\n')
         output.write('\draw[line width=0.5mm,orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
-        output.write('\draw[line width=0.5mm,orange] (9.0, 2.0) node[anchor=west] {BSA};\n')
+        output.write('\draw[line width=0.5mm,orange] (9.0, 2.0) node[anchor=west] {BSE};\n')
         # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
 
         output.write('\end{tikzpicture}\n')
@@ -506,23 +422,23 @@ def graph2(descriptor = 'paper'):
 
 def graph3(descriptor = 'paper'):
 
-    methods = ['cold_lrz', 'cold_net', 'bbd', 'bba']
+    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbe']
 
     colors = {
         'cold_lrz' : 'red',
         'cold_net' : 'gray',
         'bbd': 'blue',
-        'bba' : 'orange'
+        'bbe' : 'orange'
     }
 
     styles = {
         'cold_lrz' : 'dashed',
         'cold_net' : 'dotted',
         'bbd': 'dashdotted',
-        'bba' : 'solid'
+        'bbe' : 'solid'
     }
 
-    filter = (content['periods'] == 10) # & abs((content['best_objective'] - content['bba_objective']) <= cm.TOLERANCE)
+    filter = (content['periods'] == 10)
 
     with open ('graphs/runtime.tex', 'w') as output:
 
@@ -563,7 +479,7 @@ def graph3(descriptor = 'paper'):
         output.write('\draw[line width=0.5mm,blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
         output.write('\draw[line width=0.5mm,blue] (9.0, 2.5) node[anchor=west] {BSD};\n')
         output.write('\draw[line width=0.5mm,orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
-        output.write('\draw[line width=0.5mm,orange] (9.0, 2.0) node[anchor=west] {BSA};\n')
+        output.write('\draw[line width=0.5mm,orange] (9.0, 2.0) node[anchor=west] {BSE};\n')
         # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
 
         output.write('\end{tikzpicture}\n')
@@ -572,27 +488,12 @@ def graph3(descriptor = 'paper'):
 
         print('Exported graph to graphs/runtime.tex')
 
-'''
-table0('paper')
+table1('paper')
+table2('paper')
+table3('paper')
+table4('paper')
+table5('paper')
+table6('paper')
 graph1('paper')
 graph2('paper')
 graph3('paper')
-'''
-table1('paper')
-# table2('paper')
-# table3('paper')
-# table4('paper')
-# table5('paper')
-table6('paper')
-# graph1('paper')
-# graph2('paper')
-# graph3('paper')
-
-'''
-figure = plt.figure()
-boxsplot = content[(content['bbd_optimal'] == True) & (content['bba_optimal'] == True) & (content['cold_net_optimal'] == True)].boxplot(column = ['bbd_runtime', 'bba_runtime'])
-figure.savefig('boxsplots-bbd-bba-runtime.png')
-'''
-
-# filter = (content['locations'] == 50) & ((content['cold_lrz_optimal'] == False) | (content['cold_net_optimal'] == False))
-# content[filter].to_csv('debugging.csv')
