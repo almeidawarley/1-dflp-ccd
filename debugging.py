@@ -65,7 +65,7 @@ class debugging(ic.instance):
         C = 5
         elements = [str(i) for i in range(1, B + 1)]
         collections = [rd.sample(elements, rd.randint(1,int(B/1.1))) for _ in range(0, C)]
-        collections[C -1] = collections[C -1][1:]
+        # collections[C -1] = collections[C -1][1:]
 
         print('B: {}'.format(elements))
         print('C: {}'.format(collections))
