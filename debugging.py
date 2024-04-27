@@ -18,18 +18,27 @@ class debugging(ic.instance):
             self.create_approx()
         elif self.keyword == 'spp':
             # Create SPP instance
-            self.create_spp2()
+            self.create_spp()
         elif self.keyword == 'proof':
             # Create proof instance
             self.create_proof()
         else:
             exit('Invalid instance keyword')
 
-    def create_spp(self, K = 5):
+    def create_spp(self, random = False):
         # Create SPP instances
 
-        elements = ['1', '2', '3', '4', '5']
-        collections = [['1', '2', '3', '4', '5'], ['1'], ['2'], ['3'], ['4'], ['5']]
+        # Set target K
+        K = 5
+        if random:
+            rd.seed(0)
+            B = 10
+            C = 5
+            elements = [str(i) for i in range(1, B + 1)]
+            collections = [rd.sample(elements, rd.randint(1,int(B/1.1))) for _ in range(0, C)]
+        else:
+            elements = ['1', '2', '3', '4', '5']
+            collections = [['1', '2', '3', '4', '5'], ['1'], ['2'], ['3'], ['4'], ['5']]
 
         self.locations = [str(i + 1) for i in range(0, len(collections))]
         self.customers = [e for e in elements]
@@ -45,46 +54,12 @@ class debugging(ic.instance):
         for period in self.periods:
             self.rewards[period] = {}
             for location in self.locations:
-                self.rewards[period][location] =  1/len(collections[int(location)-1])
+                self.rewards[period][location] =  1 / len(collections[int(location)-1])
+                '''
                 if location == '1':
                     # Avoid ambiguity for heuristic
                     self.rewards[period][location] = 0.21
-
-        # Create spawning
-        self.spawning = {}
-        for period in self.periods:
-            self.spawning[period] = {}
-            for customer in self.customers:
-                self.spawning[period][customer] = 1. if period == 1 else 0.
-
-    def create_spp2(self, K = 2):
-        # Create SPP instances
-
-        rd.seed(0)
-        B = 10
-        C = 5
-        elements = [str(i) for i in range(1, B + 1)]
-        collections = [rd.sample(elements, rd.randint(1,int(B/1.1))) for _ in range(0, C)]
-        # collections[C -1] = collections[C -1][1:]
-
-        print('B: {}'.format(elements))
-        print('C: {}'.format(collections))
-
-        self.locations = [str(i + 1) for i in range(0, len(collections))]
-        self.customers = [e for e in elements]
-        self.periods = [int(i + 1) for i in range(0, C)]
-
-        self.catalogs = {}
-        for location in self.locations:
-            self.catalogs[location] = {}
-            for customer in self.customers:
-                self.catalogs[location][customer] = 1 if customer in collections[int(location)-1] else 0
-
-        self.rewards = {}
-        for period in self.periods:
-            self.rewards[period] = {}
-            for location in self.locations:
-                self.rewards[period][location] =  1/len(collections[int(location)-1])
+                '''
 
         # Create spawning
         self.spawning = {}
