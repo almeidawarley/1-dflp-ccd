@@ -1,276 +1,128 @@
 import gurobipy as gp
-import variables as vb
-import constraints as ct
-import validation as vd
-
-def build_simple(instance, method):
-    # Build the DSFLP
-
-    mip = gp.Model('DSFLP')
-
-    # Create decision variables
-    variable = {
-        'y': vb.create_vry(instance, mip)
-    }
-
-    # Maximize the total revenue
-    mip.setAttr('ModelSense', -1)
-
-    # Turn off GUROBI logs
-    # mip.setParam('OutputFlag', 0)
-    mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', 1 * 60 * 60)
-
-    # Create main constraints
-    ct.create_c1(instance, mip, variable)
-
-    # Create cumulative demands
-    cumulative = {}
-    for customer in instance.customers:
-        cumulative[customer] = instance.starts[customer]
-
-    # Set objective function
-    for period in instance.periods:
-        if method in ['2', '3']:
-            cumulative = vd.apply_replenishment(instance, cumulative)
-        for location in instance.locations:
-            coefficient = vd.evaluate_location(instance, cumulative, period, location)
-            variable['y'][period, location].obj = coefficient
-        if method in ['3']:
-            cumulative = vd.apply_absorption(instance, cumulative, location, -1)
-            cumulative = vd.apply_consolidation(instance, cumulative)
-
-    return mip, variable
-
-def build_linearized(instance):
-    # Build the (linearized) DSFLP-DAR
-
-    mip = gp.Model('DSFLP-DAR')
-
-    # Create decision variables
-    variable = {
-        # Main decision variables
-        'y': vb.create_vry(instance, mip),
-        'w': vb.create_vrw(instance, mip),
-        'd1': vb.create_vrd1(instance, mip),
-        'd2': vb.create_vrd2(instance, mip),
-        'd3': vb.create_vrd3(instance, mip),
-        # Other decision variables
-        's': vb.create_vrs(instance, mip),
-        't': vb.create_vrt(instance, mip),
-        'u': vb.create_vru(instance, mip),
-        'v': vb.create_vrv(instance, mip)
-    }
-
-    # Maximize the total revenue
-    mip.setAttr('ModelSense', -1)
-
-    # Turn off GUROBI logs
-    # mip.setParam('OutputFlag', 0)
-    mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', 10 * 60 * 60)
-
-    # Set objective function
-    mip.setObjective(sum([instance.revenues[period][location] * instance.catalogs[location][customer] * variable['w'][period, location, customer] for period in instance.periods for location in instance.locations for customer in instance.customers]))
-
-    # Create main constraints
-    ct.create_c1(instance, mip, variable)
-    ct.create_c2(instance, mip, variable)
-    ct.create_c3A(instance, mip, variable)
-    ct.create_c3B(instance, mip, variable)
-    ct.create_c3C(instance, mip, variable)
-    ct.create_c3D(instance, mip, variable)
-    ct.create_c4(instance, mip, variable)
-    ct.create_c5A(instance, mip, variable)
-    ct.create_c5B(instance, mip, variable)
-    ct.create_c5C(instance, mip, variable)
-    ct.create_c5D(instance, mip, variable)
-    ct.create_c6A(instance, mip, variable)
-    ct.create_c6B(instance, mip, variable)
-    ct.create_c6C(instance, mip, variable)
-    ct.create_c6D(instance, mip, variable)
-    ct.create_c6E(instance, mip, variable)
-    ct.create_c6F(instance, mip, variable)
-    ct.create_c6G(instance, mip, variable)
-    ct.create_c6H(instance, mip, variable)
-
-    return mip, variable
-
-def build_nonlinear(instance):
-    # Build the (nonlinear) DSFLP-DAR
-
-    mip = gp.Model('DSFLP-DAR')
-
-    # Create decision variables
-    variable = {
-        # Main decision variables
-        'y': vb.create_vry(instance, mip),
-        'w': vb.create_vrw_NL(instance, mip),
-        'd1': vb.create_vrd1(instance, mip),
-        'd2': vb.create_vrd2(instance, mip),
-        'd3': vb.create_vrd3(instance, mip),
-        # Other decision variables
-        'o': vb.create_vro(instance, mip),
-        'p': vb.create_vrp(instance, mip),
-        'q': vb.create_vrq(instance, mip),
-        'r': vb.create_vrr(instance, mip)
-    }
-
-    # Maximize the total revenue
-    mip.setAttr('ModelSense', -1)
-
-    # Turn off GUROBI logs
-    # mip.setParam('OutputFlag', 0)
-    mip.setParam('Threads', 1)
-    mip.setParam('TimeLimit', 10 * 60 * 60)
-
-    # Set objective function
-    mip.setObjective(sum([instance.revenues[period][location] * instance.catalogs[location][customer] * variable['w'][period, customer] * variable['y'][period, location] for period in instance.periods for location in instance.locations for customer in instance.customers]))
-
-    # Create main constraints
-    ct.create_c1(instance, mip, variable)
-    ct.create_c2(instance, mip, variable)
-    ct.create_c3_NL(instance, mip, variable)
-    ct.create_c4_NL(instance, mip, variable)
-    ct.create_c5_NL(instance, mip, variable)
-    ct.create_c6_NL(instance, mip, variable)
-
-    return mip, variable
-
-def block_solution(mip, variable, solution):
-
-    ignored = 0
-    for location in solution.values():
-        if location == '0':
-            ignored += 1
-
-    mip.addConstr(gp.quicksum(variable['y'][period, location] for period, location in solution.items() if location != '0') <= len(solution) - ignored - 1)
-
-def fix_solution(mip, variable, solution):
-
-    mip.addConstrs((variable['y'][period, solution[period]] == 1 if solution[period] != '0' else variable['y'].sum(period, '*') == 0 for period in solution.keys()), name = 'fix')
-
-def warm_start(instance, variable, solution):
-    # Warm start with a feasible solution
-
-    for period in instance.periods:
-        for location in instance.locations:
-            variable['y'][period, location].start  = 1. if location == solution[period] else 0.
+import common as cm
 
-def format_solution(instance, mip, variable, verbose = 0):
-    # Format model solution as dictionary
+class formulation:
 
-    solution = {}
-
-    for period in instance.periods:
-        solution[period] = '0'
+    def __init__(self, instance, name):
 
-    for period in instance.periods:
-        for location in instance.locations:
-            value = variable['y'][period, location].x
-            if vd.is_equal(value, 1.):
-                solution[period] = location
+        self.ins = instance
+        self.mip = gp.Model(name)
+        self.var = {}
 
-    return solution
+        self.set_parameters()
+        self.set_variables()
+        self.set_objective()
+        self.set_constraints()
 
-def detail_solution(instance, variable, filename = 'detailed_mip.csv'):
-    # Detail cumulative demand over time
+    def solve(self, label = ''):
 
-    solution = {}
+        label = label + '_' if len(label) > 0 else label
 
-    with open(filename, 'w') as output:
+        self.mip.optimize()
 
-        for period in instance.periods:
-            solution[period] = '0'
+        solution = self.ins.format_solution(self.var['y'])
 
-        d1 = {}
-        d2 = {}
-        d3 = {}
-        for customer in instance.customers:
-            d3[customer] = variable['d3']['0', customer].x
-        output.write('{},{},{}\n'.format('0','0',','.join([str(d3[customer]) for customer in instance.customers])))
+        objective = self.ins.evaluate_solution(solution)
 
-        for period in instance.periods:
-            for location in instance.locations:
-                value = variable['y'][period, location].x
-                if vd.is_equal(value, 1.):
-                    solution[period] = location
-            for customer in instance.customers:
-                d1[customer] = variable['d1'][period, customer].x
-                d2[customer] = variable['d2'][period, customer].x
-                d3[customer] = variable['d3'][period, customer].x
-            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d1[customer]) for customer in instance.customers])))
-            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d2[customer]) for customer in instance.customers])))
-            output.write('{},{},{}\n'.format(period, solution[period], ','.join([str(d3[customer]) for customer in instance.customers])))
+        assert cm.compare_obj(self.mip.objVal, objective)
 
-def write_bar(instance, variable, customer = 'A'):
-    # Export latex code to plot the bar graph
+        metadata = {
+            '{}status'.format(label): self.mip.status,
+            '{}objective'.format(label): self.mip.objVal,
+            '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
+            '{}optgap'.format(label): self.mip.MIPGap,
+            '{}solution'.format(label): self.ins.pack_solution(solution)
+        }
 
-    solution = {}
+        self.mip.reset()
 
-    for period in instance.periods:
-        solution[period] = '0'
+        return metadata
 
-    for period in instance.periods:
-        for location in instance.locations:
-            value = variable['y'][period, location].x
-            if vd.is_equal(value, 1.):
-                solution[period] = location
-        d1 = variable['d1'][period, customer].x
-        a = min(instance.gammas[customer] * d1 + instance.deltas[customer], d1)
+    def bound(self, label = ''):
 
-        xl = int(period) - 0.1
-        xr = int(period) + 0.1
+        label = label + '_' if len(label) > 0 else label
 
-        if solution[period] != '0':
-            print('\draw[fill=gray!25, dashed] ({},0) -- ({},0) -- ({},{}) -- ({},{}) -- ({},0);'.format(xl, xr, xr, d1, xl, d1, xl))
-        else:
-            print('\draw[fill=gray!25] ({},0) -- ({},0) -- ({},{}) -- ({},{}) -- ({},0);'.format(xl, xr, xr, d1, xl, d1, xl))
-        print('\draw[fill=gray!50] ({},0) -- ({},0) -- ({},{}) -- ({},{}) -- ({},0);'.format(xl, xr, xr, d1 - a, xl, d1 - a, xl))
-        print('\draw ({},0) node[anchor=north] {}${}${};'.format(int(period), '{', int(period), '}'))
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].vtype = 'C'
 
+        self.mip.optimize()
 
-    print('----------------------------------------------------------------')
+        metadata = {
+            '{}status'.format(label): self.mip.status,
+            '{}objective'.format(label): self.mip.objVal,
+            '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION)
+        }
 
-    for period in instance.periods:
-        for location in instance.locations:
-            value = variable['y'][period, location].x
-            if vd.is_equal(value, 1.):
-                solution[period] = location
-        d1 = variable['d1'][period, customer].x
-        a = min(instance.gammas[customer] * d1 + instance.deltas[customer], d1)
+        # self.mip.write('relaxed-{}.lp'.format(label))
+        # self.mip.write('relaxed-{}.sol'.format(label))
 
-        xl = int(period) - 0.1
-        xr = int(period) + 0.1
+        self.mip.reset()
 
-        print('\draw[fill=gray!25] ({},0) -- ({},0) -- ({},{}) -- ({},{}) -- ({},0);'.format(xl, xr, xr, a, xl, a, xl))
-        print('\draw ({},0) node[anchor=north] {}${}${};'.format(int(period), '{', int(period), '}'))
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].vtype = 'B'
 
-def write_scatter(instance, variable, color, customer = 'A'):
-    # Export latex code to plot the bar graph
+        return metadata
 
-    solution = {}
+    def heaten(self, solution):
 
-    for period in instance.periods:
-        solution[period] = '0'
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].start = 1 if location == solution[period] else 0
+                # self.var['y'][period, location].ub = 1 if location == solution[period] else 0
+                # self.var['y'][period, location].lb = 1 if location == solution[period] else 0
 
-    yprev = -1
+    def set_parameters(self):
 
-    for period in instance.periods:
-        for location in instance.locations:
-            value = variable['y'][period, location].x
-            if vd.is_equal(value, 1.):
-                solution[period] = location
+        # Maximize the total reward
+        self.mip.setAttr('ModelSense', -1)
+        # Turn off GUROBI logs
+        # mip.setParam('OutputFlag', 0)
+        # Constrain Gurobi to 1 thread
+        self.mip.setParam('Threads', 1)
+        # Set experimental time limit
+        self.mip.setParam('TimeLimit', cm.TIMELIMIT)
 
-        ycurr = variable['d1'][period, customer].x
+    def create_vry(self):
+        # Create y^{t}_{i} variables
 
-        xcurr = int(period)
-        xprev = xcurr - 1
+        lowers = [0. for _ in self.ins.periods for _ in self.ins.locations]
+        uppers = [1. for _ in self.ins.periods for _ in self.ins.locations]
+        coefs = [0. for _ in self.ins.periods for _ in self.ins.locations]
+        types = ['B' for _ in self.ins.periods for _ in self.ins.locations]
+        names = [
+            'y~{}_{}'.format(period, location)
+            for period in self.ins.periods
+            for location in self.ins.locations
+        ]
 
-        print('\draw ({},{}) node[anchor=mid, color={}] {}x{};'.format(xcurr, ycurr, color, '{', '}'))
-        # print('\draw ({},0) node[anchor=north] {}${}${};'.format(int(period), '{', int(period), '}'))
+        self.var['y'] = self.mip.addVars(self.ins.periods, self.ins.locations, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
-        if xcurr > 1:
-            print('\draw[color={}] ({},{}) -- ({}, {});'.format(color, xprev, yprev, xcurr, ycurr))
-
-        yprev = ycurr
+    def create_c1(self):
+        # Create constraint 1
+
+        self.mip.addConstrs(
+            (
+                self.var['y'].sum(period, '*') <= 1
+                for period in self.ins.periods
+            ),
+            name = 'c1'
+        )
+
+    def create_si(self):
+        # Create strong? inequality
+
+        self.mip.addConstrs(
+            (
+                sum(
+                    self.var['y'][local, location]
+                    for local in range(period, period + length)
+                    if local < self.ins.finish
+                ) <= length - 1
+                for period in self.ins.periods
+                for location in self.ins.locations
+                for length in range(2, 3)# len(self.ins.periods))
+            ),
+            name = 'si'
+        )

@@ -1,69 +1,69 @@
+import common as cm
 import json as js
-import instance as ic
+import sys
 
 features = {
-    'seed': [i for i in range(0, 10)],
-    'points': [10],
-    'patronizing': ['weak', 'medium', 'strong'],
-    'rewards': ['identical', 'inversely'],#, 'directly'],
-    'replenishment': ['absolute', 'relative'],
-    'absorption': ['complete', 'constrained']
+    'maps': ['ke', 'pa'],
+    'periods': [6, 12],
+    'distances': [50, 100],
+    'rewards': ['identical', 'inversely'],
+    'demands': ['constant', 'seasonal']
 }
 
-character = 'homogeneous'
-project = 'paper1-{}'.format(character[:3])
+methods = [1,2]
 
-instance = {}
+project = 'p1slovakia'
 
-commands = open('commands-{}.sh'.format(project), 'w')
+script = sys.argv[1]
+hours = sys.argv[2]
+
+parameters = {}
+
+commands = open('commands_{}_{}.sh'.format(script, project), 'w')
 
 counter = 0
 
-for seed in features['seed']:
-    for points in features['points']:
-        for patronizing in features['patronizing']:
-            for rewards in features['rewards']:
-                for replenishment in features['replenishment']:
-                    for absorption in features['absorption']:
-                        for periods in [int(points/2), int(points), int(2 * points)]:
+for method in methods:
+    for map in features['maps']:
+        for periods in features['periods']:
+            for distance in features['distances']:
+                for rewards in features['rewards']:
+                    for demands in features['demands']:
 
-                            instance['seed'] = seed
-                            instance['locations'] = points
-                            instance['customers'] = points
-                            instance['periods'] = periods
-                            instance['patronizing'] = patronizing
-                            instance['rewards'] = rewards
-                            instance['replenishment'] = replenishment
-                            instance['absorption'] = absorption
-                            instance['character'] = character
+                        parameters['seed'] = 0
+                        parameters['map'] = map
+                        parameters['periods'] = periods
+                        parameters['distance'] = distance
+                        parameters['rewards'] = rewards
+                        parameters['demands'] = demands
 
-                            keyword = '{}_{}'.format('rnd', '-'.join([str(value) for value in instance.values()]))
+                        keyword = '{}_{}'.format('slv', '-'.join([str(value) for value in parameters.values()]))
 
-                            with open('{}/{}.json'.format('instances/synthetic', keyword), 'w') as output:
-                                js.dump(instance, output)
+                        with open('{}/{}.json'.format('instances/slovakia', keyword), 'w') as output:
+                            js.dump(parameters, output)
 
-                            _ = ic.instance(keyword, 'validation')
+                        # _ = cm.load_instance(keyword, 'validation')
 
-                            with open('{}/{}.sh'.format('scripts', keyword), 'w') as output:
+                        with open('{}/{}_{}_{}.sh'.format('scripts', script, method, keyword), 'w') as output:
 
-                                output.write('#!/bin/bash\n')
+                            output.write('#!/bin/bash\n')
 
-                                output.write('#SBATCH --time=22:00:00\n')
-                                output.write('#SBATCH --job-name={}.job\n'.format(keyword))
-                                output.write('#SBATCH --output={}.out\n'.format(keyword))
-                                output.write('#SBATCH --account=def-mxm\n')
-                                output.write('#SBATCH --mem=30GB\n')
-                                output.write('#SBATCH --cpus-per-task=1\n')
-                                output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
-                                output.write('#SBATCH --mail-type=FAIL\n')
+                            output.write('#SBATCH --time={}:00:00\n'.format(hours))
+                            output.write('#SBATCH --job-name={}_{}_{}.job\n'.format(script, method, keyword))
+                            output.write('#SBATCH --output={}_{}_{}.out\n'.format(script, method, keyword))
+                            output.write('#SBATCH --account=def-mxm\n')
+                            output.write('#SBATCH --mem=30GB\n')
+                            output.write('#SBATCH --cpus-per-task=1\n')
+                            output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
+                            output.write('#SBATCH --mail-type=FAIL\n')
 
-                                output.write('cd ~/shortcut/\n')
-                                output.write('python main.py -p {} {}\n'.format(project, keyword))
+                            output.write('cd ~/shortcut/\n')
+                            output.write('python run-{}.py -p {} -m {} {}\n'.format(script, project, method, keyword))
 
-                            commands.write('dos2unix ../scripts/{}.sh\n'.format(keyword))
-                            commands.write('sbatch ../scripts/{}.sh\n'.format(keyword))
+                        commands.write('dos2unix ../scripts/{}_{}_{}.sh\n'.format(script, method, keyword))
+                        commands.write('sbatch ../scripts/{}_{}_{}.sh\n'.format(script, method,keyword))
 
-                            print(keyword)
-                            counter += 1
+                        print(keyword)
+                        counter += 1
 
 print('This script run wrote {} scripts in total!'.format(counter))
