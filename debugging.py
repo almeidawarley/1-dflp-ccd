@@ -37,24 +37,36 @@ class debugging(ic.instance):
             elements = [str(i) for i in range(1, B + 1)]
             collections = [rd.sample(elements, rd.randint(1,int(B/1.1))) for _ in range(0, C)]
         else:
+            B = 5
+            C = 5
             elements = ['1', '2', '3', '4', '5']
-            collections = [['1', '2', '3', '4', '5'], ['1'], ['2'], ['3'], ['4'], ['5']]
+            collections = [['1', '2', '3', '4', '5'], ['1'], ['2'], ['3'], ['1', '4', '5']] #, ['5']]
 
-        self.locations = [str(i + 1) for i in range(0, len(collections))]
-        self.customers = [e for e in elements]
-        self.periods = [int(i + 1) for i in range(0, K)]
+        self.locations = [str(i + 1) for i in range(0, len(collections))] + [str(i + 1 + len(collections)) for i in range(0, len(collections))]
+        self.customers = [e for e in elements] + [str(i + 1 + len(elements)) for i in range(0, len(collections))]
+        self.periods = [int(i + 1) for i in range(0, C)]
 
         self.catalogs = {}
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                self.catalogs[location][customer] = 1 if customer in collections[int(location)-1] else 0
+                if int(location) <= len(collections) and int(customer) <= len(elements):
+                    self.catalogs[location][customer] = 1 if customer in collections[int(location)-1] else 0
+                elif int(location) <= len(collections) and int(customer) > len(elements):
+                    self.catalogs[location][customer] = 0
+                elif int(location) > len(collections) and int(customer) <= len(elements):
+                    self.catalogs[location][customer] = 0
+                else:
+                    self.catalogs[location][customer] = 1 if int(location) - 1 - len(collections) == int(customer) - 1 - len(elements) else 0
 
         self.rewards = {}
         for period in self.periods:
             self.rewards[period] = {}
             for location in self.locations:
-                self.rewards[period][location] =  1 / len(collections[int(location)-1])
+                if int(location) <= len(collections):
+                    self.rewards[period][location] =  1 / len(collections[int(location)-1])
+                else:
+                    self.rewards[period][location] =  0.99
                 '''
                 if location == '1':
                     # Avoid ambiguity for heuristic
