@@ -253,7 +253,6 @@ class benders(fm.formulation):
     def set_constraints(self):
 
         self.create_c1()
-        # self.create_si()
 
     def create_vrv(self):
         # Create v_{j} variables

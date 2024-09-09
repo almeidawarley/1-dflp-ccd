@@ -7,6 +7,81 @@ class original(fm.formulation):
 
         super().__init__(instance, name)
 
+    def set_variables(self):
+
+        self.create_vry()
+        self.create_vrx()
+        self.create_vrw()
+        self.create_vrc()
+        self.create_vrb()
+
+    def set_objective(self):
+
+        self.mip.setObjective(
+            sum(
+                self.ins.rewards[period][location] *
+                self.var['w'][period, location, customer]
+                for period in self.ins.periods
+                for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
+            )
+        )
+
+    def set_constraints(self):
+
+        self.create_c1()
+        self.create_c2()
+        self.create_c3()
+        self.create_c4()
+        self.create_c5()
+        self.create_c6()
+        self.create_c7()
+
+    def create_vrx(self):
+        # Create x^{t}_{ij} variables
+
+        lowers = [0. for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
+        uppers = [1. for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
+        coefs = [0. for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
+        types = ['C' for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
+        names = [
+            'x~{}_{}_{}'.format(period, location, customer)
+            for period in self.ins.periods
+            for customer in self.ins.customers
+            for location in self.ins.captured_locations[customer]
+        ]
+        tuples = [
+            (period, location, customer)
+            for period in self.ins.periods
+            for customer in self.ins.customers
+            for location in self.ins.captured_locations[customer]
+        ]
+
+        self.var['x'] = self.mip.addVars(tuples, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+
+    def create_vrw(self):
+        # Create w^{t}_{ij} variables
+
+        lowers = [0 for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
+        uppers = [gp.GRB.INFINITY for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
+        coefs = [0 for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
+        types = ['C' for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
+        names = [
+            'w~{}_{}_{}'.format(period, location, customer)
+            for period in self.ins.periods
+            for customer in self.ins.customers
+            for location in self.ins.captured_locations[customer]
+        ]
+
+        tuples = [
+            (period, location, customer)
+            for period in self.ins.periods
+            for customer in self.ins.customers
+            for location in self.ins.captured_locations[customer]
+        ]
+
+        self.var['w'] = self.mip.addVars(tuples, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+
     def create_vrb(self):
         # Create b^{t}_{j} variables
 
@@ -62,144 +137,8 @@ class original(fm.formulation):
             name = 'c3'
         )
 
-class nonlinear(original):
-
-    def __init__(self, instance):
-
-        super().__init__(instance, 'DSFLP-C-NLR')
-
-    def set_variables(self):
-
-        self.create_vry()
-        self.create_vrw()
-        self.create_vrc()
-        self.create_vrb()
-
-    def set_objective(self):
-
-        self.mip.setObjective(
-            sum(
-                self.ins.rewards[period][location] *
-                self.var['w'][period, customer] *
-                self.var['y'][period, location]
-                for period in self.ins.periods
-                for customer in self.ins.customers
-                for location in self.ins.captured_locations[customer]
-            )
-        )
-
-    def set_constraints(self):
-
-        self.create_c1()
-        self.create_c2()
-        self.create_c3()
-        self.create_c4()
-        self.create_c5()
-        # self.create_si()
-
-    def create_vrw(self):
-        # Create w^{t}_{j} variables
-
-        lowers = [0 for _ in self.ins.periods for _ in self.ins.customers]
-        uppers = [gp.GRB.INFINITY for _ in self.ins.periods for _ in self.ins.customers]
-        coefs = [0 for _ in self.ins.periods for _ in self.ins.customers]
-        types = ['C' for _ in self.ins.periods for _ in self.ins.customers]
-        names = [
-            'w~{}_{}'.format(period, customer)
-            for period in self.ins.periods
-            for customer in self.ins.customers
-        ]
-
-        self.var['w'] = self.mip.addVars(self.ins.periods, self.ins.customers, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
-
     def create_c4(self):
-        # Create constraint 4, nonlinear
-
-        self.mip.addConstrs(
-            (
-                self.var['b'][period, customer] ==
-                self.var['c'][period, customer] -
-                self.var['w'][period, customer]
-                for period in self.ins.periods
-                for customer in self.ins.customers
-            ),
-            name = 'c4'
-        )
-
-    def create_c5(self):
-        # Create constrain 5, nonlinear
-
-        self.mip.addConstrs(
-            (
-                self.var['w'][period, customer] ==
-                sum(
-                    self.var['y'][period, location]
-                    for location in self.ins.captured_locations[customer]
-                ) * self.var['c'][period, customer]
-                for period in self.ins.periods
-                for customer in self.ins.customers
-            ),
-            name = 'c5'
-        )
-
-class linearized(original):
-
-    def __init__(self, instance):
-
-        super().__init__(instance, 'DSFLP-C-LRZ')
-
-    def set_variables(self):
-
-        self.create_vry()
-        self.create_vrw()
-        self.create_vrc()
-        self.create_vrb()
-
-    def set_objective(self):
-
-        self.mip.setObjective(
-            sum(
-                self.ins.rewards[period][location] *
-                self.var['w'][period, location, customer]
-                for period in self.ins.periods
-                for customer in self.ins.customers
-                for location in self.ins.captured_locations[customer]
-            )
-        )
-
-    def set_constraints(self):
-
-        self.create_c1()
-        self.create_c2()
-        self.create_c3()
-        self.create_c4()
-        self.create_c5()
-
-    def create_vrw(self):
-        # Create w^{t}_{ij} variables
-
-        lowers = [0 for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
-        uppers = [gp.GRB.INFINITY for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
-        coefs = [0 for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
-        types = ['C' for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
-        names = [
-            'w~{}_{}_{}'.format(period, location, customer)
-            for period in self.ins.periods
-            for customer in self.ins.customers
-            for location in self.ins.captured_locations[customer]
-        ]
-
-        tuples = [
-            (period, location, customer)
-            for period in self.ins.periods
-            for customer in self.ins.customers
-            for location in self.ins.captured_locations[customer]
-        ]
-
-        self.var['w'] = self.mip.addVars(tuples, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
-
-    def create_c4(self):
-        # Create constraint 4, linearized
+        # Create constraint 4
 
         self.mip.addConstrs(
             (
@@ -212,6 +151,62 @@ class linearized(original):
             name = 'c4'
         )
 
+    def create_c6(self):
+        # Create constraint 6
+
+        self.mip.addConstrs(
+            (
+                self.var['x'][period, location, customer]
+                <= self.var['y'][period, location]
+                for period in self.ins.periods
+                for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
+            ),
+            name = 'c6'
+        )
+
+    def create_c7(self):
+        # Create constraint 7
+
+        self.mip.addConstrs(
+            (
+                sum(
+                    self.var['x'][period, location, customer]
+                    for location in self.ins.captured_locations[customer]
+                ) <= 1
+                for period in self.ins.periods
+                for customer in self.ins.customers
+            ),
+            name = 'c7'
+        )
+
+class nonlinear(original):
+
+    def __init__(self, instance):
+
+        super().__init__(instance, 'DSFLP-C-NLR')
+
+    def create_c5(self):
+        # Create constrain 5, nonlinear
+
+        self.mip.addConstrs(
+            (
+                self.var['w'][period, location, customer] ==
+                self.var['x'][period, location, customer] *
+                self.var['c'][period, customer]
+                for period in self.ins.periods
+                for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
+            ),
+            name = 'c5'
+        )
+
+class linearized(original):
+
+    def __init__(self, instance):
+
+        super().__init__(instance, 'DSFLP-C-LRZ')
+
     def create_c5(self):
         # Create constraint 5, linearized
 
@@ -219,7 +214,7 @@ class linearized(original):
             (
                 self.var['w'][period, location, customer] <=
                 self.ins.limits[period][customer] *
-                self.var['y'][period, location]
+                self.var['x'][period, location, customer]
                 for period in self.ins.periods
                 for customer in self.ins.customers
                 for location in self.ins.captured_locations[customer]
@@ -231,7 +226,7 @@ class linearized(original):
                 self.var['w'][period, location, customer] <=
                 self.var['c'][period, customer] +
                 self.ins.limits[period][customer] *
-                (1 - self.var['y'][period, location])
+                (1 - self.var['x'][period, location, customer])
                 for period in self.ins.periods
                 for customer in self.ins.customers
                 for location in self.ins.captured_locations[customer]
@@ -242,7 +237,7 @@ class linearized(original):
             (
                 self.var['w'][period, location, customer]
                 >=  -1 * self.ins.limits[period][customer] *
-                self.var['y'][period, location]
+                self.var['x'][period, location, customer]
                 for period in self.ins.periods
                 for customer in self.ins.customers
                 for location in self.ins.captured_locations[customer]
@@ -254,7 +249,7 @@ class linearized(original):
                 self.var['w'][period, location, customer] >=
                 self.var['c'][period, customer] -
                 1 * self.ins.limits[period][customer] *
-                (1 - self.var['y'][period, location])
+                (1 - self.var['x'][period, location, customer])
                 for period in self.ins.periods
                 for customer in self.ins.customers
                 for location in self.ins.captured_locations[customer]
