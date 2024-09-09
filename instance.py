@@ -130,11 +130,15 @@ class instance:
 
         latest = {customer: self.start for customer in self.customers}
 
-        for period, location in solution.items():
-            if location != self.depot:
-                for customer in self.captured_customers[location]:
-                    objective += self.rewards[period][location] * self.accumulated[latest[customer]][period][customer]
-                    latest[customer] = period
+        for period, locations in solution.items():
+            if locations != [self.depot]:
+                for customer in self.customers:
+                    marginal = 0.
+                    for location in locations:
+                        if location in self.captured_locations[customer]:
+                            marginal = max(marginal, self.rewards[period][location] * self.accumulated[latest[customer]][period][customer])
+                            latest[customer] = period
+                    objective += marginal
 
         return objective
 
@@ -144,7 +148,7 @@ class instance:
 
     def empty_solution(self):
 
-        return {period: self.depot for period in self.periods}
+        return {period: [self.depot] for period in self.periods}
 
     def insert_solution(self, solution, period, location):
 
@@ -165,17 +169,23 @@ class instance:
         solution = self.empty_solution()
 
         for period in self.periods:
+            solution[period] = []
             for location in self.locations:
                 value = variable[period, location].x
                 if cm.is_equal_to(value, 1.):
-                    solution[period] = location
+                    solution[period].append(location)
 
         return solution
 
     def pack_solution(self, solution):
         # Format dictionary solution as text
 
-        return '-'.join(solution.values())
+        formatted = list(solution.values())
+
+        for index, _ in enumerate(formatted):
+            formatted[index] = '~'.join(formatted[index])
+
+        return '-'.join(formatted)
 
     def unpack_solution(self, text):
         # Format text solution as dictionary

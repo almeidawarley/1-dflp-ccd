@@ -23,103 +23,7 @@ class benders(fm.formulation):
             else:
                 exit('Invalid method for solving suproblems')
 
-    def solve_std(self, label = '', cutoff = 0.):
-
-        # Standard Benders implementation
-        '''
-        for customer in self.ins.customers:
-            self.add_inequality(self.ins.unpack_solution('0-3'), customer)
-        self.mip.write('refactoring-master.lp')
-        '''
-
-        '''
-        for location in self.ins.locations:
-            incumbent = self.ins.stable_solution(location)
-            # incumbent = self.ins.empty_solution()
-            # incumbent[self.ins.finish-1] = location
-            for customer in self.ins.customers:
-                self.add_inequality(incumbent, customer)
-        '''
-
-        label = label + '_' if len(label) > 0 else label
-
-        lower_bound, upper_bound = 0., gp.GRB.INFINITY
-        incumbent = self.ins.empty_solution()
-        time_elapsed, time_remaining = 0., cm.TIMELIMIT
-        time_subprbs = 0.
-        loop_counter = 0
-
-        while not cm.compare_obj(upper_bound, lower_bound) and time_remaining > cm.TIMENOUGH:
-
-            # Optimize master problem
-            self.mip.setParam('TimeLimit', time_remaining)
-            if loop_counter > 0:
-                self.mip.setParam('Cutoff', max(lower_bound, cutoff))
-            self.heaten(incumbent)
-            self.mip.optimize()
-            # self.mip.write('master-i{}.lp'.format(loop_counter))
-
-            # Update upper bound
-            proven_bound = self.mip.objBound
-            upper_bound = min(upper_bound, proven_bound)
-            time_elapsed += self.mip.runtime
-            solution = self.ins.format_solution(self.var['y'])
-
-            '''
-            profiler = cProfile.Profile()
-            profiler.enable()
-            for customer in self.ins.customers:
-                self.subproblems[customer].cut()
-            profiler.disable()
-            stats = pstats.Stats(profiler).sort_stats('tottime')
-            stats.print_stats()
-            _ = input('wait...')
-            '''
-
-            # Solve subproblems
-            start = tm.time()
-            current_bound = 0.
-            for customer in self.ins.customers:
-                dual_objective = self.add_inequality(solution, customer)
-                current_bound += dual_objective
-            end = tm.time()
-
-            time_elapsed += end - start
-            time_subprbs += end - start
-
-            # Update lower bound
-            if current_bound > lower_bound:
-                lower_bound = current_bound
-                incumbent = self.ins.copy_solution(solution)
-            loop_counter += 1
-
-            # Print iteration log
-            print('-----------------------------------------------------------------------------------\n\n')
-            print('Iteration: {}'.format(loop_counter))
-            print('Lower bound: {}'.format(lower_bound))
-            print('Current bound: {}'.format(current_bound))
-            print('Upper bound: {}'.format(upper_bound))
-            print('Current solution: {}'.format('-'.join(solution.values())))
-            print('Current incumbent: {}'.format('-'.join(incumbent.values())))
-            print('Optimality gap: {}'.format(cm.compute_gap(upper_bound, lower_bound)))
-            print('\n\n-----------------------------------------------------------------------------------')
-
-            # _ = input('next iteration...')
-
-            time_remaining = cm.TIMELIMIT - time_elapsed
-
-        metadata = {
-            '{}iterations'.format(label): loop_counter,
-            '{}objective'.format(label): lower_bound,
-            '{}runtime'.format(label): round(time_elapsed, cm.PRECISION),
-            '{}subtime'.format(label): round(time_subprbs, cm.PRECISION),
-            '{}optgap'.format(label): cm.compute_gap(upper_bound, lower_bound),
-            '{}solution'.format(label): self.ins.pack_solution(incumbent)
-        }
-
-        return metadata
-
-    def solve_bbc(self, label = '', cutoff = 0.):
+    def solve(self, label = '', cutoff = 0.):
 
         # Branch-and-Benders cut
 
@@ -164,12 +68,13 @@ class benders(fm.formulation):
                 solution = model.cbGetSolution(self.var['y'])
 
                 # Format raw solution
-                incumbent = self.ins.empty_solution()
+                incumbent = {}
                 for period in self.ins.periods:
+                    incumbent[period] = []
                     for location in self.ins.locations:
                         value = solution[period, location]
                         if cm.is_equal_to(value, 1.):
-                            incumbent[period] = location
+                            incumbent[period].append(location)
 
                 # content.write('#{} {}\n'.format(data['loop_counter'], self.ins.pack_solution(incumbent)))
 

@@ -177,7 +177,7 @@ class duality(subproblem):
         # Build optimality cut
         for period in self.ins.periods:
             for location in self.ins.captured_locations[self.customer]:
-                self.inequality['y'][period][location] = self.var['p'][period, location].x
+                self.inequality['y'][period][location] = self.var['o'][period, location].x - sum(self.var['p'][period, other].x for other in self.ins.captured_locations[self.customer])
         self.inequality['b'] = self.var['q'][self.ins.start].x
 
         return self.mip.objVal, self.inequality
@@ -197,13 +197,17 @@ class duality(subproblem):
 
         self.create_vrp()
         self.create_vrq()
+        self.create_vro()
 
     def set_objective(self):
 
         self.mip.setObjective(
             sum(
-                self.var['p'][period, location] *
-                (1 if self.solution[period] == location else 0)
+                (
+                    self.var['o'][period, location] -
+                    self.var['p'][period, location]
+                ) *
+                (1 if location in self.solution[period] else 0)
                 for period in self.ins.periods
                 for location in self.ins.captured_locations[self.customer]
             ) + self.var['q'][self.ins.start]
@@ -216,7 +220,7 @@ class duality(subproblem):
     def create_vrp(self):
         # Create p^{t}_{i} variables
 
-        lowers = [-gp.GRB.INFINITY for _ in self.ins.periods for _ in self.ins.locations]
+        lowers = [0. for _ in self.ins.periods for _ in self.ins.locations]
         uppers = [gp.GRB.INFINITY for _ in self.ins.periods for _ in self.ins.locations]
         coefs = [0. for _ in self.ins.periods for _ in self.ins.locations]
         types = ['C' for _ in self.ins.periods for _ in self.ins.locations]
@@ -227,6 +231,21 @@ class duality(subproblem):
         ]
 
         self.var['p'] = self.mip.addVars(self.ins.periods, self.ins.locations, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
+
+    def create_vro(self):
+        # Create o^{t}_{i} variables
+
+        lowers = [0. for _ in self.ins.periods for _ in self.ins.locations]
+        uppers = [gp.GRB.INFINITY for _ in self.ins.periods for _ in self.ins.locations]
+        coefs = [0. for _ in self.ins.periods for _ in self.ins.locations]
+        types = ['C' for _ in self.ins.periods for _ in self.ins.locations]
+        names = [
+            'o~{}_{}'.format(period, location)
+            for period in self.ins.periods
+            for location in self.ins.locations
+        ]
+
+        self.var['o'] = self.mip.addVars(self.ins.periods, self.ins.locations, lb = lowers, ub = uppers, obj = coefs, vtype = types, name = names)
 
     def create_vrq(self):
         # Create q^{t} variables
@@ -247,7 +266,11 @@ class duality(subproblem):
 
         self.mip.addConstrs(
             (
-                self.var['p'][period2, location] +
+                self.var['o'][period2, location] -
+                sum(
+                    self.var['p'][period2, other]
+                    for other in self.ins.captured_locations[self.customer]
+                ) +
                 self.var['q'][period1] - self.var['q'][period2] >=
                 self.ins.rewards[period2][location] *
                 self.ins.accumulated[period1][period2][self.customer]

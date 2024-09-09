@@ -21,7 +21,7 @@ def main():
 
     cm.mark_section('External subproblems')
     benders1 = bd.benders(instance, 'external')
-    metadata = benders1.solve_bbc('bbe')
+    metadata = benders1.solve('bbe')
     record = rc.update_record(record, metadata)
 
 if __name__ == '__main__':

@@ -34,35 +34,18 @@ def main():
     if args.methods == '1' or args.methods == '0':
         cm.mark_section('Analytical subproblems')
         benders1 = bd.benders(instance, 'analytical')
-        metadata = benders1.solve_bbc('bba')
+        metadata = benders1.solve('bba')
         record = rc.update_record(record, metadata)
 
     if args.methods == '2' or args.methods == '0':
         cm.mark_section('Duality subproblems')
         benders2 = bd.benders(instance, 'duality')
-        metadata = benders2.solve_bbc('bbd')
-        record = rc.update_record(record, metadata)
-
-    '''
-    if args.methods == '0':
-        cm.mark_section('Solving with standard Benders')
-
-    if args.methods == '0':
-        cm.mark_section('Analytical subproblems')
-        benders3 = bd.benders(instance, 'analytical')
-        metadata = benders3.solve_std('bsa')
+        metadata = benders2.solve('bbd')
         record = rc.update_record(record, metadata)
 
     if args.methods == '0':
-        cm.mark_section('Duality subproblems')
-        benders4 = bd.benders(instance, 'duality')
-        metadata = benders4.solve_std('bsd')
-        record = rc.update_record(record, metadata)
-
-    if args.methods == '0':
-        for approach in ['bba', 'bbd', 'bsa', 'bsd']:
+        for approach in ['bba', 'bbd']:
             print('> {} approach: {} <{}> [{}]'.format(approach.upper(), record['{}_objective'.format(approach)], record['{}_runtime'.format(approach)], record['{}_solution'.format(approach)]))
-    '''
 
 if __name__ == '__main__':
 
