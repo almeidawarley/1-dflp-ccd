@@ -79,6 +79,7 @@ class instance:
 
         # Prepare proper ctypes
 
+        '''
         self.c_nb_locations = c_int(len(self.locations))
         self.c_nb_customers = c_int(len(self.customers))
         self.c_nb_periods = c_int(len(self.periods))
@@ -101,6 +102,7 @@ class instance:
             for period2 in self.periods:
                 for customer in self.customers:
                     self.c_dt_accumulated[int(period1) * len(self.periods) * len(self.customers) + (int(period2) - 1)* len(self.customers) + int(customer) - 1] = int(self.accumulated[period1][period2][customer]) if period1 < period2 else 0
+        '''
 
     def print_instance(self):
         # Print stored instance
