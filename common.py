@@ -8,6 +8,7 @@ TIMELIMIT = 5 * 60 * 60
 TIMENOUGH = 5
 TOLERANCE = 10 ** (-4)
 PRECISION = 4
+INFINITY = 10 ** 6
 
 def is_equal_to(value1, value2, tolerance = TOLERANCE):
     # Compare two values according to tolerance

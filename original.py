@@ -17,6 +17,30 @@ class original(fm.formulation):
 
     def set_objective(self):
 
+        '''
+        # Check penalization part
+        self.mip.setObjective(
+            sum(
+                self.ins.rewards[period][location] *
+                self.var['w'][period, location, customer]
+                for period in self.ins.periods
+                for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
+            ) -
+            sum(
+                self.ins.penalization *
+                self.ins.spawning[period][customer] *
+                (
+                    1 - sum(
+                        self.var['x'][period, location, customer]
+                        for location in self.ins.captured_locations[customer]
+                    )
+                )
+                for period in self.ins.periods
+                for customer in self.ins.customers
+            )
+        )
+        '''
         self.mip.setObjective(
             sum(
                 self.ins.rewards[period][location] *
@@ -26,6 +50,7 @@ class original(fm.formulation):
                 for location in self.ins.captured_locations[customer]
             )
         )
+        #'''
 
     def set_constraints(self):
 
@@ -36,6 +61,7 @@ class original(fm.formulation):
         self.create_c5()
         self.create_c6()
         self.create_c7()
+        self.create_c8()
 
     def create_vrx(self):
         # Create x^{t}_{ij} variables
@@ -178,6 +204,22 @@ class original(fm.formulation):
                 for customer in self.ins.customers
             ),
             name = 'c7'
+        )
+
+    def create_c8(self):
+        # Create constraint 8
+
+        self.mip.addConstrs(
+            (
+                sum(
+                    self.var['x'][period, other, customer]
+                    for other in self.ins.captured_locations[customer]
+                ) >= self.var['y'][period, location]
+                for period in self.ins.periods
+                for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
+            ),
+            name = 'c8'
         )
 
 class nonlinear(original):

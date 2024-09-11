@@ -13,6 +13,35 @@ class network(fm.formulation):
 
     def set_objective(self):
 
+        '''
+        # Check penalization part
+        self.mip.setObjective(
+            sum(
+                self.ins.rewards[period2][location] *
+                self.ins.accumulated[period1][period2][customer] *
+                self.var['x'][period1, period2, location, customer]
+                for period1 in self.ins.periods_with_start
+                for period2 in self.ins.periods
+                for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
+                if period1 < period2
+            ) -
+            sum(
+                self.ins.penalization *
+                sum(
+                    self.ins.spawning[period3][customer]
+                    for period3 in self.ins.periods
+                    if period1 <= period3 and period3 < period2
+                ) *
+                self.var['x'][period1, period2, location, customer]
+                for period1 in self.ins.periods_with_start
+                for period2 in self.ins.periods_with_end
+                for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
+                if period1 < period2
+            )
+        )
+        '''
         self.mip.setObjective(
             sum(
                 self.ins.rewards[period2][location] *
@@ -25,6 +54,7 @@ class network(fm.formulation):
                 if period1 < period2
             )
         )
+        #'''
 
     def set_constraints(self):
 
