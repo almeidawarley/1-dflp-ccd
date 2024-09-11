@@ -16,6 +16,8 @@ class instance:
             - self.locations: list of locations
             - self.customers: list of customers
             - self.periods: list of periods
+            - self.facilities: list of facilities
+            - self.penalization: penalization factor
 
             - self.catalogs: preference rules
             - self.rewards: location rewards
@@ -109,8 +111,12 @@ class instance:
 
         print('Keyword: <{}>'.format(self.keyword))
 
+        print('Penalization: {}'.format(self.penalization))
+
+        print('Facilities: {}'.format(self.facilities[self.start + 1]))
+
         print('Customers: {}'.format(self.customers))
-        print('\t| j: #\t[L]')
+        print('\t| j: #\t[I]')
         for customer in self.customers:
             print('\t| {}: {}\t{}'.format(
                 customer,
@@ -118,6 +124,7 @@ class instance:
                 self.captured_locations[customer] if len(self.locations) <= 100 else '[...]'))
 
         print('Locations: {}'.format(self.locations))
+        print('\t| j: #\t[J]')
         for location in self.locations:
             print('\t| {} ({}) : {}'.format(
                 location,

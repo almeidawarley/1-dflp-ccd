@@ -28,6 +28,10 @@ class artificial(ic.instance):
         number_periods = int(self.parameters['periods'])
         self.periods = [int(i + 1) for i in range(number_periods)]
 
+        # Store number of facilities
+        self.facilities = {period : int(self.parameters['facilities']) for period in self.periods}
+        self.penalization = 10 ** int(self.parameters['penalization'])
+
         # Create random preferences
         if self.parameters['preferences'] == 'small':
             preferences = 0.5 # 1 / 2.01
@@ -63,13 +67,6 @@ class artificial(ic.instance):
                     exit('Wrong value for rewards parameter')
                 self.rewards[period][location] = np.ceil(coefficient * len(self.locations))
 
-        stored_f = {}
-        def bass(t, p = 0.04, q = 0.4, m = 10):
-            return (p * m + (q - p) * sum(v for x, v in stored_f.items() if x <= t) - (q/m) * (sum(v for x, v in stored_f.items() if x <= t)) ** 2)
-
-        for period in self.periods:
-            stored_f[period] = bass(period)
-
         # Create amplitude
         self.amplitudes = {}
         for customer in self.customers:
@@ -93,8 +90,6 @@ class artificial(ic.instance):
                     self.spawning[period][customer] = (period / number_periods) * self.amplitudes[customer]
                 elif self.parameters['demands'] == 'decreasing':
                     self.spawning[period][customer] = ((number_periods - period + 1)/ number_periods) * self.amplitudes[customer]
-                elif self.parameters['demands'] == 'bass':
-                    self.spawning[period][customer] = stored_f[period] * self.amplitudes[customer]
                 else:
                     exit('Wrong value for demand behaviour')
                 self.spawning[period][customer] = np.ceil(self.spawning[period][customer])

@@ -25,6 +25,9 @@ class debugging(ic.instance):
         else:
             exit('Invalid instance keyword')
 
+        self.facilities = {period: 1 for period in self.periods}
+        self.penalization = 0
+
     def create_spp(self, random = False):
         # Create SPP instances
 

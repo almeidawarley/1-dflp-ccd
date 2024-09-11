@@ -104,7 +104,7 @@ class formulation:
 
         self.mip.addConstrs(
             (
-                self.var['y'].sum(period, '*') <= 1
+                self.var['y'].sum(period, '*') <= self.ins.facilities[period]
                 for period in self.ins.periods
             ),
             name = 'c1'
