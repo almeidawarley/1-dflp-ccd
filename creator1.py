@@ -66,7 +66,7 @@ for seed in features['seed']:
                                         output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
                                         output.write('#SBATCH --mail-type=FAIL\n')
 
-                                        output.write('cd ~/shortcut/\n')
+                                        output.write('cd /home/walm/projects/def-mxm/walm/1-dflp-ra/\n')
                                         output.write('python run-{}.py -p {} {}\n'.format(script, project, keyword))
 
                                     commands.write('dos2unix ../scripts/{}_{}.sh\n'.format(script, keyword))
