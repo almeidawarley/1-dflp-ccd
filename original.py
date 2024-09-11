@@ -17,8 +17,6 @@ class original(fm.formulation):
 
     def set_objective(self):
 
-        '''
-        # Check penalization part
         self.mip.setObjective(
             sum(
                 self.ins.rewards[period][location] *
@@ -40,17 +38,6 @@ class original(fm.formulation):
                 for customer in self.ins.customers
             )
         )
-        '''
-        self.mip.setObjective(
-            sum(
-                self.ins.rewards[period][location] *
-                self.var['w'][period, location, customer]
-                for period in self.ins.periods
-                for customer in self.ins.customers
-                for location in self.ins.captured_locations[customer]
-            )
-        )
-        #'''
 
     def set_constraints(self):
 

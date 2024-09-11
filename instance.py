@@ -140,15 +140,18 @@ class instance:
         for period, locations in solution.items():
             if locations != [self.depot]:
                 for customer in self.customers:
-                    marginal = - 1 * cm.INFINITY
+                    reward = - 1 * cm.INFINITY
                     captured = False
                     for location in locations:
                         if location in self.captured_locations[customer]:
                             captured = True
-                            marginal = max(marginal, self.rewards[period][location] * self.accumulated[latest[customer]][period][customer])
+                            reward = max(reward, self.rewards[period][location] * self.accumulated[latest[customer]][period][customer])
                     if captured:
                         latest[customer] = period
-                        objective += marginal
+                        objective += reward
+                    else:
+                        objective -= self.penalization * self.spawning[period][customer]
+                        # penalty = self.penalization * self.spawning[period][customer]
 
         return objective
 
