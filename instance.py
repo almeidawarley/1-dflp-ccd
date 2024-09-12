@@ -124,7 +124,7 @@ class instance:
                 self.captured_locations[customer] if len(self.locations) <= 100 else '[...]'))
 
         print('Locations: {}'.format(self.locations))
-        print('\t| j: #\t[J]')
+        print('\t| i: #\t[J]')
         for location in self.locations:
             print('\t| {} ({}) : {}'.format(
                 location,

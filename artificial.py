@@ -30,7 +30,7 @@ class artificial(ic.instance):
 
         # Store number of facilities
         self.facilities = {period : int(self.parameters['facilities']) for period in self.periods}
-        self.penalization = int(self.parameters['penalization']) * 10
+        self.penalization = int(self.parameters['penalization']) * 0.5 * len(self.locations)
 
         # Create random preferences
         if self.parameters['preferences'] == 'small':

@@ -56,7 +56,7 @@ class original(fm.formulation):
         lowers = [0. for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
         uppers = [1. for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
         coefs = [0. for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
-        types = ['C' for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
+        types = ['B' for _ in self.ins.periods for customer in self.ins.customers for _ in self.ins.captured_locations[customer]]
         names = [
             'x~{}_{}_{}'.format(period, location, customer)
             for period in self.ins.periods
@@ -264,8 +264,8 @@ class linearized(original):
         )
         self.mip.addConstrs(
             (
-                self.var['w'][period, location, customer]
-                >=  -1 * self.ins.limits[period][customer] *
+                self.var['w'][period, location, customer] >=
+                -1 * self.ins.limits[period][customer] *
                 self.var['x'][period, location, customer]
                 for period in self.ins.periods
                 for customer in self.ins.customers
@@ -277,7 +277,7 @@ class linearized(original):
             (
                 self.var['w'][period, location, customer] >=
                 self.var['c'][period, customer] -
-                1 * self.ins.limits[period][customer] *
+                self.ins.limits[period][customer] *
                 (1 - self.var['x'][period, location, customer])
                 for period in self.ins.periods
                 for customer in self.ins.customers
