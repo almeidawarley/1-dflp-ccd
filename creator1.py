@@ -3,11 +3,11 @@ import json as js
 import sys
 
 features = {
-    'seed': [i for i in range(0, 10)],
+    'seed': [i for i in range(0, 5)],
     'points': [50, 100],
     'periods': [10],
-    'facilities': [1, 2],
-    'penalization': [0], #, 1],
+    'facilities': [1, 2, 3, 4],
+    'penalization': [0, 1],
     'preferences': ['small', 'large'],
     'rewards': ['identical', 'inversely'],
     'demands': ['constant', 'seasonal', 'increasing', 'decreasing'],
