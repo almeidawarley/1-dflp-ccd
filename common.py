@@ -16,10 +16,10 @@ def is_equal_to(value1, value2, tolerance = TOLERANCE):
 
 def compute_gap(major, minor):
     # Compute relative gap between two values
-    if major <= TOLERANCE:
-        return 1.
-    else:
-        return round((major - minor) / major, PRECISION)
+    if major < minor:
+        print('>>>>> Flipping objective values for gap computation <<<<<')
+        major, minor = minor, major
+    return round((major - minor) / (major + TOLERANCE), PRECISION)
 
 def compare_obj(objective1, objective2, tolerance = TOLERANCE):
     # Compare two objective values according to tolerance
