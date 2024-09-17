@@ -161,7 +161,7 @@ class instance:
 
     def empty_solution(self):
 
-        return {period: [self.depot] for period in self.periods}
+        return {period: [] for period in self.periods}
 
     def insert_solution(self, solution, period, location):
 
