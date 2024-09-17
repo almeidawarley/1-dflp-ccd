@@ -19,7 +19,7 @@ def compute_gap(major, minor):
     if major < minor:
         print('>>>>> Flipping objective values for gap computation <<<<<')
         major, minor = minor, major
-    return round((major - minor) / (major + TOLERANCE), PRECISION)
+    return round((major - minor) / abs(major + 1 / INFINITY), PRECISION)
 
 def compare_obj(objective1, objective2, tolerance = TOLERANCE):
     # Compare two objective values according to tolerance
