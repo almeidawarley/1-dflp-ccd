@@ -6,6 +6,18 @@ class network(fm.formulation):
 
         super().__init__(instance, 'DSFLP-C-NET')
 
+    def relax(self):
+
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].vtype = 'C'
+
+    def tense(self):
+
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].vtype = 'B'
+
     def set_variables(self):
 
         self.create_vry()

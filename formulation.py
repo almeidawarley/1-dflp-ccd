@@ -42,9 +42,7 @@ class formulation:
 
         label = label + '_' if len(label) > 0 else label
 
-        for period in self.ins.periods:
-            for location in self.ins.locations:
-                self.var['y'][period, location].vtype = 'C'
+        self.relax()
 
         self.mip.optimize()
 
@@ -59,9 +57,7 @@ class formulation:
 
         self.mip.reset()
 
-        for period in self.ins.periods:
-            for location in self.ins.locations:
-                self.var['y'][period, location].vtype = 'B'
+        self.tense()
 
         return metadata
 

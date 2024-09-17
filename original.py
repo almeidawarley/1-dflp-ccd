@@ -7,6 +7,28 @@ class original(fm.formulation):
 
         super().__init__(instance, name)
 
+    def relax(self):
+
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].vtype = 'C'
+
+        for period in self.ins.periods:
+            for customer in self.ins.customers:
+                for location in self.ins.captured_locations[customer]:
+                    self.var['x'][period, location, customer].vtype = 'C'
+
+    def tense(self):
+
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].vtype = 'B'
+
+        for period in self.ins.periods:
+            for customer in self.ins.customers:
+                for location in self.ins.captured_locations[customer]:
+                    self.var['x'][period, location, customer].vtype = 'B'
+
     def set_variables(self):
 
         self.create_vry()
