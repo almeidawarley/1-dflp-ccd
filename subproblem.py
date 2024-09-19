@@ -177,7 +177,7 @@ class duality(subproblem):
         # Build optimality cut
         for period in self.ins.periods:
             for location in self.ins.captured_locations[self.customer]:
-                self.inequality['y'][period][location] = self.var['o'][period, location].x - sum(self.var['p'][period, other].x for other in self.ins.captured_locations[self.customer])
+                self.inequality['y'][period][location] = self.var['o'][period, location].x - self.var['p'][period, location].x
         self.inequality['b'] = self.var['q'][self.ins.start].x
 
         return self.mip.objVal, self.inequality

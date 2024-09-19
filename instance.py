@@ -138,7 +138,7 @@ class instance:
         latest = {customer: self.start for customer in self.customers}
 
         for period, locations in solution.items():
-            if locations != [self.depot]:
+            if len(locations) > 0.:
                 for customer in self.customers:
                     reward = - 1 * cm.INFINITY
                     captured = False
