@@ -33,12 +33,14 @@ class artificial(ic.instance):
         self.penalization = int(self.parameters['penalization']) * 0.5 * len(self.locations)
 
         # Create random preferences
-        if self.parameters['preferences'] == 'small':
-            preferences = 0.5 # 1 / 2.01
+        if self.parameters['preferences'] == 'only':
+            preferences = 0
+        elif self.parameters['preferences'] == 'small':
+            preferences = 0.5
         elif self.parameters['preferences'] == 'medium':
             preferences = 1
         elif self.parameters['preferences'] == 'large':
-            preferences = 2 # 2.01
+            preferences = 2
         else:
             exit('Wrong value for preferences parameter')
         consideration_size = int(np.ceil((preferences * number_locations) / number_periods))
