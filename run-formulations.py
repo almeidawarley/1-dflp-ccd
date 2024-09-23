@@ -24,7 +24,7 @@ def main():
     else:
         warm_solution = instance.empty_solution()
 
-    if args.methods == '1' or args.methods == '0':
+    if args.methods == '1' or args.methods == '0' or args.methods == '3':
         cm.mark_section('Solving the DSFLP-C-LRZ formulation')
         formulation1 = og.linearized(instance)
 
@@ -41,7 +41,7 @@ def main():
         record = rc.update_record(record, metadata)
     '''
 
-    if args.methods == '0':
+    if args.methods == '0' or args.methods == '3':
         cm.mark_section('Linear programming relaxation bound')
         metadata = formulation1.bound('rlx_lrz')
         record = rc.update_record(record, metadata)
