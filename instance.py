@@ -122,6 +122,7 @@ class instance:
                 customer,
                 len(self.captured_locations[customer]),
                 self.captured_locations[customer] if len(self.locations) <= 100 else '[...]'))
+            print('\t\t{}'.format([self.spawning[period][customer] for period in self.periods]))
 
         print('Locations: {}'.format(self.locations))
         print('\t| i: #\t[J]')
@@ -152,6 +153,29 @@ class instance:
                     else:
                         objective -= self.penalization * self.spawning[period][customer]
                         # penalty = self.penalization * self.spawning[period][customer]
+
+        return objective
+
+    def evaluate_customer(self, solution, customer):
+
+        objective = 0.
+
+        latest = self.start
+
+        for period, locations in solution.items():
+            if len(locations) > 0.:
+                reward = - 1 * cm.INFINITY
+                captured = False
+                for location in locations:
+                    if location in self.captured_locations[customer]:
+                        captured = True
+                        reward = max(reward, self.rewards[period][location] * self.accumulated[latest][period][customer])
+                if captured:
+                    latest = period
+                    objective += reward
+                else:
+                    objective -= self.penalization * self.spawning[period][customer]
+                    # penalty = self.penalization * self.spawning[period][customer]
 
         return objective
 
