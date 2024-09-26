@@ -29,9 +29,12 @@ class benders(fm.formulation):
 
         label = label + '_' if len(label) > 0 else label
 
+        '''
+        # Add constraints for empty solution
         empty = self.ins.empty_solution()
         for customer in self.ins.customers:
             self.add_inequality(empty, customer)
+        '''
 
         '''
         for location in self.ins.locations:
@@ -90,6 +93,7 @@ class benders(fm.formulation):
                             rhs += inequality['y'][period][location] * self.var['y'][period, location]
 
                     # content.write('{} {}\n'.format(customer, inequality))
+                    # content.flush()
 
                     # Add inequality for some customer
                     model.cbLazy(self.var['v'][customer] <= rhs)
@@ -101,6 +105,11 @@ class benders(fm.formulation):
         self.mip.optimize(callback)
 
         incumbent = self.ins.format_solution(self.var['y'])
+
+        objective = self.ins.evaluate_solution(incumbent)
+
+        assert cm.compare_obj(self.mip.objVal, objective)
+
         try:
             optgap = round(self.mip.MIPGap, cm.PRECISION)
         except:
@@ -163,7 +172,7 @@ class benders(fm.formulation):
         # Create v_{j} variables
 
         lowers = [0. for _ in self.ins.customers]
-        uppers = [gp.GRB.INFINITY for _ in self.ins.customers]
+        uppers = [max(self.ins.rewards[period][location] for period in self.ins.periods for location in self.ins.captured_locations[customer]) * self.ins.limits[self.ins.finish - 1][customer] for customer in self.ins.customers]
         coefs = [0. for _ in self.ins.customers]
         types = ['C' for _ in self.ins.customers]
         names = [
