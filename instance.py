@@ -79,6 +79,21 @@ class instance:
                 limit = self.accumulated[self.start][period][customer]
                 self.limits[period][customer] = np.ceil(limit)
 
+        self.coefficients = {}
+        for period1 in self.periods_with_start:
+            self.coefficients[period1] = {}
+            for period2 in self.periods_with_end:
+                if period1 < period2:
+                    self.coefficients[period1][period2] = {}
+                    for location in self.locations:
+                        self.coefficients[period1][period2][location] = {}
+                        for customer in self.captured_customers[location]:
+                            if period2 != self.finish:
+                                self.coefficients[period1][period2][location][customer] = self.rewards[period2][location] * self.accumulated[period1][period2][customer]
+                            else:
+                                self.coefficients[period1][period2][location][customer] = 0.
+                            self.coefficients[period1][period2][location][customer] -= self.penalization * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > period1 and period3 < period2)
+
         # Prepare proper ctypes
 
         '''
