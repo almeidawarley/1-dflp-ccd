@@ -23,7 +23,7 @@ class benders(fm.formulation):
             else:
                 exit('Invalid method for solving suproblems')
 
-    def solve(self, label = '', cutoff = 0.):
+    def solve(self, label = ''):
 
         # Branch-and-Benders cut
 
@@ -101,7 +101,6 @@ class benders(fm.formulation):
                 data['time_subprbs'] += end - start
                 data['loop_counter'] += 1
 
-        self.mip.setParam('Cutoff', cutoff)
         self.mip.optimize(callback)
 
         incumbent = self.ins.format_solution(self.var['y'])
@@ -109,6 +108,10 @@ class benders(fm.formulation):
         objective = self.ins.evaluate_solution(incumbent)
 
         assert cm.compare_obj(self.mip.objVal, objective)
+
+        # print('MIP objective value: {}'.format(self.mip.objVal))
+        # print('ACT objective value: {}'.format(objective))
+        # print('Optimal solution: {}'.format(self.ins.pack_solution(incumbent)))
 
         try:
             optgap = round(self.mip.MIPGap, cm.PRECISION)
@@ -171,8 +174,8 @@ class benders(fm.formulation):
     def create_vrv(self):
         # Create v_{j} variables
 
-        lowers = [0. for _ in self.ins.customers]
-        uppers = [max(self.ins.rewards[period][location] for period in self.ins.periods for location in self.ins.captured_locations[customer]) * self.ins.limits[self.ins.finish - 1][customer] for customer in self.ins.customers]
+        lowers = [-gp.GRB.INFINITY for _ in self.ins.customers]
+        uppers = [self.ins.highest for _ in self.ins.customers]
         coefs = [0. for _ in self.ins.customers]
         types = ['C' for _ in self.ins.customers]
         names = [

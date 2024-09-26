@@ -26,6 +26,10 @@ class formulation:
 
         assert cm.compare_obj(self.mip.objVal, objective)
 
+        # print('MIP objective value: {}'.format(self.mip.objVal))
+        # print('ACT objective value: {}'.format(objective))
+        # print('Optimal solution: {}'.format(self.ins.pack_solution(solution)))
+
         metadata = {
             '{}status'.format(label): self.mip.status,
             '{}objective'.format(label): self.mip.objVal,

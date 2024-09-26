@@ -79,6 +79,7 @@ class instance:
                 limit = self.accumulated[self.start][period][customer]
                 self.limits[period][customer] = np.ceil(limit)
 
+        self.highest = - 1 * cm.INFINITY
         self.coefficients = {}
         for period1 in self.periods_with_start:
             self.coefficients[period1] = {}
@@ -93,6 +94,8 @@ class instance:
                             else:
                                 self.coefficients[period1][period2][location][customer] = 0.
                             self.coefficients[period1][period2][location][customer] -= self.penalization * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > period1 and period3 < period2)
+                            if self.coefficients[period1][period2][location][customer] > self.highest:
+                                self.highest = self.coefficients[period1][period2][location][customer]
 
         # Prepare proper ctypes
 
