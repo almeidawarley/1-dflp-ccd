@@ -11,6 +11,7 @@ class subproblem:
         self.ins = instance
         self.customer = customer
         self.solution = self.ins.empty_solution()
+        self.counter = 0
 
         # Create empty inequality
         self.inequality = {}
@@ -40,22 +41,31 @@ class analytical(subproblem):
         self.dual_solution = {}
         self.dual_solution['q'] = {}
         self.dual_solution['p'] = {}
+        self.dual_solution['o'] = {}
         for period in self.ins.periods_with_start:
             self.dual_solution['q'][period] = 0.
         for period in self.ins.periods:
             self.dual_solution['p'][period] = {}
+            self.dual_solution['o'][period] = {}
             for location in self.ins.captured_locations[self.customer]:
                 self.dual_solution['p'][period][location] = 0.
+                self.dual_solution['o'][period][location] = 0.
 
     def cut(self):
 
         # Update primal solution
         for period1 in self.ins.periods_with_start:
             self.primal_solution[period1] = self.ins.finish
-            for period2 in self.ins.periods:
-                if period1 < period2 and self.solution[period2] != self.ins.depot and self.ins.catalogs[self.solution[period2]][self.customer] == 1:
-                    self.primal_solution[period1] = period2
-                    break
+            class Found(Exception): pass
+            try:
+                for period2 in self.ins.periods:
+                    if period1 < period2 and len(self.solution[period2]) > 0:
+                        for location in self.ins.captured_locations[self.customer]:
+                            if location in self.solution[period2]:
+                                self.primal_solution[period1] = period2
+                                raise Found
+            except Found:
+                pass # print('Primal solution: customer {} - {} > {}'.format(self.customer, period1, self.primal_solution[period1]))
 
         dual_objective = 0.
 
@@ -66,7 +76,10 @@ class analytical(subproblem):
             self.dual_solution['q'][period3] = 0.
             for period1, period2 in self.primal_solution.items():
                 if self.primal_solution[period3] != period2 and period2 != self.ins.finish and period1 != period3 and period3 < period2:
-                    location = self.solution[period2]
+                    location = self.solution[period2][0]
+                    for i in self.solution[period2]:
+                        if self.ins.rewards[period2][i] > self.ins.rewards[period2][location]:
+                            location = i
                     current = self.ins.rewards[period2][location] * self.ins.accumulated[period3][period2][self.customer] 
                     current -= self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer]
                     current += self.dual_solution['q'][period1]
@@ -77,7 +90,10 @@ class analytical(subproblem):
         for period3 in reversed(self.ins.periods_with_start):
             for period1, period2 in self.primal_solution.items():
                 if self.primal_solution[period3] == period2 and period2 != self.ins.finish and period1 != period3 and period3 < period2:
-                    location = self.solution[period2]
+                    location = self.solution[period2][0]
+                    for i in self.solution[period2]:
+                        if self.ins.rewards[period2][i] > self.ins.rewards[period2][location]:
+                            location = i
                     current = self.ins.rewards[period2][location] * self.ins.accumulated[period3][period2][self.customer] 
                     current -= self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer] 
                     current += self.dual_solution['q'][period1]
@@ -86,27 +102,28 @@ class analytical(subproblem):
 
         dual_objective += self.dual_solution['q'][self.ins.start]
 
-        # Compute p based on q values
+        # Compute o based on q values
         for period2 in self.ins.periods:
             for location in self.ins.captured_locations[self.customer]:
                 # Start with max as start period
                 current = self.ins.rewards[period2][location] * self.ins.accumulated[self.ins.start][period2][self.customer] 
                 current += self.dual_solution['q'][period2]  - self.dual_solution['q'][self.ins.start]
-                self.dual_solution['p'][period2][location] = current
+                self.dual_solution['o'][period2][location] = current
                 # Parse through other periods
                 for period1 in self.ins.periods:
                     if period1 < period2:
                         current = self.ins.rewards[period2][location] * self.ins.accumulated[period1][period2][self.customer] 
                         current += self.dual_solution['q'][period2] - self.dual_solution['q'][period1]
-                        if current > self.dual_solution['p'][period2][location]:
-                            self.dual_solution['p'][period2][location] = current
-                if self.solution[period2] == location:
-                    dual_objective += self.dual_solution['p'][period2][location]
+                        if current > self.dual_solution['o'][period2][location]:
+                            self.dual_solution['o'][period2][location] = current
+                if location in self.solution[period2]:
+                    dual_objective += self.dual_solution['o'][period2][location]
 
         # Build optimality cut
         for period in self.ins.periods:
             for location in self.ins.captured_locations[self.customer]:
-                self.inequality['y'][period][location] = self.dual_solution['p'][period][location]
+                # self.inequality['y'][period][location] = self.dual_solution['o'][period][location] - self.dual_solution['p'][period][location]
+                self.inequality['y'][period][location] = max(self.dual_solution['o'][period][location] - self.dual_solution['p'][period][location], 0)
         self.inequality['b'] = self.dual_solution['q'][self.ins.start]
 
         return dual_objective, self.inequality
@@ -173,6 +190,14 @@ class duality(subproblem):
 
         # Solve dual program
         self.mip.optimize()
+        self.counter += 1
+
+        '''
+        if not os.path.exists('subprbms/{}'.format(self.counter)):
+            os.makedirs('subprbms/{}'.format(self.counter))
+        self.mip.write('subprbms/{}/customer_{}.sol'.format(self.counter, self.customer))
+        self.mip.write('subprbms/{}/customer_{}.lp'.format(self.counter, self.customer))
+        '''
 
         # Build optimality cut
         for period in self.ins.periods:
@@ -216,6 +241,7 @@ class duality(subproblem):
     def set_constraints(self):
 
         self.create_c1()
+        self.create_c2()
 
     def create_vrp(self):
         # Create p^{t}_{i} variables
@@ -250,7 +276,7 @@ class duality(subproblem):
     def create_vrq(self):
         # Create q^{t} variables
 
-        lowers = [0 for _ in self.ins.periods_with_start]
+        lowers = [-gp.GRB.INFINITY for _ in self.ins.periods_with_start]
         uppers = [gp.GRB.INFINITY for _ in self.ins.periods_with_start]
         coefs = [0. for _ in self.ins.periods_with_start]
         types = ['C' for _ in self.ins.periods_with_start]
@@ -272,12 +298,24 @@ class duality(subproblem):
                     for other in self.ins.captured_locations[self.customer]
                 ) +
                 self.var['q'][period1] - self.var['q'][period2] >=
-                self.ins.rewards[period2][location] *
-                self.ins.accumulated[period1][period2][self.customer]
+                self.ins.coefficients[period1][period2][location][self.customer]
                 for period1 in self.ins.periods_with_start
                 for period2 in self.ins.periods
                 for location in self.ins.captured_locations[self.customer]
                 if period1 < period2
             ),
             name = 'c1'
+        )
+
+    def create_c2(self):
+        # Create constraint 2
+
+        self.mip.addConstrs(
+            (
+                self.var['q'][period1] >=
+                self.ins.coefficients[period1][self.ins.finish][location][self.customer]
+                for period1 in self.ins.periods_with_start
+                for location in self.ins.captured_locations[self.customer]
+            ),
+            name = 'c2'
         )
