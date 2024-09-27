@@ -193,6 +193,7 @@ class duality(subproblem):
         self.counter += 1
 
         '''
+        import os
         if not os.path.exists('subprbms/{}'.format(self.counter)):
             os.makedirs('subprbms/{}'.format(self.counter))
         self.mip.write('subprbms/{}/customer_{}.sol'.format(self.counter, self.customer))
