@@ -175,7 +175,7 @@ class benders(fm.formulation):
         # Create v_{j} variables
 
         lowers = [-gp.GRB.INFINITY for _ in self.ins.customers]
-        uppers = [self.ins.highest for _ in self.ins.customers]
+        uppers = [cm.INFINITY for _ in self.ins.customers]
         coefs = [0. for _ in self.ins.customers]
         types = ['C' for _ in self.ins.customers]
         names = [
