@@ -171,6 +171,9 @@ class instance:
                     else:
                         objective -= self.penalization * self.spawning[period][customer]
                         # penalty = self.penalization * self.spawning[period][customer]
+            else:
+                for customer in self.customers:
+                    objective -= self.penalization * self.spawning[period][customer]
 
         return objective
 
@@ -194,6 +197,8 @@ class instance:
                 else:
                     objective -= self.penalization * self.spawning[period][customer]
                     # penalty = self.penalization * self.spawning[period][customer]
+            else:
+                objective -= self.penalization * self.spawning[period][customer]
 
         return objective
 

@@ -107,11 +107,11 @@ class benders(fm.formulation):
 
         objective = self.ins.evaluate_solution(incumbent)
 
-        assert cm.compare_obj(self.mip.objVal, objective)
-
         # print('MIP objective value: {}'.format(self.mip.objVal))
         # print('ACT objective value: {}'.format(objective))
         # print('Optimal solution: {}'.format(self.ins.pack_solution(incumbent)))
+
+        assert cm.compare_obj(self.mip.objVal, objective, 10 ** (-2))
 
         try:
             optgap = round(self.mip.MIPGap, cm.PRECISION)

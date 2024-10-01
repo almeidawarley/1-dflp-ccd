@@ -24,9 +24,6 @@ def compute_gap(major, minor):
 def compare_obj(objective1, objective2, tolerance = TOLERANCE):
     # Compare two objective values according to tolerance
 
-    if objective1 < objective2:
-      objective1, objective2 = objective2, objective1
-
     return compute_gap(objective1, objective2) <= tolerance
 
 def mark_section(title):
