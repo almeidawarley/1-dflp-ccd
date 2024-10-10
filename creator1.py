@@ -10,8 +10,8 @@ features = {
     'penalization': [0, 1],
     'preferences': ['small', 'large'],
     'rewards': ['identical', 'inversely'],
-    'demands': ['constant', 'seasonal', 'increasing', 'decreasing'],
-    'characters': ['homogeneous', 'heterogeneous']
+    'demands': ['constant'], # ['constant', 'seasonal', 'increasing', 'decreasing'],
+    'characters': ['heterogeneous'] # ['homogeneous', 'heterogeneous']
 }
 
 project = 'p1artificial'
