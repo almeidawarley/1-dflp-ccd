@@ -148,14 +148,14 @@ class benders(fm.formulation):
             optgap = 1.
 
         metadata = {
-            '{}iterations_frc'.format(label): data['loop_fractional'],
-            '{}iterations_int'.format(label): data['loop_integer'],
+            '{}fraction_cuts'.format(label): data['loop_fractional'],
+            '{}fraction_time'.format(label): round(data['time_fractional'], cm.PRECISION),
+            '{}integer_cuts'.format(label): data['loop_integer'],
+            '{}integer_time'.format(label): round(data['time_integer'], cm.PRECISION),
             '{}objective'.format(label): self.mip.objVal,
             '{}bound'.format(label): self.mip.objBound,
             '{}nodes'.format(label): self.mip.nodeCount,
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
-            '{}subtime_frc'.format(label): round(data['time_fractional'], cm.PRECISION),
-            '{}subtime_int'.format(label): round(data['time_integer'], cm.PRECISION),
             '{}optgap'.format(label): optgap,
             '{}solution'.format(label): self.ins.pack_solution(incumbent)
         }
