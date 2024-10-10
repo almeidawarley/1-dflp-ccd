@@ -7,11 +7,13 @@ import cProfile, pstats
 
 class benders(fm.formulation):
 
-    def __init__(self, instance, type):
+    def __init__(self, instance, type, fractional = False):
 
         super().__init__(instance, 'DSFLP-MASTER')
 
         self.subproblems = {}
+        self.type = type
+        self.fractional = fractional
 
         for customer in self.ins.customers:
             if type == 'analytical':
@@ -59,12 +61,39 @@ class benders(fm.formulation):
         '''
 
         data = {}
-        data['time_subprbs'] = 0.
-        data['loop_counter'] = 0
+        data['time_integer'] = 0.
+        data['time_fractional'] = 0.
+        data['loop_integer'] = 0
+        data['loop_fractional'] = 0
 
         # content = open('cuts-{}.txt'.format(label), 'w')
 
         def callback(model, where):
+
+            if where == gp.GRB.Callback.MIPNODE:
+
+                if self.fractional and model.cbGet(gp.GRB.Callback.MIPNODE_STATUS) == gp.GRB.OPTIMAL and model.cbGet(gp.GRB.Callback.MIP_NODCNT) == 0:
+
+                    incumbent = []
+
+                    solution = model.cbGetNodeRel(self.var['y'])
+
+                    start = tm.time()
+                    for customer in self.ins.customers:
+
+                        self.subproblems[customer].update(incumbent, solution)
+                        _, inequality = self.subproblems[customer].cut()
+
+                        rhs = inequality['b']
+                        for period in self.ins.periods:
+                            for location in self.ins.captured_locations[customer]:
+                                rhs += inequality['y'][period][location] * self.var['y'][period, location]
+
+                        # Add inequality for some customer
+                        model.cbLazy(self.var['v'][customer] <= rhs)
+                    end = tm.time()
+                    data['time_fractional'] += end - start
+                    data['loop_fractional'] += 1
 
             if where == gp.GRB.Callback.MIPSOL:
 
@@ -79,12 +108,12 @@ class benders(fm.formulation):
                         if cm.is_equal_to(value, 1.):
                             incumbent[period].append(location)
 
-                # content.write('#{} {}\n'.format(data['loop_counter'], self.ins.pack_solution(incumbent)))
+                # content.write('#{} {}\n'.format(data['loop_integer'], self.ins.pack_solution(incumbent)))
 
                 start = tm.time()
                 for customer in self.ins.customers:
 
-                    self.subproblems[customer].update(incumbent)
+                    self.subproblems[customer].update(incumbent, solution)
                     _, inequality = self.subproblems[customer].cut()
 
                     rhs = inequality['b']
@@ -98,8 +127,8 @@ class benders(fm.formulation):
                     # Add inequality for some customer
                     model.cbLazy(self.var['v'][customer] <= rhs)
                 end = tm.time()
-                data['time_subprbs'] += end - start
-                data['loop_counter'] += 1
+                data['time_integer'] += end - start
+                data['loop_integer'] += 1
 
         self.mip.optimize(callback)
 
@@ -119,10 +148,14 @@ class benders(fm.formulation):
             optgap = 1.
 
         metadata = {
-            '{}iterations'.format(label): data['loop_counter'],
+            '{}iterations_frc'.format(label): data['loop_fractional'],
+            '{}iterations_int'.format(label): data['loop_integer'],
             '{}objective'.format(label): self.mip.objVal,
+            '{}bound'.format(label): self.mip.objBound,
+            '{}nodes'.format(label): self.mip.nodeCount,
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
-            '{}subtime'.format(label): round(data['time_subprbs'], cm.PRECISION),
+            '{}subtime_frc'.format(label): round(data['time_fractional'], cm.PRECISION),
+            '{}subtime_int'.format(label): round(data['time_integer'], cm.PRECISION),
             '{}optgap'.format(label): optgap,
             '{}solution'.format(label): self.ins.pack_solution(incumbent)
         }

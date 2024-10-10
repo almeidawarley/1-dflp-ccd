@@ -33,6 +33,8 @@ class formulation:
         metadata = {
             '{}status'.format(label): self.mip.status,
             '{}objective'.format(label): self.mip.objVal,
+            '{}bound'.format(label): self.mip.objBound,
+            '{}nodes'.format(label): self.mip.nodeCount,
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
             '{}optgap'.format(label): self.mip.MIPGap,
             '{}solution'.format(label): self.ins.pack_solution(solution)

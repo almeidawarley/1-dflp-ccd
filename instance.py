@@ -179,28 +179,29 @@ class instance:
 
         return objective
 
-    def evaluate_customer(self, solution, customer):
+    def evaluate_customer(self, solution, customer, from_period = 0):
 
         objective = 0.
 
-        latest = self.start
+        latest = from_period
 
         for period, locations in solution.items():
-            if len(locations) > 0.:
-                reward = - 1 * cm.INFINITY
-                captured = False
-                for location in locations:
-                    if location in self.captured_locations[customer]:
-                        captured = True
-                        reward = max(reward, self.rewards[period][location] * self.accumulated[latest][period][customer])
-                if captured:
-                    latest = period
-                    objective += reward
+            if period > from_period:
+                if len(locations) > 0.:
+                    reward = - 1 * cm.INFINITY
+                    captured = False
+                    for location in locations:
+                        if location in self.captured_locations[customer]:
+                            captured = True
+                            reward = max(reward, self.rewards[period][location] * self.accumulated[latest][period][customer])
+                    if captured:
+                        latest = period
+                        objective += reward
+                    else:
+                        objective -= self.penalization * self.spawning[period][customer]
+                        # penalty = self.penalization * self.spawning[period][customer]
                 else:
                     objective -= self.penalization * self.spawning[period][customer]
-                    # penalty = self.penalization * self.spawning[period][customer]
-            else:
-                objective -= self.penalization * self.spawning[period][customer]
 
         return objective
 

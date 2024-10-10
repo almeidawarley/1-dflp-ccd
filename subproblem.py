@@ -11,7 +11,7 @@ class subproblem:
         self.ins = instance
         self.customer = customer
         self.solution = self.ins.empty_solution()
-        self.variable = {}
+        self.raw_solution = {}
         self.counter = 0
         self.uncaptured = '-'
 
@@ -24,10 +24,10 @@ class subproblem:
             for location in self.ins.captured_locations[self.customer]:
                 self.inequality['y'][period][location] = 0.
 
-    def update(self, solution, variable = {}):
+    def update(self, solution, raw_solution = {}):
 
         self.solution = solution
-        self.variable = variable
+        self.raw_solution = raw_solution
 
 class analytical(subproblem):
 
@@ -114,7 +114,7 @@ class analytical(subproblem):
                 if self.dual_solution['o'][period2][location] > 0.:
                     pass # print('o^{}_{} = {} properly computed?'.format(period2, location, self.dual_solution['o'][period2][location]))
 
-        # Compute variables q^l for CAPTURED periods
+        # Compute variables q^l for CAPTURED and UNCAPTURED periods
         for period1 in reversed(self.ins.periods_with_start):
             # Set baseline value, which does not vary with variables p^t_i
             self.dual_solution['q'][period1] = max(self.ins.coefficients[period1][self.ins.finish][location][self.customer] for location in self.ins.captured_locations[self.customer])
@@ -148,7 +148,7 @@ class analytical(subproblem):
                     self.dual_solution['p'][period2][location] = self.dual_solution['q'][period1] - offset - self.ins.evaluate_customer(self.solution, self.customer, period1)
                     # print('p^{}_{} = {} should be proper now!'.format(period2, location, self.dual_solution['p'][period2][location]))
 
-        # Compute variables o^t_i for UNCAPTURED periods t (q^t required! could it be tigther actually?)
+        # Compute variables o^t_i for UNCAPTURED periods t (q^t required! could it be tigther actually? yes)
         for period2 in self.ins.periods:
             for location in self.ins.captured_locations[self.customer]:
                 if patronization[period2] == self.uncaptured:
@@ -321,7 +321,7 @@ class duality(subproblem):
 
     def set_objective(self):
 
-        if len(self.variable) > 0.:
+        if len(self.raw_solution) > 0.:
 
             self.mip.setObjective(
                 sum(
@@ -329,7 +329,7 @@ class duality(subproblem):
                         self.var['o'][period, location] -
                         self.var['p'][period, location]
                     ) *
-                    self.variable[period, location]
+                    self.raw_solution[period, location]
                     for period in self.ins.periods
                     for location in self.ins.captured_locations[self.customer]
                 ) + self.var['q'][self.ins.start]
