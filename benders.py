@@ -108,6 +108,8 @@ class benders(fm.formulation):
                         if cm.is_equal_to(value, 1.):
                             incumbent[period].append(location)
 
+                solution = {}
+
                 # content.write('#{} {}\n'.format(data['loop_integer'], self.ins.pack_solution(incumbent)))
 
                 start = tm.time()
