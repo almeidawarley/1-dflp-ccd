@@ -24,21 +24,35 @@ class formulation:
 
         objective = self.ins.evaluate_solution(solution)
 
-        # print('MIP objective value: {}'.format(self.mip.objVal))
-        # print('ACT objective value: {}'.format(objective))
-        # print('Optimal solution: {}'.format(self.ins.pack_solution(solution)))
+        try:
+            optgap = round(self.mip.MIPGap, cm.PRECISION)
+        except:
+            optgap = 1.
+
+        if not cm.compare_obj(self.mip.objVal, objective):
+
+            print('Solution: {}'.format(self.ins.pack_solution(solution)))
+            print('MIP objective: {}'.format(self.mip.objVal))
+            print('True objective: {}'.format(objective))
+
+            assert objective > self.mip.objVal
+
+            optgap = cm.compute_gap(self.mip.objBound, objective)
 
         assert cm.compare_obj(self.mip.objVal, objective, 10 ** (-2))
 
         metadata = {
             '{}status'.format(label): self.mip.status,
-            '{}objective'.format(label): self.mip.objVal,
+            '{}objective'.format(label): objective, # self.mip.objVal,
             '{}bound'.format(label): self.mip.objBound,
             '{}nodes'.format(label): self.mip.nodeCount,
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
-            '{}optgap'.format(label): self.mip.MIPGap,
+            '{}optgap'.format(label): optgap, # self.mip.MIPGap,
             '{}solution'.format(label): self.ins.pack_solution(solution)
         }
+
+        # self.mip.write('integer-{}.lp'.format(label))
+        # self.mip.write('integer-{}.sol'.format(label))
 
         self.mip.reset()
 

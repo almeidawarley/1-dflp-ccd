@@ -138,23 +138,27 @@ class benders(fm.formulation):
 
         objective = self.ins.evaluate_solution(incumbent)
 
-        # print('MIP objective value: {}'.format(self.mip.objVal))
-        # print('ACT objective value: {}'.format(objective))
-        # print('Optimal solution: {}'.format(self.ins.pack_solution(incumbent)))
-
-        assert cm.compare_obj(self.mip.objVal, objective, 10 ** (-2))
-
         try:
             optgap = round(self.mip.MIPGap, cm.PRECISION)
         except:
             optgap = 1.
+
+        if not cm.compare_obj(self.mip.objVal, objective):
+
+            print('Solution: {}'.format(self.ins.pack_solution(incumbent)))
+            print('MIP objective: {}'.format(self.mip.objVal))
+            print('True objective: {}'.format(objective))
+
+            assert objective > self.mip.objVal
+
+            optgap = cm.compute_gap(self.mip.objBound, objective)
 
         metadata = {
             '{}fraction_cuts'.format(label): data['loop_fractional'],
             '{}fraction_time'.format(label): round(data['time_fractional'], cm.PRECISION),
             '{}integer_cuts'.format(label): data['loop_integer'],
             '{}integer_time'.format(label): round(data['time_integer'], cm.PRECISION),
-            '{}objective'.format(label): self.mip.objVal,
+            '{}objective'.format(label): objective, # self.mip.objVal,
             '{}bound'.format(label): self.mip.objBound,
             '{}nodes'.format(label): self.mip.nodeCount,
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
