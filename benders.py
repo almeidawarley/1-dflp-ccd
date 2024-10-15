@@ -72,7 +72,10 @@ class benders(fm.formulation):
 
             if where == gp.GRB.Callback.MIPNODE:
 
-                if self.fractional and model.cbGet(gp.GRB.Callback.MIPNODE_STATUS) == gp.GRB.OPTIMAL and model.cbGet(gp.GRB.Callback.MIP_NODCNT) == 0:
+                status = model.cbGet(gp.GRB.Callback.MIPNODE_STATUS)
+                nodes = model.cbGet(gp.GRB.Callback.MIPNODE_NODCNT)
+
+                if self.fractional and status == gp.GRB.OPTIMAL and nodes == 0:
 
                     incumbent = []
 
