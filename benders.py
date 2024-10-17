@@ -11,17 +11,19 @@ class benders(fm.formulation):
 
         super().__init__(instance, 'DSFLP-MASTER')
 
-        self.subproblems = {}
+        self.fractional_subproblems = {}
+        self.integer_subproblems = {}
         self.separation = separation
         self.fractional = fractional
 
         for customer in self.ins.customers:
+            self.fractional_subproblems[customer] = sb.duality(self.ins, customer)
             if separation == 'analytical':
-                self.subproblems[customer] = sb.analytical(self.ins, customer)
+                self.integer_subproblems[customer] = sb.analytical(self.ins, customer)
             elif separation == 'external':
-                self.subproblems[customer] = sb.external(self.ins, customer)
+                self.integer_subproblems[customer] = sb.external(self.ins, customer)
             elif separation == 'duality':
-                self.subproblems[customer] = sb.duality(self.ins, customer)
+                self.integer_subproblems[customer] = sb.duality(self.ins, customer)
             else:
                 exit('Invalid method for solving suproblems')
 
@@ -63,8 +65,8 @@ class benders(fm.formulation):
 
                     for customer in self.ins.customers:
 
-                        self.subproblems[customer].update(solution, raw_solution)
-                        _, inequality = self.subproblems[customer].cut()
+                        self.fractional_subproblems[customer].update(solution, raw_solution)
+                        _, inequality = self.fractional_subproblems[customer].cut()
 
                         rhs = inequality['b']
                         for period in self.ins.periods:
@@ -102,8 +104,8 @@ class benders(fm.formulation):
 
                 for customer in self.ins.customers:
 
-                    self.subproblems[customer].update(solution, raw_solution)
-                    value, inequality = self.subproblems[customer].cut()
+                    self.integer_subproblems[customer].update(solution, raw_solution)
+                    value, inequality = self.integer_subproblems[customer].cut()
 
                     rhs = inequality['b']
                     for period in self.ins.periods:
