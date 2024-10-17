@@ -7,20 +7,20 @@ import cProfile, pstats
 
 class benders(fm.formulation):
 
-    def __init__(self, instance, type, fractional = False):
+    def __init__(self, instance, separation, fractional = False):
 
         super().__init__(instance, 'DSFLP-MASTER')
 
         self.subproblems = {}
-        self.type = type
+        self.separation = separation
         self.fractional = fractional
 
         for customer in self.ins.customers:
-            if type == 'analytical':
+            if separation == 'analytical':
                 self.subproblems[customer] = sb.analytical(self.ins, customer)
-            elif type == 'external':
+            elif separation == 'external':
                 self.subproblems[customer] = sb.external(self.ins, customer)
-            elif type == 'duality':
+            elif separation == 'duality':
                 self.subproblems[customer] = sb.duality(self.ins, customer)
             else:
                 exit('Invalid method for solving suproblems')
@@ -31,40 +31,15 @@ class benders(fm.formulation):
 
         label = label + '_' if len(label) > 0 else label
 
-        '''
-        # Add constraints for empty solution
-        empty = self.ins.empty_solution()
-        for customer in self.ins.customers:
-            self.add_inequality(empty, customer)
-        '''
-
-        '''
-        for location in self.ins.locations:
-            incumbent = self.ins.stable_solution(location)
-            # incumbent = self.ins.empty_solution()
-            # incumbent[self.ins.finish-1] = location
-            for customer in self.ins.customers:
-                self.add_inequality(incumbent, customer)
-        '''
-
         # Activate lazy constraints
         self.mip.setParam('LazyConstraints', 1)
 
-        '''
-        self.mip.setParam('Cuts', 0)
-        self.mip.setParam('Heuristics', 0)
-        self.mip.setParam('RINS', 0)
-        self.mip.setParam('Presolve', 0)
-        self.mip.setParam('Aggregate', 0)
-        self.mip.setParam('Symmetry', 0)
-        self.mip.setParam('Disconnected', 0)
-        '''
-
-        data = {}
-        data['time_integer'] = 0.
-        data['time_fractional'] = 0.
-        data['loop_integer'] = 0
-        data['loop_fractional'] = 0
+        # Initiate global variables
+        information = {}
+        information['subtime_integer'] = 0.
+        information['subtime_fractional'] = 0.
+        information['cuts_integer'] = 0
+        information['cuts_fractional'] = 0
 
         # content = open('cuts-{}.txt'.format(label), 'w')
 
@@ -72,19 +47,23 @@ class benders(fm.formulation):
 
             if where == gp.GRB.Callback.MIPNODE:
 
+                # Visit a MIP node, with fractional or integer solution
                 status = model.cbGet(gp.GRB.Callback.MIPNODE_STATUS)
                 nodes = model.cbGet(gp.GRB.Callback.MIPNODE_NODCNT)
 
+                # Check if separating fractional solutions, and if at root node
                 if self.fractional and status == gp.GRB.OPTIMAL and nodes == 0:
 
-                    incumbent = []
+                    # Retrieve raw and formatted solution
+                    solution = [] # Formatted solution not available
+                    raw_solution = model.cbGetNodeRel(self.var['y'])
 
-                    solution = model.cbGetNodeRel(self.var['y'])
-
+                    # Generate an optimality cut per customer
                     start = tm.time()
+
                     for customer in self.ins.customers:
 
-                        self.subproblems[customer].update(incumbent, solution)
+                        self.subproblems[customer].update(solution, raw_solution)
                         _, inequality = self.subproblems[customer].cut()
 
                         rhs = inequality['b']
@@ -92,34 +71,39 @@ class benders(fm.formulation):
                             for location in self.ins.captured_locations[customer]:
                                 rhs += inequality['y'][period][location] * self.var['y'][period, location]
 
-                        # Add inequality for some customer
+                        # Add the optimality cut to the model
                         model.cbLazy(self.var['v'][customer] <= rhs)
+
                     end = tm.time()
-                    data['time_fractional'] += end - start
-                    data['loop_fractional'] += 1
+
+                    # Update global variables accordingly
+                    information['subtime_fractional'] += end - start
+                    information['cuts_fractional'] += 1
 
             if where == gp.GRB.Callback.MIPSOL:
 
-                solution = model.cbGetSolution(self.var['y'])
+                # Visit a MIP node, with a feasible integer solution
 
-                # Format raw solution
-                incumbent = {}
-                for period in self.ins.periods:
-                    incumbent[period] = []
-                    for location in self.ins.locations:
-                        value = solution[period, location]
-                        if cm.is_equal_to(value, 1.):
-                            incumbent[period].append(location)
-
+                # Retrieve raw and formatted solution
+                raw_solution = model.cbGetSolution(self.var['y'])
                 solution = {}
+                for period in self.ins.periods:
+                    solution[period] = []
+                    for location in self.ins.locations:
+                        value = raw_solution[period, location]
+                        if cm.is_equal_to(value, 1.):
+                            solution[period].append(location)
+                raw_solution = {} # Forcing the formatted solution
 
-                # content.write('#{} {}\n'.format(data['loop_integer'], self.ins.pack_solution(incumbent)))
+                # content.write('#{}: {}\n'.format(information['cuts_integer'], self.ins.pack_solution(solution)))
 
+                # Generate an optimality cut per customer
                 start = tm.time()
+
                 for customer in self.ins.customers:
 
-                    self.subproblems[customer].update(incumbent, solution)
-                    _, inequality = self.subproblems[customer].cut()
+                    self.subproblems[customer].update(solution, raw_solution)
+                    value, inequality = self.subproblems[customer].cut()
 
                     rhs = inequality['b']
                     for period in self.ins.periods:
@@ -129,63 +113,46 @@ class benders(fm.formulation):
                     # content.write('{} {}\n'.format(customer, inequality))
                     # content.flush()
 
-                    # Add inequality for some customer
+                    # Add the optimality cut to the model
                     model.cbLazy(self.var['v'][customer] <= rhs)
-                end = tm.time()
-                data['time_integer'] += end - start
-                data['loop_integer'] += 1
 
+                end = tm.time()
+
+                # Update global variables accordingly
+                information['subtime_integer'] += end - start
+                information['cuts_integer'] += 1
+
+        # Call Gurobi to optimize the model
         self.mip.optimize(callback)
 
-        incumbent = self.ins.format_solution(self.var['y'])
-
-        objective = self.ins.evaluate_solution(incumbent)
-
-        try:
-            optgap = round(self.mip.MIPGap, cm.PRECISION)
-        except:
-            optgap = 1.
-
-        if not cm.compare_obj(self.mip.objVal, objective):
-
-            print('Solution: {}'.format(self.ins.pack_solution(incumbent)))
-            print('MIP objective: {}'.format(self.mip.objVal))
-            print('True objective: {}'.format(objective))
-
-            assert objective > self.mip.objVal
-
-            optgap = cm.compute_gap(self.mip.objBound, objective)
+        # Retrieve solution and simulate objective value
+        solution = self.ins.format_solution(self.var['y'])
+        objective = self.ins.evaluate_solution(solution)
 
         metadata = {
-            '{}fraction_cuts'.format(label): data['loop_fractional'],
-            '{}fraction_time'.format(label): round(data['time_fractional'], cm.PRECISION),
-            '{}integer_cuts'.format(label): data['loop_integer'],
-            '{}integer_time'.format(label): round(data['time_integer'], cm.PRECISION),
-            '{}objective'.format(label): objective, # self.mip.objVal,
-            '{}bound'.format(label): self.mip.objBound,
+            '{}cuts_fractional'.format(label): information['cuts_fractional'],
+            '{}subtime_fractional'.format(label): round(information['subtime_fractional'], cm.PRECISION),
+            '{}cuts_integer'.format(label): information['cuts_integer'],
+            '{}subtime_integer'.format(label): round(information['subtime_integer'], cm.PRECISION),
+            '{}status'.format(label): self.mip.status,
+            '{}objective'.format(label): round(self.mip.objVal, cm.PRECISION),
+            '{}bound'.format(label): round(self.mip.objBound, cm.PRECISION),
             '{}nodes'.format(label): self.mip.nodeCount,
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
-            '{}optgap'.format(label): optgap,
-            '{}solution'.format(label): self.ins.pack_solution(incumbent)
+            #'{}mipgap'.format(label): self.mip.MIPGap, # optgap? not really
+            '{}optgap'.format(label): cm.compute_gap(self.mip.objBound, self.mip.objVal),
+            '{}solution'.format(label): self.ins.pack_solution(solution)
         }
+
+        cm.mark_section('Reporting summary of metadata')
+        for key, value in metadata.items():
+            print('{}: {}'.format(key, value))
+
+        assert cm.compare_obj(self.mip.objVal, objective)
 
         # content.close()
 
         return metadata
-
-    def add_inequality(self, solution, customer, lazy = 1):
-
-        self.subproblems[customer].update(solution)
-        dual_objective, inequality = self.subproblems[customer].cut()
-
-        rhs = inequality['b']
-        for period in self.ins.periods:
-            for location in self.ins.captured_locations[customer]:
-                rhs += inequality['y'][period][location] * self.var['y'][period, location]
-
-        self.mip.addConstr(self.var['v'][customer] <= rhs).lazy = lazy
-
-        return dual_objective
 
     def set_parameters(self):
 
