@@ -4,7 +4,7 @@ import slovakia as sl
 import satisfiability as st
 import artificial as ar
 
-TIMELIMIT = 1 * 60 * 60
+TIMELIMIT = 2 * 60 * 60
 TOLERANCE = 10 ** (-4)
 PRECISION = 4 # 10 ** (-4)
 INFINITY = 10 ** 8
