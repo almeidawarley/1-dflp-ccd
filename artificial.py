@@ -4,9 +4,9 @@ import json as js
 
 class artificial(ic.instance):
 
-    def __init__(self, keyword, project):
+    def __init__(self, keyword):
 
-        super().__init__(keyword, project)
+        super().__init__(keyword)
 
     def create_instance(self, folder = 'instances/artificial'):
         # Create artificial instances
@@ -30,7 +30,6 @@ class artificial(ic.instance):
 
         # Store number of facilities
         self.facilities = {period : int(self.parameters['facilities']) for period in self.periods}
-        self.penalization = int(self.parameters['penalization']) * 0.5 * len(self.locations)
 
         # Create random preferences
         if self.parameters['preferences'] == 'only':
@@ -95,3 +94,32 @@ class artificial(ic.instance):
                 else:
                     exit('Wrong value for demand behaviour')
                 self.spawning[period][customer] = np.ceil(self.spawning[period][customer])
+
+        # Store customer penalties
+        '''
+        self.penalties = {
+            customer : (
+                int(self.parameters['penalties'])  * 0.25 *
+                len(self.locations)
+            )
+            for customer in self.customers
+        }
+
+        # Warning: wrong generation of penalties!
+
+        '''
+        self.penalties = {
+            customer : (
+                int(self.parameters['penalties'])  * 0.25 *
+                sum(
+                    self.catalogs[location][customer] *
+                    self.rewards[self.start + 1][location]
+                    for location in self.locations
+                ) /
+                sum(
+                    self.catalogs[location][customer]
+                    for location in self.locations
+                )
+            )
+            for customer in self.customers
+        }

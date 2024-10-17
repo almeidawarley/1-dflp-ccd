@@ -7,21 +7,19 @@ features = {
     'points': [50, 100],
     'periods': [10],
     'facilities': [1, 2, 3, 4],
-    'penalization': [0, 1],
+    'penalties': [0, 1, 2, 3],
     'preferences': ['small', 'large'],
     'rewards': ['identical', 'inversely'],
     'demands': ['constant'], # ['constant', 'seasonal', 'increasing', 'decreasing'],
     'characters': ['heterogeneous'] # ['homogeneous', 'heterogeneous']
 }
 
-project = 'p1artificial'
-
 script = sys.argv[1]
 hours = sys.argv[2]
 
 parameters = {}
 
-commands = open('commands_{}_{}.sh'.format(script, project), 'w')
+commands = open('commands_{}.sh'.format(script), 'w')
 
 counter = 0
 
@@ -29,7 +27,7 @@ for seed in features['seed']:
     for points in features['points']:
         for periods in features['periods']:
             for facilities in features['facilities']:
-                for penalization in features['penalization']:
+                for penalties in features['penalties']:
                     for preferences in features['preferences']:
                         for rewards in features['rewards']:
                             for demands in features['demands']:
@@ -40,7 +38,7 @@ for seed in features['seed']:
                                     parameters['customers'] = points
                                     parameters['periods'] = periods
                                     parameters['facilities'] = facilities
-                                    parameters['penalization'] = penalization
+                                    parameters['penalties'] = penalties
                                     parameters['preferences'] = preferences
                                     parameters['rewards'] = rewards
                                     parameters['demands'] = demands
@@ -67,7 +65,7 @@ for seed in features['seed']:
                                         output.write('#SBATCH --mail-type=FAIL\n')
 
                                         output.write('cd /home/walm/projects/def-mxm/walm/1-dflp-ra/\n')
-                                        output.write('python run-{}.py -p {} {}\n'.format(script, project, keyword))
+                                        output.write('python run-{}.py {}\n'.format(script, keyword))
 
                                     commands.write('dos2unix ../scripts/{}_{}.sh\n'.format(script, keyword))
                                     commands.write('sbatch ../scripts/{}_{}.sh\n'.format(script, keyword))

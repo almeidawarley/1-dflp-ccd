@@ -4,10 +4,12 @@ import pandas as pd
 import common as cm
 from ctypes import *
 # c_int, c_float, cdll, pointer
+import gurobipy as gp
 
 class instance:
 
-    def __init__(self, keyword, project):
+    def __init__(self, keyword):
+
         # Initiate instance class
 
         '''
@@ -17,19 +19,16 @@ class instance:
             - self.customers: list of customers
             - self.periods: list of periods
             - self.facilities: list of facilities
-            - self.penalization: penalization factor
 
             - self.catalogs: preference rules
             - self.rewards: location rewards
             - self.spawning: spawning demand
             - self.accumulated: accumulated demand
+            - self.penalties: customer penalties
         '''
 
         # Store instance keyword
         self.keyword = keyword
-
-        # Store project keyword
-        self.project = project
 
         # Store parameters
         self.parameters = {}
@@ -37,19 +36,17 @@ class instance:
         # Set random seed
         self.parameters['seed'] = 0
 
+        # Set start period
+        self.start = 0
+
         # Apply generator
         self.create_instance()
 
-        # Set start/finish
-        self.start = 0
-        self.finish = len(self.periods) + 1
+        # Set final period
+        self.final = len(self.periods) + 1
         self.periods_with_start = [self.start] + [period for period in self.periods]
-        self.periods_with_end = [period for period in self.periods] + [self.finish]
-        self.periods_extended = [self.start] + [period for period in self.periods] + [self.finish]
-
-        # Set depot info
-        self.depot = '0'
-        self.locations_extended = [self.depot] + self.locations
+        self.periods_with_final = [period for period in self.periods] + [self.final]
+        self.periods_extended = [self.start] + [period for period in self.periods] + [self.final]
 
         # Compute accumulated demand
         self.accumulated = {}
@@ -67,7 +64,6 @@ class instance:
             self.captured_locations[customer] = [location for location in self.locations if self.catalogs[location][customer] == 1]
 
         self.captured_customers = {}
-        self.captured_customers[self.depot] = []
         for location in self.locations:
             self.captured_customers[location] = [customer for customer in self.customers if self.catalogs[location][customer] == 1]
 
@@ -79,25 +75,22 @@ class instance:
                 limit = self.accumulated[self.start][period][customer]
                 self.limits[period][customer] = np.ceil(limit)
 
-        with open('coefficients.csv', 'w') as content:
-            self.highest = - 1 * cm.INFINITY
+        with open('coefficients/{}.csv'.format(keyword), 'w') as content:
             self.coefficients = {}
             for period1 in self.periods_with_start:
                 self.coefficients[period1] = {}
-                for period2 in self.periods_with_end:
+                for period2 in self.periods_with_final:
                     if period1 < period2:
                         self.coefficients[period1][period2] = {}
                         for location in self.locations:
                             self.coefficients[period1][period2][location] = {}
                             for customer in self.captured_customers[location]:
-                                if period2 != self.finish:
+                                if period2 != self.final:
                                     self.coefficients[period1][period2][location][customer] = self.rewards[period2][location] * self.accumulated[period1][period2][customer]
                                 else:
                                     self.coefficients[period1][period2][location][customer] = 0.
-                                self.coefficients[period1][period2][location][customer] -= self.penalization * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > period1 and period3 < period2)
+                                self.coefficients[period1][period2][location][customer] -= self.penalties[customer] * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > period1 and period3 < period2)
                                 content.write('{}, {}, {}, {}, {}\n'.format(period1, period2, location, customer, self.coefficients[period1][period2][location][customer]))
-                                if self.coefficients[period1][period2][location][customer] > self.highest:
-                                    self.highest = self.coefficients[period1][period2][location][customer]
 
         # Prepare proper ctypes
 
@@ -131,9 +124,9 @@ class instance:
 
         print('Keyword: <{}>'.format(self.keyword))
 
-        print('Penalization: {}'.format(self.penalization))
+        print('Penalties: {}'.format(self.penalties.values()))
 
-        print('Facilities: {}'.format(self.facilities[self.start + 1]))
+        print('Facilities: {}'.format(self.facilities.values()))
 
         print('Customers: {}'.format(self.customers))
         print('\t| j: #\t[I]')
@@ -161,7 +154,7 @@ class instance:
         for period, locations in solution.items():
             if len(locations) > 0.:
                 for customer in self.customers:
-                    reward = - 1 * cm.INFINITY
+                    reward = - 1 * gp.GRB.INFINITY
                     captured = False
                     for location in locations:
                         if location in self.captured_locations[customer]:
@@ -171,11 +164,11 @@ class instance:
                         latest[customer] = period
                         objective += reward
                     else:
-                        objective -= self.penalization * self.spawning[period][customer]
-                        # penalty = self.penalization * self.spawning[period][customer]
+                        objective -= self.penalties[customer] * self.spawning[period][customer]
+                        # penalty = self.penalties[customer] * self.spawning[period][customer]
             else:
                 for customer in self.customers:
-                    objective -= self.penalization * self.spawning[period][customer]
+                    objective -= self.penalties[customer] * self.spawning[period][customer]
 
         return objective
 
@@ -188,7 +181,7 @@ class instance:
         for period, locations in solution.items():
             if period > from_period:
                 if len(locations) > 0.:
-                    reward = - 1 * cm.INFINITY
+                    reward = - 1 * gp.GRB.INFINITY
                     captured = False
                     for location in locations:
                         if location in self.captured_locations[customer]:
@@ -198,10 +191,10 @@ class instance:
                         latest = period
                         objective += reward
                     else:
-                        objective -= self.penalization * self.spawning[period][customer]
-                        # penalty = self.penalization * self.spawning[period][customer]
+                        objective -= self.penalties[customer] * self.spawning[period][customer]
+                        # penalty = self.penalties[customer] * self.spawning[period][customer]
                 else:
-                    objective -= self.penalization * self.spawning[period][customer]
+                    objective -= self.penalties[customer] * self.spawning[period][customer]
 
         return objective
 
@@ -226,7 +219,7 @@ class instance:
 
         return inserted
 
-    def format_solution(self, variable):
+    def format_solution(self, variables):
         # Format model solution as dictionary
 
         solution = self.empty_solution()
@@ -234,7 +227,7 @@ class instance:
         for period in self.periods:
             solution[period] = []
             for location in self.locations:
-                value = variable[period, location].x
+                value = variables[period, location].x
                 if cm.is_equal_to(value, 1.):
                     solution[period].append(location)
 
@@ -261,11 +254,7 @@ class instance:
         index = 0
 
         for period in self.periods:
-            solution[period] = text[index]
+            solution[period] = text[index].split('~')
             index += 1
 
         return solution
-
-    def stable_solution(self, location):
-
-        return {period: location for period in self.periods}

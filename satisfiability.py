@@ -2,9 +2,9 @@ import instance as ic
 
 class satisfiability(ic.instance):
 
-    def __init__(self, keyword, project):
+    def __init__(self, keyword):
 
-        super().__init__(keyword, project)
+        super().__init__(keyword)
 
     def create_instance(self, folder = 'instances/satisfiability'):
         # Create 3SAT instances

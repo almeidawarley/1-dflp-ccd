@@ -38,7 +38,7 @@ class analytical(subproblem):
         # Create primal solution
         self.primal_solution = {}
         for period in self.ins.periods_with_start:
-            self.primal_solution[period] = self.ins.finish
+            self.primal_solution[period] = self.ins.final
 
         # Create dual solution
         self.dual_solution = {}
@@ -80,7 +80,7 @@ class analytical(subproblem):
         # print('Previous capture pattern for customer {}: {}'.format(self.customer, previouscap))
 
         # Compute future capture at each time period
-        futurecap = {period: self.ins.finish for period in self.ins.periods_with_start}
+        futurecap = {period: self.ins.final for period in self.ins.periods_with_start}
         for period1 in self.ins.periods_with_start:
             for period2 in self.ins.periods:
                 if period1 < period2:
@@ -117,7 +117,7 @@ class analytical(subproblem):
         # Compute variables q^l for CAPTURED and UNCAPTURED periods
         for period1 in reversed(self.ins.periods_with_start):
             # Set baseline value, which does not vary with variables p^t_i
-            self.dual_solution['q'][period1] = max(self.ins.coefficients[period1][self.ins.finish][location][self.customer] for location in self.ins.captured_locations[self.customer])
+            self.dual_solution['q'][period1] = max(self.ins.coefficients[period1][self.ins.final][location][self.customer] for location in self.ins.captured_locations[self.customer])
             # Compute esimated value, assuming variables p^t_i are zero
             for period2 in self.ins.periods:
                 if period1 < period2 and patronization[period2] != self.uncaptured:
@@ -155,7 +155,7 @@ class analytical(subproblem):
                     '''
                     self.dual_solution['o'][period2][location] = max(
                             self.ins.coefficients[period1][period2][location][self.customer] -
-                            self.ins.coefficients[period1][self.ins.finish][location][self.customer] +
+                            self.ins.coefficients[period1][self.ins.final][location][self.customer] +
                             self.dual_solution['q'][period2]
                             for period1 in self.ins.periods_with_start if period1 < period2)
                     '''
@@ -323,6 +323,8 @@ class duality(subproblem):
 
         if len(self.raw_solution) > 0.:
 
+            print('>>> Writing objective function based on raw solution <<<')
+
             self.mip.setObjective(
                 sum(
                     (
@@ -424,7 +426,7 @@ class duality(subproblem):
         self.mip.addConstrs(
             (
                 self.var['q'][period1] >=
-                self.ins.coefficients[period1][self.ins.finish][location][self.customer]
+                self.ins.coefficients[period1][self.ins.final][location][self.customer]
                 for period1 in self.ins.periods_with_start
                 for location in self.ins.captured_locations[self.customer]
             ),

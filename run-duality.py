@@ -5,7 +5,7 @@ import benders as bd
 
 def main():
 
-    parser = ap.ArgumentParser(description = 'Run fractional Benders for some DSFLP-C instance')
+    parser = ap.ArgumentParser(description = 'Run duality Benders for some DSFLP-C instance')
     parser.add_argument('keyword', type = str, help = 'Instance keyword following established patterns')
     args = parser.parse_args()
 
@@ -16,9 +16,9 @@ def main():
 
     cm.mark_section('Solving with branch-and-Benders')
 
-    cm.mark_section('Duality subproblems, separating fractional and integer solutions')
-    benders1 = bd.benders(instance, 'duality', True)
-    metadata = benders1.solve('bbf')
+    cm.mark_section('Duality subproblems, separating integer solutions only')
+    benders1 = bd.benders(instance, 'duality', False)
+    metadata = benders1.solve('bbd')
     rc.update_record(args.keyword, metadata)
 
 if __name__ == '__main__':

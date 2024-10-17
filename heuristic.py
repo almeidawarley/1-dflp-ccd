@@ -3,6 +3,8 @@ import common as cm
 import numpy as np
 import time as tm
 
+# Warning: update heuristics to multiple facilities
+
 class heuristic:
 
     def __init__(self, instance, name):

@@ -1,7 +1,7 @@
 import gurobipy as gp
 import formulation as fm
 
-class original(fm.formulation):
+class intuitive(fm.formulation):
 
     def __init__(self, instance, name):
 
@@ -48,7 +48,7 @@ class original(fm.formulation):
                 for location in self.ins.captured_locations[customer]
             ) -
             sum(
-                self.ins.penalization *
+                self.ins.penalties[customer] *
                 self.ins.spawning[period][customer] *
                 (
                     1 - sum(
@@ -231,7 +231,7 @@ class original(fm.formulation):
             name = 'c8'
         )
 
-class nonlinear(original):
+class nonlinear(intuitive):
 
     def __init__(self, instance):
 
@@ -252,7 +252,7 @@ class nonlinear(original):
             name = 'c5'
         )
 
-class linearized(original):
+class linearized(intuitive):
 
     def __init__(self, instance):
 

@@ -1,11 +1,12 @@
 import instance as ic
 import random as rd
+import numpy as np
 
 class debugging(ic.instance):
 
-    def __init__(self, keyword, project):
+    def __init__(self, keyword):
 
-        super().__init__(keyword, project)
+        super().__init__(keyword)
 
     def create_instance(self):
 
@@ -26,7 +27,7 @@ class debugging(ic.instance):
             exit('Invalid instance keyword')
 
         self.facilities = {period: 1 for period in self.periods}
-        self.penalization = 0
+        self.penalties = {customer: 0 for customer in self.customers}
 
     def create_spp(self, random = False):
         # Create SPP instances
@@ -34,11 +35,11 @@ class debugging(ic.instance):
         # Set target K
         K = 5
         if random:
-            rd.seed(0)
+            np.random.seed(self.parameters['seed'])
             B = 10
             C = 5
             elements = [str(i) for i in range(1, B + 1)]
-            collections = [rd.sample(elements, rd.randint(1,int(B/1.1))) for _ in range(0, C)]
+            collections = [np.random.choice(elements, rd.randint(1,int(B/1.1))) for _ in range(0, C)]
         else:
             B = 5
             C = 5
