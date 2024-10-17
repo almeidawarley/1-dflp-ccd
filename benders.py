@@ -111,6 +111,7 @@ class benders(fm.formulation):
                             rhs += inequality['y'][period][location] * self.var['y'][period, location]
 
                     # content.write('{} {}\n'.format(customer, inequality))
+                    # content.write('> cut_{}_{}: '.format(customer, information['cuts_integer']) + str(self.var['v'][customer] - rhs <= inequality['b']).replace('<gurobi.TempConstr: <gurobi.LinExpr: ', '').replace('> <= ',  ' <= ')[:-1] + '\n')
                     # content.flush()
 
                     # Add the optimality cut to the model

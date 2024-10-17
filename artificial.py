@@ -97,6 +97,7 @@ class artificial(ic.instance):
 
         # Store customer penalties
         '''
+        # Left here for the sake of future reference
         self.penalties = {
             customer : (
                 int(self.parameters['penalties'])  * 0.25 *
@@ -104,9 +105,6 @@ class artificial(ic.instance):
             )
             for customer in self.customers
         }
-
-        # Warning: wrong generation of penalties!
-
         '''
         self.penalties = {
             customer : (

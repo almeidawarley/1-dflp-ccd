@@ -57,7 +57,7 @@ class analytical(subproblem):
     def cut(self):
 
         # Compute patronization pattern for customer
-        patronization = {period: self.uncaptured for period in self.ins.periods}
+        patronization = {period: self.uncaptured for period in self.ins.periods_with_start}
         for period2 in self.ins.periods:
             if len(self.solution[period2]) > 0:
                 location = self.uncaptured
@@ -65,19 +65,6 @@ class analytical(subproblem):
                     if other in self.ins.captured_locations[self.customer] and (location == self.uncaptured or self.ins.rewards[period2][other] > self.ins.rewards[period2][location]):
                         location = other
                 patronization[period2] = location
-
-        # print('Patronization pattern for customer {}: {}'.format(self.customer, patronization))
-
-        # Compute previous capture at each time period
-        previouscap = {period: self.ins.start for period in self.ins.periods}
-        for period2 in self.ins.periods:
-            for period1 in reversed(self.ins.periods):
-                if period1 < period2:
-                    if patronization[period1] != self.uncaptured:
-                        previouscap[period2] = period1
-                        break
-
-        # print('Previous capture pattern for customer {}: {}'.format(self.customer, previouscap))
 
         # Compute future capture at each time period
         futurecap = {period: self.ins.final for period in self.ins.periods_with_start}
@@ -88,80 +75,44 @@ class analytical(subproblem):
                         futurecap[period1] = period2
                         break
 
-        # print('Future capture pattern for customer {}: {}'.format(self.customer, futurecap))
-
         dual_objective = 0.
 
-        # Assign zero values to variables p^t_i
+        # Assign zero values to variables o^t_i and p^t_i
         for period2 in self.ins.periods:
             for location in self.ins.captured_locations[self.customer]:
+                self.dual_solution['o'][period2][location] = 0.
                 self.dual_solution['p'][period2][location] = 0.
-
-        # Compute variables o^t_i for CAPTURED periods t
-        for period2 in self.ins.periods:
-            for location in self.ins.captured_locations[self.customer]:
-                if patronization[period2] != self.uncaptured:
-                    # Notation: period1 s, other k^t
-                    period1 = previouscap[period2]
-                    other = patronization[period2]
-                    if other == location:
-                        self.dual_solution['o'][period2][location] = 0.
-                    else:
-                        self.dual_solution['o'][period2][location] = max(
-                            self.ins.coefficients[period1][period2][location][self.customer] -
-                            self.ins.coefficients[period1][period2][other][self.customer], 0
-                        )
-                if self.dual_solution['o'][period2][location] > 0.:
-                    pass # print('o^{}_{} = {} properly computed?'.format(period2, location, self.dual_solution['o'][period2][location]))
 
         # Compute variables q^l for CAPTURED and UNCAPTURED periods
         for period1 in reversed(self.ins.periods_with_start):
-            # Set baseline value, which does not vary with variables p^t_i
-            self.dual_solution['q'][period1] = max(self.ins.coefficients[period1][self.ins.final][location][self.customer] for location in self.ins.captured_locations[self.customer])
-            # Compute esimated value, assuming variables p^t_i are zero
-            for period2 in self.ins.periods:
-                if period1 < period2 and patronization[period2] != self.uncaptured:
-                    for location in self.ins.captured_locations[self.customer]:
-                        other = patronization[period2] # Notation: k^t
-                        period3 = previouscap[period2] # Notation: s
-                        if location in self.solution[period2]:
-                            self.dual_solution['q'][period1] = max(self.dual_solution['q'][period1], 
-                                                                    self.ins.coefficients[period1][period2][location][self.customer] + 
-                                                                    self.dual_solution['p'][period2][other] +
-                                                                    self.dual_solution['q'][period2])
-                        else:
-                            self.dual_solution['q'][period1] = max(self.dual_solution['q'][period1], 
-                                                                    self.ins.coefficients[period1][period2][location][self.customer] -
-                                                                    self.ins.coefficients[period3][period2][location][self.customer] +
-                                                                    self.ins.coefficients[period3][period2][other][self.customer] +
-                                                                    self.dual_solution['p'][period2][other] +
-                                                                    self.dual_solution['q'][period2])
+            # Compute estimated value, assuming variables p^t_i are zero
+            self.dual_solution['q'][period1] = max(
+                [
+                    self.ins.coefficients[period1][self.ins.final][location][self.customer] 
+                    for location in self.ins.captured_locations[self.customer]
+                ] + [
+                    self.ins.coefficients[period1][period2][location][self.customer] +
+                    sum(self.dual_solution['p'][period2][other] for other in self.ins.captured_locations[self.customer]) +
+                    self.dual_solution['q'][period2]
+                    for period2 in self.ins.periods if period1 < period2
+                    for location in self.ins.captured_locations[self.customer]
+                    if period1 < period2 and location in self.solution[period2]
+                ]
+            )
 
-            if period1 == self.ins.start or patronization[period1] != self.uncaptured:
-                # Optimality check based on completementary slackness-ish
-                offset = sum(self.dual_solution['p'][period2][location] for period2 in self.ins.periods for location in self.ins.captured_locations[self.customer])
-                if self.dual_solution['q'][period1] - offset == self.ins.evaluate_customer(self.solution, self.customer, period1):
-                    pass # print('q^{} = properly computed, moving forward'.format(period1, self.dual_solution['q'][period1]))
-                else:
-                    period2, location = futurecap[period1], patronization[futurecap[period1]]
-                    # print('q^{} = {} not properly computed, changing p^{}_{}'.format(period1, self.dual_solution['q'][period1], period2, location))
-                    self.dual_solution['p'][period2][location] = self.dual_solution['q'][period1] - offset - self.ins.evaluate_customer(self.solution, self.customer, period1)
-                    # print('p^{}_{} = {} should be proper now!'.format(period2, location, self.dual_solution['p'][period2][location]))
+            if patronization[period1] != self.uncaptured:
+                # Adjust variables p^t_k for CAPTURED periods according to complementary slackness-ish
+                offset = sum(self.dual_solution['p'][period2][other] for period2 in self.ins.periods for other in self.ins.captured_locations[self.customer])
+                self.dual_solution['p'][period2][location] = self.dual_solution['q'][period1] - offset - self.ins.evaluate_customer(self.solution, self.customer, period1)
 
-        # Compute variables o^t_i for UNCAPTURED periods t (q^t required! could it be tigther actually? yes)
+        # Compute variables o^t_i for CAPTURED and UNCAPTURED periods
         for period2 in self.ins.periods:
             for location in self.ins.captured_locations[self.customer]:
-                if patronization[period2] == self.uncaptured:
-                    '''
+                if location not in self.solution[period2]:
                     self.dual_solution['o'][period2][location] = max(
                             self.ins.coefficients[period1][period2][location][self.customer] -
-                            self.ins.coefficients[period1][self.ins.final][location][self.customer] +
-                            self.dual_solution['q'][period2]
-                            for period1 in self.ins.periods_with_start if period1 < period2)
-                    '''
-                    self.dual_solution['o'][period2][location] = max(
-                            self.ins.coefficients[period1][period2][location][self.customer] -
-                            self.dual_solution['q'][period1] + self.dual_solution['q'][period2]
+                            self.dual_solution['q'][period1] + self.dual_solution['q'][period2] +
+                            sum(self.dual_solution['p'][period2][other] for other in self.ins.captured_locations[self.customer])
                             for period1 in self.ins.periods_with_start if period1 < period2)
                     self.dual_solution['o'][period2][location] = max(self.dual_solution['o'][period2][location], 0)
 
@@ -187,8 +138,6 @@ class analytical(subproblem):
         '''
 
         dual_objective = self.dual_solution['q'][self.ins.start] - sum(self.dual_solution['p'][period2][location] for period2 in self.ins.periods for location in self.ins.captured_locations[self.customer])
-
-        # print('Dual objective for customer {}, solution {}: {}'.format(self.customer, self.ins.pack_solution(self.solution), dual_objective))
 
         self.counter += 1
 
