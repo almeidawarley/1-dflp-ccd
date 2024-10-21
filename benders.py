@@ -60,6 +60,9 @@ class benders(fm.formulation):
                     solution = [] # Formatted solution not available
                     raw_solution = model.cbGetNodeRel(self.var['y'])
 
+                    # content.write('${}: {}\n'.format(information['cuts_fractional'], {k: v for k, v in raw_solution.items() if v > 0}))
+                    # content.flush()
+
                     # Generate an optimality cut per customer
                     start = tm.time()
 
@@ -98,6 +101,7 @@ class benders(fm.formulation):
                 raw_solution = {} # Forcing the formatted solution
 
                 # content.write('#{}: {}\n'.format(information['cuts_integer'], self.ins.pack_solution(solution)))
+                # content.flush()
 
                 # Generate an optimality cut per customer
                 start = tm.time()
@@ -147,7 +151,7 @@ class benders(fm.formulation):
             '{}solution'.format(label): self.ins.pack_solution(solution)
         }
 
-        cm.mark_section('Reporting summary of metadata')
+        cm.mark_section('Reporting summary for '.format(self.ins.keyword))
         for key, value in metadata.items():
             print('{}: {}'.format(key, value))
 

@@ -14,6 +14,7 @@ class subproblem:
         self.raw_solution = {}
         self.counter = 0
         self.uncaptured = '-'
+        self.placeholder = '?'
 
         # Create empty inequality
         self.inequality = {}
@@ -57,7 +58,7 @@ class analytical(subproblem):
     def cut(self):
 
         # Compute patronization pattern for customer
-        patronization = {period: self.uncaptured for period in self.ins.periods_with_start}
+        patronization = {period: self.uncaptured for period in self.ins.periods}
         for period2 in self.ins.periods:
             if len(self.solution[period2]) > 0:
                 location = self.uncaptured
@@ -65,6 +66,7 @@ class analytical(subproblem):
                     if other in self.ins.captured_locations[self.customer] and (location == self.uncaptured or self.ins.rewards[period2][other] > self.ins.rewards[period2][location]):
                         location = other
                 patronization[period2] = location
+        patronization[self.ins.start] = self.placeholder
 
         # Compute future capture at each time period
         futurecap = {period: self.ins.final for period in self.ins.periods_with_start}
@@ -83,27 +85,58 @@ class analytical(subproblem):
                 self.dual_solution['o'][period2][location] = 0.
                 self.dual_solution['p'][period2][location] = 0.
 
-        # Compute variables q^l for CAPTURED and UNCAPTURED periods
+        # Compute variables q^l for CAPTURED periods only
         for period1 in reversed(self.ins.periods_with_start):
             # Compute estimated value, assuming variables p^t_i are zero
-            self.dual_solution['q'][period1] = max(
-                [
-                    self.ins.coefficients[period1][self.ins.final][location][self.customer] 
-                    for location in self.ins.captured_locations[self.customer]
-                ] + [
-                    self.ins.coefficients[period1][period2][location][self.customer] +
-                    sum(self.dual_solution['p'][period2][other] for other in self.ins.captured_locations[self.customer]) +
-                    self.dual_solution['q'][period2]
-                    for period2 in self.ins.periods if period1 < period2
-                    for location in self.ins.captured_locations[self.customer]
-                    if period1 < period2 and location in self.solution[period2]
-                ]
-            )
 
             if patronization[period1] != self.uncaptured:
-                # Adjust variables p^t_k for CAPTURED periods according to complementary slackness-ish
-                offset = sum(self.dual_solution['p'][period2][other] for period2 in self.ins.periods for other in self.ins.captured_locations[self.customer])
-                self.dual_solution['p'][period2][location] = self.dual_solution['q'][period1] - offset - self.ins.evaluate_customer(self.solution, self.customer, period1)
+
+                self.dual_solution['q'][period1] = max(
+                    [
+                        # This is the case where period2 is the final period
+                        self.ins.coefficients[period1][self.ins.final][location][self.customer]
+                        for location in self.ins.captured_locations[self.customer]
+                    ] + [
+                        self.ins.coefficients[period1][period2][location][self.customer] +
+                        sum(self.dual_solution['p'][period2][other] for other in self.ins.captured_locations[self.customer]) +
+                        self.dual_solution['q'][period2]
+                        for period2 in self.ins.periods
+                        for location in self.ins.captured_locations[self.customer]
+                        if period1 < period2 and location in self.solution[period2]
+                    ]
+                )
+
+                if futurecap[period1] != self.ins.final:
+                    # Adjust variables p^t_k for CAPTURED periods
+                    offset = sum(
+                        self.dual_solution['p'][period2][other]
+                        for period2 in self.ins.periods
+                        for other in self.ins.captured_locations[self.customer]
+                        if period1 < period2 and other in self.solution[period2]
+                    )
+                    period2, location = futurecap[period1], patronization[futurecap[period1]]
+                    self.dual_solution['p'][period2][location] = self.dual_solution['q'][period1] - offset - self.ins.evaluate_customer(self.solution, self.customer, period1)
+
+        # Compute variables q^l for UNCAPTURED periods only
+        for period1 in reversed(self.ins.periods_with_start):
+            # Compute estimated value, assuming variables p^t_i are zero
+
+            if patronization[period1] == self.uncaptured:
+
+                self.dual_solution['q'][period1] = max(
+                    [
+                        # This is the case where period2 is the final period
+                        self.ins.coefficients[period1][self.ins.final][location][self.customer]
+                        for location in self.ins.captured_locations[self.customer]
+                    ] + [
+                        self.ins.coefficients[period1][period2][location][self.customer] +
+                        sum(self.dual_solution['p'][period2][other] for other in self.ins.captured_locations[self.customer]) +
+                        self.dual_solution['q'][period2]
+                        for period2 in self.ins.periods
+                        for location in self.ins.captured_locations[self.customer]
+                        if period1 < period2 and location in self.solution[period2]
+                    ]
+                )
 
         # Compute variables o^t_i for CAPTURED and UNCAPTURED periods
         for period2 in self.ins.periods:
@@ -137,7 +170,15 @@ class analytical(subproblem):
                     content.write('o~{}_{} {}\n'.format(period2, location, self.dual_solution['o'][period2][location]))
         '''
 
-        dual_objective = self.dual_solution['q'][self.ins.start] - sum(self.dual_solution['p'][period2][location] for period2 in self.ins.periods for location in self.ins.captured_locations[self.customer])
+        dual_objective = (
+            self.dual_solution['q'][self.ins.start] -
+            sum(
+                self.dual_solution['p'][period2][location]
+                for period2 in self.ins.periods
+                for location in self.ins.captured_locations[self.customer]
+                # if location in self.solution[period2]
+            )
+        )
 
         self.counter += 1
 
