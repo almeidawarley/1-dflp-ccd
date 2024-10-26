@@ -160,14 +160,14 @@ class debugging(ic.instance):
         # Create JOPT instance
 
         self.locations = ['1', '2', '3', '4']
-        self.customers = ['A', 'B', 'C']
-        self.periods = [1, 2, 3]#, 4]
+        self.customers = ['1', '2', '3']
+        self.periods = [1, 2, 3] #, 4]
 
         # Create catalogs
         considerations = {}
-        considerations ['A'] = ['1', '2', '4']
-        considerations ['B'] = ['1', '3', '4']
-        considerations ['C'] = ['2', '3', '4']
+        considerations ['1'] = ['1', '2', '4']
+        considerations ['2'] = ['1', '3', '4']
+        considerations ['3'] = ['2', '3', '4']
         self.catalogs = {}
         for location in self.locations:
             self.catalogs[location] = {}
