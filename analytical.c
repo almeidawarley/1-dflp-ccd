@@ -110,20 +110,17 @@ void procedure(int customer, int I, int J, int T, int *catalogs, float *coeffici
 
     // Patronization pattern
     // int patronization[T + 1];
+    // Future capture pattern
+    // int futurecapture[T + 1];
     int placeholder = -2;
     int uncaptured = -1;
+    int finalperiod = T + 1;
     for(int l = 0; l < T + 1; l++){
         patronization[l] = uncaptured;
+        futurecapture[l] = finalperiod;
     }
     // Customer captured at t = 0
     patronization[0] = placeholder;
-
-    // Future capture pattern
-    // int futurecapture[T + 1];
-    int finalperiod = T + 1;
-    for(int l = 0; l < T + 1; l++){
-        futurecapture[l] = finalperiod;
-    }
 
     // Compute proper values
     int captured, location;
