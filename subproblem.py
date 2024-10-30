@@ -190,12 +190,12 @@ class external(subproblem):
 
         super().__init__(instance, customer)
 
+        self.library = cdll.LoadLibrary('./libanalytical.so')
         self.master_y = (c_float * (len(self.ins.periods) * len(self.ins.locations)))()
         self.primal_x = (c_float * (len(self.ins.periods_with_final) * len(self.ins.periods_with_final) * len(self.ins.locations)))()
         self.dual_q = (c_float * (len(self.ins.periods_with_start)))()
         self.dual_o = (c_float * (len(self.ins.periods) * len(self.ins.locations)))()
         self.dual_p = (c_float * (len(self.ins.periods) * len(self.ins.locations)))()
-        self.library = cdll.LoadLibrary('./libanalytical.so')
         self.patronization = (c_int * (len(self.ins.periods_with_start) * len(self.ins.locations)))()
         self.futurecapture = (c_int * (len(self.ins.periods_with_start) * len(self.ins.locations)))()
 
