@@ -151,7 +151,7 @@ class benders(fm.formulation):
             '{}solution'.format(label): self.ins.pack_solution(solution)
         }
 
-        cm.mark_section('Reporting summary for '.format(self.ins.keyword))
+        cm.mark_section('Reporting summary for {} '.format(self.ins.keyword))
         for key, value in metadata.items():
             print('{}: {}'.format(key, value))
 
