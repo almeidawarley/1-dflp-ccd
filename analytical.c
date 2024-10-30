@@ -305,16 +305,17 @@ void procedure(int customer, int I, int J, int T, int *catalogs, float *coeffici
         }
     }
 
-    // Compute dual objective
-    summing_p = 0;
-    for(int t = 0; t < T; t++){
-        if(patronization[t] != uncaptured){
-            summing_p += dual_p[t * I + patronization[t]];
-        }
-    }
-    float dual_objective = dual_q[0] - summing_p;
-
     if(debug == 1){
+
+        // Compute dual objective
+        summing_p = 0;
+        for(int t = 0; t < T; t++){
+            if(patronization[t] != uncaptured){
+                summing_p += dual_p[t * I + patronization[t]];
+            }
+        }
+        float dual_objective = dual_q[0] - summing_p;
+
         printf("Dual objective: %f\n", dual_objective);
         for(int t = 0; t < T; t++){
             for(int i = 0; i < I; i++){
