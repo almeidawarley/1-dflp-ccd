@@ -75,6 +75,7 @@ class instance:
                 limit = self.accumulated[self.start][period][customer]
                 self.limits[period][customer] = np.ceil(limit)
 
+        # Compute coefficients
         with open('coefficients/{}.csv'.format(keyword), 'w') as content:
             self.coefficients = {}
             for period1 in self.periods_with_start:
@@ -94,30 +95,26 @@ class instance:
 
         # Prepare proper ctypes
 
-        '''
         self.c_nb_locations = c_int(len(self.locations))
         self.c_nb_customers = c_int(len(self.customers))
         self.c_nb_periods = c_int(len(self.periods))
 
         self.c_dt_catalogs = (c_int * (len(self.locations) * len(self.customers)))()
-
         for location in self.locations:
             for customer in self.customers:
                 self.c_dt_catalogs[(int(location) - 1) * len(self.customers) + int(customer) - 1] = c_int(self.catalogs[location][customer])
 
-        self.c_dt_rewards = (c_float * (len(self.periods) * len(self.locations)))()
-
-        for period in self.periods:
-            for location in self.locations:
-                self.c_dt_rewards[(int(period) - 1) * len(self.locations) + int(location) - 1] = self.rewards[period][location]
-
-        self.c_dt_accumulated = (c_int * (len(self.periods_with_start) * len(self.periods) * len(self.customers)))()
-
+        self.c_dt_coefficients = (c_float * (len(self.periods_with_start) * len(self.periods_with_final) * len(self.locations) * len(self.customers)))()
         for period1 in self.periods_with_start:
-            for period2 in self.periods:
-                for customer in self.customers:
-                    self.c_dt_accumulated[int(period1) * len(self.periods) * len(self.customers) + (int(period2) - 1)* len(self.customers) + int(customer) - 1] = int(self.accumulated[period1][period2][customer]) if period1 < period2 else 0
-        '''
+            for period2 in self.periods_with_final:
+                for location in self.locations:
+                    for customer in self.customers:
+                        self.c_dt_coefficients[(
+                            (int(period1) - 0) * len(self.periods_with_final) * len(self.locations) * len(self.customers) + 
+                            (int(period2) - 1) * len(self.locations) * len(self.customers) + 
+                            (int(location) - 1) * len(self.customers) + 
+                            (int(customer) - 1)
+                        )] = c_float(self.coefficients[period1][period2][location][customer] if period1 < period2 and customer in self.captured_customers[location] else -10 ** 8)
 
     def print_instance(self):
         # Print stored instance
