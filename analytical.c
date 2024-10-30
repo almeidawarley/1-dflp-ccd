@@ -1,17 +1,18 @@
 #ifndef ANALYTICAL_H
 #define ANALYTICAL_H
 
-#include<stdio.h>
+#include <stdio.h>
 #include <math.h>
+
 
 int is_equal_to(float value1, float value2){
     float tolerance = 0.0001;
-    return (abs(value1 - value2) < tolerance);
+    return (fabs(value1 - value2) < tolerance);
 }
 
 void procedure(int customer, int I, int J, int T, int *catalogs, float *coefficients, float *master_y, float *primal_x, float *dual_q, float *dual_o, float *dual_p, int *patronization, int *futurecapture, int debug){
 
-    char dump;
+    // char dump;
     debug = 2;
     if(debug == 1){
 
