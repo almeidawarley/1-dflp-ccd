@@ -107,7 +107,7 @@ class artificial(ic.instance):
         }
         '''
         self.penalties = {
-            customer : (
+            customer : np.ceil(
                 int(self.parameters['penalties'])  * 0.25 *
                 sum(
                     self.catalogs[location][customer] *
