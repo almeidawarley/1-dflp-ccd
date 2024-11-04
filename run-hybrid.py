@@ -16,8 +16,8 @@ def main():
 
     cm.mark_section('Solving with branch-and-Benders')
 
-    cm.mark_section('Analytical subproblems, separating fractional and integer solutions')
-    benders1 = bd.benders(instance, 'analytical', True)
+    cm.mark_section('External subproblems, separating fractional and integer solutions')
+    benders1 = bd.benders(instance, 'external', True)
     metadata = benders1.solve('bbh')
     rc.update_record(args.keyword, metadata)
 
