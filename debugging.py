@@ -27,7 +27,56 @@ class debugging(ic.instance):
             exit('Invalid instance keyword')
 
         self.facilities = {period: 1 for period in self.periods}
-        self.penalties = {customer: 0 for customer in self.customers}
+
+        # Set proper time periods
+        self.start, self.final = 0, len(self.periods) + 1
+        self.periods_with_start = [self.start] + [period for period in self.periods]
+        self.periods_with_final = [period for period in self.periods] + [self.final]
+        self.periods_extended = [self.start] + [period for period in self.periods] + [self.final]
+
+        # Compute accumulated demand
+        self.accumulated = {}
+        for period1 in self.periods_with_start:
+            self.accumulated[period1] = {}
+            for period2 in self.periods:
+                if period1 < period2:
+                    self.accumulated[period1][period2] = {}
+                    for customer in self.customers:
+                        # self.accumulated[period1][period2][customer] = sum(self.spawning[period][customer] for period in self.periods if period <= period2 - period1) 
+                        self.accumulated[period1][period2][customer] = sum(self.spawning[period][customer] for period in self.periods if period1 < period and period <= period2)
+
+        # Compute captured locations
+        self.captured_locations = {}
+        for customer in self.customers:
+            self.captured_locations[customer] = [location for location in self.locations if self.catalogs[location][customer] == 1]
+
+        # Compute captured customers
+        self.captured_customers = {}
+        for location in self.locations:
+            self.captured_customers[location] = [customer for customer in self.customers if self.catalogs[location][customer] == 1]
+
+        # Set proper limit values
+        self.limits = {}
+        for period in self.periods:
+            self.limits[period] = {}
+            for customer in self.customers:
+                limit = self.accumulated[self.start][period][customer]
+                self.limits[period][customer] = np.ceil(limit)
+
+        # Compute coefficients
+        self.coefficients = {}
+        for period1 in self.periods_with_start:
+            self.coefficients[period1] = {}
+            for period2 in self.periods_with_final:
+                if period1 < period2:
+                    self.coefficients[period1][period2] = {}
+                    for location in self.locations:
+                        self.coefficients[period1][period2][location] = {}
+                        for customer in self.captured_customers[location]:
+                            if period2 != self.final:
+                                self.coefficients[period1][period2][location][customer] = self.rewards[location] * self.accumulated[period1][period2][customer]
+                            else:
+                                self.coefficients[period1][period2][location][customer] = 0.
 
     def create_spp(self, random = False):
         # Create SPP instances
@@ -64,17 +113,15 @@ class debugging(ic.instance):
                     self.catalogs[location][customer] = 1 if int(location) - 1 - len(collections) == int(customer) - 1 - len(elements) else 0
 
         self.rewards = {}
-        for period in self.periods:
-            self.rewards[period] = {}
-            for location in self.locations:
-                if int(location) <= len(collections):
-                    self.rewards[period][location] =  1 / len(collections[int(location)-1])
-                else:
-                    self.rewards[period][location] =  0.99
-                '''
-                if location == '1':
-                    # Avoid ambiguity for heuristic
-                    self.rewards[period][location] = 0.21
+        for location in self.locations:
+            if int(location) <= len(collections):
+                self.rewards[location] =  1 / len(collections[int(location)-1])
+            else:
+                self.rewards[location] =  0.99
+            '''
+            if location == '1':
+                # Avoid ambiguity for heuristic
+                self.rewards[location] = 0.21
                 '''
 
         # Create spawning
@@ -101,13 +148,11 @@ class debugging(ic.instance):
                 self.catalogs[location][customer] = 1 if customer in collections[int(location)-1] else 0
 
         self.rewards = {}
-        for period in self.periods:
-            self.rewards[period] = {}
-            for location in self.locations:
-                self.rewards[period][location] =  1/len(collections[int(location)-1])
-                if location == '3':
-                    # Avoid ambiguity for heuristic
-                    self.rewards[period][location] = 0.51
+        for location in self.locations:
+            self.rewards[location] =  1/len(collections[int(location)-1])
+            if location == '3':
+                # Avoid ambiguity for heuristic
+                self.rewards[location] = 0.51
 
         # Create spawning
         self.spawning = {}
@@ -141,10 +186,8 @@ class debugging(ic.instance):
 
         # Create rewards
         self.rewards = {}
-        for period in self.periods:
-            self.rewards[period] = {}
-            for location in self.locations:
-                self.rewards[period][location] =  1
+        for location in self.locations:
+            self.rewards[location] =  1
 
         # Create spawning
         self.spawning = {}
@@ -178,10 +221,8 @@ class debugging(ic.instance):
 
         # Create rewards
         self.rewards = {}
-        for period in self.periods:
-            self.rewards[period] = {}
-            for location in self.locations:
-                self.rewards[period][location] = rewards [location]
+        for location in self.locations:
+            self.rewards[location] = rewards[location]
 
         # Create spawning
         self.spawning = {}

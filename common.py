@@ -1,8 +1,5 @@
 import debugging as db
-# import synthetic as sy
-import slovakia as sl
-import satisfiability as st
-import artificial as ar
+import benchmark as bm
 
 TIMELIMIT = 2 * 60 * 60
 TOLERANCE = 10 ** (-4)
@@ -46,14 +43,8 @@ def mark_section(title):
 def load_instance(keyword):
     if keyword in ['proof', 'spp', 'approx', 'jopt']:
         instance = db.debugging(keyword)
-    elif '.cnf' in keyword:
-        instance = st.satisfiability(keyword)
-    # elif 'rnd' in keyword:
-    #     instance = sy.synthetic(keyword)
     elif 'art' in keyword:
-        instance = ar.artificial(keyword)
-    elif 'slv' in keyword:
-        instance = sl.slovakia(keyword)
+        instance = bm.benchmark(keyword)
     else:
         exit('Invalid instance keyword')
     return instance

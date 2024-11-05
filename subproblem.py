@@ -63,7 +63,7 @@ class analytical(subproblem):
             if len(self.solution[period2]) > 0:
                 location = self.uncaptured
                 for other in self.solution[period2]:
-                    if other in self.ins.captured_locations[self.customer] and (location == self.uncaptured or self.ins.rewards[period2][other] > self.ins.rewards[period2][location]):
+                    if other in self.ins.captured_locations[self.customer] and (location == self.uncaptured or self.ins.rewards[other] > self.ins.rewards[location]):
                         location = other
                 patronization[period2] = location
         patronization[self.ins.start] = self.placeholder
@@ -296,7 +296,7 @@ class duality(subproblem):
             if len(self.solution[period2]) > 0:
                 location = '-'
                 for i in self.solution[period2]:
-                    if i in self.ins.captured_locations[self.customer] and (location == '-' or self.ins.rewards[period2][i] > self.ins.rewards[period2][location]):
+                    if i in self.ins.captured_locations[self.customer] and (location == '-' or self.ins.rewards[i] > self.ins.rewards[location]):
                         location = i
                 patronization[period2] = location
 

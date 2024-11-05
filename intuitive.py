@@ -41,7 +41,7 @@ class intuitive(fm.formulation):
 
         self.mip.setObjective(
             sum(
-                self.ins.rewards[period][location] *
+                self.ins.rewards[location] *
                 self.var['w'][period, location, customer]
                 for period in self.ins.periods
                 for customer in self.ins.customers
