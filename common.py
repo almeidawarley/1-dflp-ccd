@@ -43,7 +43,7 @@ def mark_section(title):
 def load_instance(keyword):
     if keyword in ['proof', 'spp', 'approx', 'jopt']:
         instance = db.debugging(keyword)
-    elif 'art' in keyword:
+    elif 'bmk' in keyword:
         instance = bm.benchmark(keyword)
     else:
         exit('Invalid instance keyword')
