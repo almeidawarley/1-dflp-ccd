@@ -3,54 +3,51 @@ import common as cm
 import matplotlib.pyplot as plt
 
 content = pd.read_csv('results/paper1/summary.csv')
-supervl = pd.read_csv('results/paper1/supervalid.csv')
 
 content['index'] = content['keyword']
 content = content.set_index('index')
-supervl['index'] = supervl['keyword']
-supervl = supervl.set_index('index')
 
-exact_approaches = ['cold_lrz', 'cold_net', 'bbd', 'bbe']
+# content = content[content['locations'] == 100]
 
-for approach in exact_approaches:
-    for column in supervl.columns:
-        if approach in column:
-            supervl = supervl.rename({column: column.replace(approach, 'sv_' + approach)}, axis = 1)
-        if 'rlx' in column:
-            supervl = supervl.drop(column, axis = 1)
-supervl = supervl.drop(['project','keyword','created','seed','locations','customers','periods','preferences','rewards','demands','characters','updated','commit','branch'], axis = 1)
+formulation_approaches = ['cold_lrz', 'cold_net']
+benders_approaches = ['bbd', 'bbf', 'bba', 'bbe', 'bbh']
+heuristic_approaches = [] # ['rnd', 'eml', 'frw', 'bcw', 'prg']
+exact_approaches = formulation_approaches + benders_approaches
 
-content = pd.concat([content, supervl], axis = 1, join = 'inner')
+content['bst_objective'] = content.apply(lambda row: max(row['{}_objective'.format(approach)] for approach in exact_approaches), axis = 1)
+content['bst_runtime'] = content.apply(lambda row: min(row['{}_runtime'.format(approach)] for approach in exact_approaches), axis = 1)
+content['bst_optgap'] = content.apply(lambda row: min(row['{}_optgap'.format(approach)] for approach in exact_approaches), axis = 1)
+content['bst_optimal'] = content.apply(lambda row: (row['bst_optgap'] <= cm.TOLERANCE), axis = 1)
 
-content['best_objective'] = content.apply(lambda row: max(row['{}_objective'.format(approach)] for approach in exact_approaches), axis = 1)
-content['best_optgap'] = content.apply(lambda row: min(row['{}_optgap'.format(approach)] for approach in exact_approaches), axis = 1)
-content['best_optimal'] = content.apply(lambda row: (row['best_optgap'] <= cm.TOLERANCE), axis = 1)
+for method in benders_approaches:
+    content['{}_proportion'.format(method)] = content.apply(lambda row: (row['{}_subtime_integer'.format(method)] + row['{}_subtime_fractional'.format(method)]) / row['{}_runtime'.format(method)], axis = 1)
+    content['{}_nodes'.format(method)] = content.apply(lambda row: (row['{}_nodes'.format(method)]  / 10**6), axis = 1)
 
-for approach in ['rnd', 'eml', 'frw', 'bcw', 'prg']:
-    content['{}_optgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['best_objective'], row['{}_objective'.format(approach)]), axis = 1)
+for approach in heuristic_approaches:
+    content['{}_optgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['bst_objective'], row['{}_objective'.format(approach)]), axis = 1)
 
 for approach in exact_approaches:
     content['{}_optimal'.format(approach)] = content.apply(lambda row: (row['{}_optgap'.format(approach)] <= cm.TOLERANCE), axis = 1)
 
-for approach in ['lrz', 'net']:
-    content['{}_intgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['rlx_{}_objective'.format(approach)], row['best_objective']), axis = 1)
-
-content['refr_objective'] = content.apply(lambda row: max(row['{}_objective'.format(approach)] for approach in exact_approaches), axis = 1)
-content['refr_runtime'] = content.apply(lambda row: min(row['{}_runtime'.format(approach)] for approach in exact_approaches), axis = 1)
+for approach in formulation_approaches:
+    approach = approach.replace('cold_', '')
+    content['{}_intgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['rlx_{}_objective'.format(approach)], row['bst_objective']), axis = 1)
 
 for approach in exact_approaches:
-    content['{}_ratio_objective'.format(approach)] = content.apply(lambda row: round(row['refr_objective'] / row['{}_objective'.format(approach)], 3), axis = 1)
-    content['{}_ratio_runtime'.format(approach)] = content.apply(lambda row: round(row['{}_runtime'.format(approach)] / row['refr_runtime'], 3), axis = 1)
+    content['{}_ratio_objective'.format(approach)] = content.apply(lambda row: round(row['bst_objective'] / (row['{}_objective'.format(approach)] + cm.TOLERANCE), cm.PRECISION), axis = 1)
+    content['{}_ratio_runtime'.format(approach)] = content.apply(lambda row: round(row['{}_runtime'.format(approach)] / (row['bst_runtime'] + cm.TOLERANCE), cm.PRECISION), axis = 1)
 
 content.to_csv('debugging.csv')
 
 characteristics = {
     'periods': [10],
     'locations': [50, 100],
+    'facilities': [1, 2, 3, 4],
+    'penalties': [0, 1, 2, 3],
     'preferences': ['small', 'large'],
     'rewards': ['identical', 'inversely'],
-    'demands': ['constant', 'seasonal'],
-    'characters': ['homogeneous', 'heterogeneous']
+    'demands': ['constant'], # 'demands': ['constant', 'seasonal', 'increasing', 'decreasing'],
+    'characters': ['heterogeneous'] # ['homogeneous', 'heterogeneous']
 }
 
 labels = {
@@ -60,6 +57,18 @@ labels = {
     'locations': {
         50: '50 locations, customers',
         100: '100 locations, customers',
+    },
+    'facilities': {
+        1: '1 facility',
+        2: '2 facilities',
+        3: '3 facilities',
+        4: '4 facilities',
+    },
+    'penalties': {
+        0: 'No penalties',
+        1: '25\\% penalties',
+        2: '50\\% penalties',
+        3: '75\\% penalties',
     },
     'preferences': {
         'small': 'Small choice sets',
@@ -71,7 +80,9 @@ labels = {
     },
     'demands': {
         'constant': 'Constant demand',
-        'seasonal': 'Seasonal demand'
+        'seasonal': 'Seasonal demand',
+        'increasing': 'Increasing demand',
+        'decreasing': 'Decreasing demand',
     },
     'characters': {
         'homogeneous': 'Identical amplitudes',
@@ -80,6 +91,16 @@ labels = {
 }
 
 def table1(descriptor = 'paper'):
+
+    filter = (content['periods'] == 10) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
+
+    content[filter].boxplot(['cold_lrz_runtime', 'cold_net_runtime'])
+    plt.savefig('results/paper1/box_table1_runtime.png')
+    plt.figure().clear()
+
+    content[filter].boxplot(['lrz_intgap', 'net_intgap'])
+    plt.savefig('results/paper1/box_table1_intgap.png')
+    plt.figure().clear()
 
     for characteristic, values in characteristics.items():
 
@@ -100,10 +121,13 @@ def table1(descriptor = 'paper'):
                 deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
 
-            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+            # count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+            count = len(content[filter].index)
+            total = len(content[(content[characteristic] == value)].index)
 
-            print('{}&${:.2f}$&{}{}{}'.
-            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+            # print('{}&${:.2f}$&{}{}{}'.
+            print('{}&${} \, ({})$&{}{}{}'.
+            format(labels[characteristic][value], count, total, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
 
@@ -112,6 +136,12 @@ def table1(descriptor = 'paper'):
     print('**************************************************************************************************')
 
 def table2(descriptor = 'paper'):
+
+    filter = (content['periods'] == 10) & ((content['cold_lrz_optimal'] == False) | (content['cold_net_optimal'] == False))
+
+    content[filter].boxplot(['cold_lrz_optgap', 'cold_net_optgap'])
+    plt.savefig('results/paper1/box_table2_optgap.png')
+    plt.figure().clear()
 
     for characteristic, values in characteristics.items():
 
@@ -135,10 +165,13 @@ def table2(descriptor = 'paper'):
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 optimals[column] = content[filter & (content[column] <= cm.TOLERANCE)][column].count()
 
-            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+            # count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+            count = len(content[filter].index)
+            total = len(content[(content[characteristic] == value)].index)
 
-            print('{}&${:.2f}$&{}{}{}'.
-            format(labels[characteristic][value], count, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+            # print('{}&${:.2f}$&{}{}{}'.
+            print('{}&${} \, ({})$&{}{}{}'.
+            format(labels[characteristic][value], count, total, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
 
@@ -152,7 +185,7 @@ def table3(descriptor = 'paper'):
 
         for value in values:
 
-            filter = (content[characteristic] == value) & (content['best_optimal'] == True)
+            filter = (content[characteristic] == value) & (content['bst_optimal'] == True)
 
             if descriptor == 'paper':
                 columns = ['eml_optgap', 'rnd_optgap', 'frw_optgap', 'bcw_optgap'] #, 'prg_optgap']
@@ -181,13 +214,19 @@ def table3(descriptor = 'paper'):
 
 def table4(descriptor = 'paper'):
 
+    filter = (content['periods'] == 10) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bbf_optimal'] == True) & (content['bbe_optimal'] == True) & (content['bbh_optimal'] == True)
+
+    content[filter].boxplot(['cold_net_runtime', 'bbd_runtime', 'bbf_runtime', 'bbe_runtime', 'bbh_runtime'])
+    plt.savefig('results/paper1/box_table4_runtime.png')
+    plt.figure().clear()
+
     for characteristic, values in characteristics.items():
 
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['cold_net_runtime', 'bbd_runtime', 'bbe_runtime']
-                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bbe_optimal'] == True)
+                columns = ['cold_net_runtime', 'bbd_runtime', 'bbf_runtime', 'bbe_runtime', 'bbh_runtime']
+                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bbf_optimal'] == True) & (content['bbe_optimal'] == True) & (content['bbh_optimal'] == True)
             else:
                 exit('Wrong descriptor for table 4')
 
@@ -200,10 +239,13 @@ def table4(descriptor = 'paper'):
                 deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
 
-            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+            # count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+            count = len(content[filter].index)
+            total = len(content[(content[characteristic] == value)].index)
 
-            print('{}&${:.2f}$&{}{}{}'.
-            format(labels[characteristic][value], count, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+            # print('{}&${:.2f}$&{}{}{}'.
+            print('{}&${} \, ({})$&{}{}{}'.
+            format(labels[characteristic][value], count, total, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
 
@@ -213,13 +255,19 @@ def table4(descriptor = 'paper'):
 
 def table5(descriptor = 'paper'):
 
+    filter = (content['periods'] == 10) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bbf_optimal'] == False) | (content['bbe_optimal'] == False) & (content['bbh_optimal'] == False))
+
+    content[filter].boxplot(['cold_net_optgap', 'bbd_optgap', 'bbf_optgap', 'bbe_optgap', 'bbh_optgap'])
+    plt.savefig('results/paper1/box_table5_optgap.png')
+    plt.figure().clear()
+
     for characteristic, values in characteristics.items():
 
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['cold_net_optgap', 'bbd_optgap', 'bbe_optgap']
-                filter = (content[characteristic] == value) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bbe_optimal'] == False))
+                columns = ['cold_net_optgap', 'bbd_optgap', 'bbf_optgap', 'bbe_optgap', 'bbh_optgap']
+                filter = (content[characteristic] == value) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bbf_optimal'] == False) | (content['bbe_optimal'] == False) | (content['bbh_optimal'] == False))
             else:
                 exit('Wrong descriptor for table 5')
 
@@ -235,10 +283,13 @@ def table5(descriptor = 'paper'):
                 # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 optimals[column] = content[filter & (content[column] <= cm.TOLERANCE)][column].count()
 
-            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+            # count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+            count = len(content[filter].index)
+            total = len(content[(content[characteristic] == value)].index)
 
-            print('{}&${:.2f}$&{}{}{}'.
-            format(labels[characteristic][value], count, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+            # print('{}&${:.2f}$&{}{}{}'.
+            print('{}&${} \, ({})$&{}{}{}'.
+            format(labels[characteristic][value], count, total, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
 
@@ -248,15 +299,24 @@ def table5(descriptor = 'paper'):
 
 def table6(descriptor = 'paper'):
 
-    content['bbd_proportion'] = content.apply(lambda row: row['bbd_subtime'] / row['bbd_runtime'], axis = 1)
-    content['bbe_proportion'] = content.apply(lambda row: row['bbe_subtime'] / row['bbe_runtime'], axis = 1)
+    filter = (content['periods'] == 10) & (content['bbd_optimal'] == True) & (content['bbf_optimal'] == True) & (content['bbe_optimal'] == True) & (content['bbh_optimal'] == True)
+
+    content[filter].boxplot(['bbd_nodes', 'bbf_nodes', 'bbe_nodes', 'bbh_nodes'])
+    plt.savefig('results/paper1/box_table6_nodes.png')
+    plt.figure().clear()
+
+    content[filter].boxplot(['bbd_proportion', 'bbf_proportion', 'bbe_proportion', 'bbh_proportion'])
+    plt.savefig('results/paper1/box_table6_proportion.png')
+    plt.figure().clear()
 
     for characteristic, values in characteristics.items():
 
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['bbd_iterations', 'bbd_proportion', 'bbe_iterations', 'bbe_proportion']
+                # columns = ['bbd_nodes', 'bbd_proportion', 'bbf_nodes', 'bbf_proportion', 'bbe_nodes', 'bbe_proportion', 'bbh_nodes', 'bbh_proportion']
+                columns = ['bbd_cuts_integer', 'bbd_proportion', 'bbe_cuts_integer', 'bbe_proportion']
+                # filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bbf_optimal'] == True) & (content['bbe_optimal'] == True) & (content['bbh_optimal'] == True)
                 filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bbe_optimal'] == True)
             else:
                 exit('Wrong descriptor for table 6')
@@ -271,10 +331,13 @@ def table6(descriptor = 'paper'):
                 deviations[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
                 # maximums[column] = round(content[filter & (content[column] > cm.TOLERANCE)][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
 
-            count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+            # count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+            count = len(content[filter].index)
+            total = len(content[(content[characteristic] == value)].index)
 
-            print('{}&${:.2f}$&{}{}{}'.
-            format(labels[characteristic][value], count, '&'.join(['${:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+            # print('{}&${:.2f}$&{}{}{}'.
+            print('{}&${} \, ({})$&{}{}{}'.
+            format(labels[characteristic][value], count, total, '&'.join(['${:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
 
@@ -353,147 +416,194 @@ def graph1(descriptor = 'paper'):
 
 def graph2(descriptor = 'paper'):
 
-    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbe']
+    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbf', 'bbe', 'bbh']
 
     colors = {
         'cold_lrz' : 'red',
         'cold_net' : 'gray',
         'bbd': 'blue',
-        'bbe' : 'orange'
+        'bbf': 'yellow',
+        'bba' : 'orange',
+        'bbe' : 'orange',
+        'bbh': 'green'
     }
 
     styles = {
         'cold_lrz' : 'dashed',
         'cold_net' : 'dotted',
         'bbd': 'dashdotted',
-        'bbe' : 'solid'
+        'bbf' : 'dashed',
+        'bba' : 'dotted',
+        'bbe' : 'dotted',
+        'bbh': 'dashdotted',
     }
 
-    filter = (content['periods'] == 10) # & (content['best_optgap'] > cm.TOLERANCE)
+    filter = (content['periods'] == 10) # & (content['bst_optgap'] > cm.TOLERANCE)
 
     with open ('graphs/objectives.tex', 'w') as output:
 
+        length_x, lower_x, upper_x, step_x = 10, 1, 1.1, 0.01
+        length_y, lower_y, upper_y, step_y = 10, 50, 100, 10
+
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
-        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (10.5,0);\n')
-        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,10.5);\n')
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- ({},0);\n'.format(length_x + 0.5))
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,10.5);\n'.format(length_y + 0.5))
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (-1,-0.5) node[anchor=mid] {$(+1)$};\n')
-        output.write('\draw (9,0.5) node[anchor=mid] {objective ratio ($10^{-3}$)};\n')
+        output.write('\draw (9.5,0.5) node[anchor=mid] {objective ratio};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
-        for x in range(0,11):
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x, '{$', x,'$}'))
-        for y in range(0,11):
-            output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', 90 + y,'$}'))
+        formatted_x = 0
+        while formatted_x <= length_x:
+            x = (formatted_x / length_x) * (upper_x - lower_x) + lower_x
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.2f}{};\n'.format(formatted_x, '{$', x,'$}'))
+            formatted_x += 1
 
+        formatted_y = 0
+        while formatted_y <= length_y:
+            y = (formatted_y / length_y) * (upper_y - lower_y) + lower_y
+            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', y,'$}'))
+            formatted_y += 1
 
         for method in methods:
 
-            prev_x = 0
-            prev_y = int(100 * len(content[filter & (content['{}_ratio_objective'.format(method)] <= (prev_x + 10**3)/ 10**3)])/len(content[filter]))
+            prev_x = 1
+            prev_y = int(100 * len(content[filter & (content['{}_ratio_objective'.format(method)] <= prev_x)]) / len(content[filter]))
 
-            for x in range(1,11,1):
+            x = lower_x
 
-                y = int(100 * len(content[filter & (content['{}_ratio_objective'.format(method)] <= (x + 10**3)/ 10**3)])/len(content[filter]))
-                output.write('\draw[line width=0.5mm,line width=0.5mm,{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x, (prev_y - 90), x, (y - 90)))
+            while x <= upper_x:
+
+                y = int(100 * len(content[filter & (content['{}_ratio_objective'.format(method)] <= x)]) / len(content[filter]))
+
+                formatted_prev_x = length_x * (prev_x - lower_x) / (upper_x - lower_x)
+                formatted_prev_y = length_y * (prev_y - lower_y) / (upper_y - lower_y)
+                formatted_x = length_x * (x - lower_x) / (upper_x - lower_x)
+                formatted_y = length_y * (y - lower_y) / (upper_y - lower_y)
+
+                output.write('\draw[line width=0.5mm,line width=0.5mm,{},{}] ({:.2f},{:.2f})--({:.2f},{:.2f});'.format(colors[method], styles[method], formatted_prev_x, formatted_prev_y, formatted_x, formatted_y))
 
                 prev_x = x
                 prev_y = y
+                x += step_x
 
         output.write('\n')
 
-        output.write('\draw[line width=0.5mm,red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
-        output.write('\draw[line width=0.5mm,red] (9.0, 3.5) node[anchor=west] {STI};\n')
-        output.write('\draw[line width=0.5mm,gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
-        output.write('\draw[line width=0.5mm,gray] (9.0, 3.0) node[anchor=west] {DTI};\n')
-        output.write('\draw[line width=0.5mm,blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
-        output.write('\draw[line width=0.5mm,blue] (9.0, 2.5) node[anchor=west] {BSD};\n')
-        output.write('\draw[line width=0.5mm,orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
-        output.write('\draw[line width=0.5mm,orange] (9.0, 2.0) node[anchor=west] {BSE};\n')
-        # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
+        current_y = 3.0
+        next_y = 0.5
+
+        for method in methods:
+            output.write('\draw[line width=0.5mm, {}, {}] (8.5, {:.2f})--(9.0, {:.2f});\n'.format(colors[method], styles[method], current_y, current_y))
+            output.write('\draw[line width=0.5mm, {}] (9.0, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], current_y, '{', method.replace('cold_', ''), '}'))
+            current_y += next_y
 
         output.write('\end{tikzpicture}\n')
-        # output.write('\caption{}Performance overview in terms of optimality gap of proposed heuristics for {}.{}\n'.format('{', labels[characteristic][value].lower(), '}'))
-        # output.write('\end{figure}')
 
         print('Exported graph to graphs/objectives.tex')
 
 def graph3(descriptor = 'paper'):
 
-    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbe']
+    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbf', 'bbe', 'bbh']
 
     colors = {
         'cold_lrz' : 'red',
         'cold_net' : 'gray',
         'bbd': 'blue',
-        'bbe' : 'orange'
+        'bbf': 'yellow',
+        'bba' : 'orange',
+        'bbe' : 'orange',
+        'bbh': 'green'
     }
 
     styles = {
         'cold_lrz' : 'dashed',
         'cold_net' : 'dotted',
         'bbd': 'dashdotted',
-        'bbe' : 'solid'
+        'bbf' : 'dashed',
+        'bba' : 'dotted',
+        'bbe' : 'dotted',
+        'bbh': 'dashdotted',
     }
 
-    filter = (content['periods'] == 10)
+    filter = (content['periods'] == 10) # & (content['bst_optgap'] > cm.TOLERANCE)
 
-    with open ('graphs/runtime.tex', 'w') as output:
+    with open ('graphs/runtimes.tex', 'w') as output:
+
+        length_x, lower_x, upper_x, step_x = 10, 1, 21, 2
+        length_y, lower_y, upper_y, step_y = 10, 0, 100, 10
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
-        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (10.5,0);\n')
-        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,10.5);\n')
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- ({},0);\n'.format(length_x + 0.5))
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,10.5);\n'.format(length_y + 0.5))
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9,0.5) node[anchor=mid] {time ratio ($10^{0}$)};\n')
+        output.write('\draw (9.5,0.5) node[anchor=mid] {runtime ratio};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
-        for x in range(0,11):
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{}{};\n'.format(x - 1, '{$', x,'$}'))
-        for y in range(0,11):
-            output.write('\draw (-0.5,{}) node[anchor=mid] {}{}{};\n'.format(y, '{$', y * 10,'$}'))
+        formatted_x = 0
+        while formatted_x <= length_x:
+            x = (formatted_x / length_x) * (upper_x - lower_x) + lower_x
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.2f}{};\n'.format(formatted_x, '{$', x,'$}'))
+            formatted_x += 1
 
+        formatted_y = 0
+        while formatted_y <= length_y:
+            y = (formatted_y / length_y) * (upper_y - lower_y) + lower_y
+            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', y,'$}'))
+            formatted_y += 1
 
         for method in methods:
 
             prev_x = 1
-            prev_y = int(100 * len(content[filter & (content['{}_ratio_runtime'.format(method)] <= prev_x)])/len(content[filter]))
+            prev_y = int(100 * len(content[filter & (content['{}_ratio_runtime'.format(method)] <= prev_x)]) / len(content[filter]))
 
-            for x in range(1,11,1):
+            x = lower_x
 
-                y = int(100 * len(content[filter & (content['{}_ratio_runtime'.format(method)] <= x)])/len(content[filter]))
-                output.write('\draw[line width=0.5mm,{},{}] ({},{})--({},{});'.format(colors[method], styles[method], prev_x - 1, prev_y/10, x - 1, y/10))
+            while x <= upper_x:
+
+                y = int(100 * len(content[filter & (content['{}_ratio_runtime'.format(method)] <= x)]) / len(content[filter]))
+
+                formatted_prev_x = length_x * (prev_x - lower_x) / (upper_x - lower_x)
+                formatted_prev_y = length_y * (prev_y - lower_y) / (upper_y - lower_y)
+                formatted_x = length_x * (x - lower_x) / (upper_x - lower_x)
+                formatted_y = length_y * (y - lower_y) / (upper_y - lower_y)
+
+                output.write('\draw[line width=0.5mm,line width=0.5mm,{},{}] ({:.2f},{:.2f})--({:.2f},{:.2f});'.format(colors[method], styles[method], formatted_prev_x, formatted_prev_y, formatted_x, formatted_y))
 
                 prev_x = x
                 prev_y = y
+                x += step_x
 
         output.write('\n')
 
-        output.write('\draw[line width=0.5mm,red, dashed] (8.5, 3.5)--(9.0, 3.5);\n')
-        output.write('\draw[line width=0.5mm,red] (9.0, 3.5) node[anchor=west] {STI};\n')
-        output.write('\draw[line width=0.5mm,gray, dotted] (8.5, 3.0)--(9.0, 3.0);\n')
-        output.write('\draw[line width=0.5mm,gray] (9.0, 3.0) node[anchor=west] {DTI};\n')
-        output.write('\draw[line width=0.5mm,blue, dashdotted] (8.5, 2.5)--(9.0, 2.5);\n')
-        output.write('\draw[line width=0.5mm,blue] (9.0, 2.5) node[anchor=west] {BSD};\n')
-        output.write('\draw[line width=0.5mm,orange, solid] (8.5, 2.0)--(9.0, 2.0);\n')
-        output.write('\draw[line width=0.5mm,orange] (9.0, 2.0) node[anchor=west] {BSE};\n')
-        # output.write('\draw (8,4.0)--(11,4.0)--(11,1.5)--(8,1.5)--(8,4.0);\n')
+        current_y = 3.0
+        next_y = 0.5
+
+        for method in methods:
+            output.write('\draw[line width=0.5mm, {}, {}] (8.5, {:.2f})--(9.0, {:.2f});\n'.format(colors[method], styles[method], current_y, current_y))
+            output.write('\draw[line width=0.5mm, {}] (9.0, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], current_y, '{', method.replace('cold_', ''), '}'))
+            current_y += next_y
 
         output.write('\end{tikzpicture}\n')
-        # output.write('\caption{}Performance overview in terms of optimality gap of proposed heuristics for {}.{}\n'.format('{', labels[characteristic][value].lower(), '}'))
-        # output.write('\end{figure}')
 
-        print('Exported graph to graphs/runtime.tex')
+        print('Exported graph to graphs/runtimes.tex')
 
-table1('paper')
-table2('paper')
-table3('paper')
-table4('paper')
-table5('paper')
+# table1('paper')
+# table2('paper')
+# table3('paper')
+# table4('paper')
+# table5('paper')
 table6('paper')
-graph1('paper')
+# graph1('paper')
 graph2('paper')
 graph3('paper')
+
+'''
+# Boxplot nodes
+filter = (content['periods'] == 10) & (content['bbd_optimal'] == True) & (content['bba_optimal'] == True) # & (content['bbe_optimal'] == True)
+content[filter].boxplot(['bbd_nodes', 'bba_nodes']) #, 'bbe_nodes'])
+plt.savefig('results/paper1/box_notable_nodes.png')
+plt.figure().clear()
+'''

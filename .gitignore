@@ -26,7 +26,7 @@ graphs/*.tex
 # Instance files
 instances/exploratory/*.json
 instances/synthetic/*.json
-instances/artificial/*.json
+instances/benchmark/*.json
 instances/satisfiability/*.cnf
 instances/slovakia/*
 
