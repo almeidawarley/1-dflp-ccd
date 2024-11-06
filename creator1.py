@@ -4,7 +4,7 @@ import sys
 
 features = {
     'seed': [i for i in range(0, 5)],
-    'locations': [50, 100],
+    'locations': [150, 200],
     'customers': [1, 2, 3, 4, 5],
     'periods': [10],
     'facilities': [1], # [1, 2, 3, 4],
