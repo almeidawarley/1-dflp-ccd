@@ -59,7 +59,7 @@ class instance:
 
         # Print instance summary
         print('Keyword: {}'.format(self.keyword))
-        print('Facilities: {}'.format(list(self.facilities.values())))
+        print('Facilities: {}'.format([number for number in self.facilities.values()]))
 
         # Print customer information
         print('Customers: {}'.format(self.customers))
