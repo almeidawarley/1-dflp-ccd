@@ -1,5 +1,7 @@
 import debugging as db
 import benchmark as bm
+import coverage as cv
+import progressive as pr
 
 TIMELIMIT = 2 * 60 * 60
 TOLERANCE = 10 ** (-4)
@@ -45,6 +47,10 @@ def load_instance(keyword):
         instance = db.debugging(keyword)
     elif 'bmk' in keyword:
         instance = bm.benchmark(keyword)
+    elif 'cov' in keyword:
+        instance = cv.coverage(keyword)
+    elif 'prg' in keyword:
+        instance = pr.progressive(keyword)
     else:
         exit('Invalid instance keyword')
     return instance
