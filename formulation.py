@@ -18,6 +18,11 @@ class formulation:
 
         label = label + '_' if len(label) > 0 else label
 
+        # Provide a simple warm start solution
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].start = 0
+
         # Call Gurobi to optimize the model
         self.mip.optimize()
 
@@ -50,16 +55,29 @@ class formulation:
 
         label = label + '_' if len(label) > 0 else label
 
+        # Relax integrality (binary) constraints
         self.relax()
 
+        # Call Gurobi to optimize the model
         self.mip.optimize()
 
-        metadata = {
-            '{}status'.format(label): self.mip.status,
-            '{}objective'.format(label): self.mip.objVal,
-            '{}bound'.format(label): self.mip.objBound,
-            '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION)
-        }
+        if self.mip.solcount > 0:
+
+            metadata = {
+                '{}status'.format(label): self.mip.status,
+                '{}objective'.format(label): self.mip.objVal,
+                '{}bound'.format(label): self.mip.objBound,
+                '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION)
+            }
+
+        else:
+
+            metadata = {
+                '{}status'.format(label): self.mip.status,
+                '{}objective'.format(label): round(-cm.INFINITY, cm.PRECISION),
+                '{}bound'.format(label): round(cm.INFINITY, cm.PRECISION),
+                '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION)
+            }
 
         self.mip.reset()
 
