@@ -61,7 +61,7 @@ class benchmark(ic.instance):
                 coefficient = 1. / popularity if popularity > 0. else 1.
             else:
                 exit('Wrong value for rewards parameter')
-            self.rewards[location] = np.ceil(coefficient * len(self.locations))
+            self.rewards[location] = int(np.ceil(coefficient * len(self.locations)))
 
         # Create amplitude
         self.amplitudes = {}
@@ -88,11 +88,11 @@ class benchmark(ic.instance):
                     self.spawning[period][customer] = ((number_periods - period + 1)/ number_periods) * self.amplitudes[customer]
                 else:
                     exit('Wrong value for demand behaviour')
-                self.spawning[period][customer] = np.ceil(self.spawning[period][customer])
+                self.spawning[period][customer] = int(np.ceil(self.spawning[period][customer]))
 
         # Create penalties
         self.penalties = {
-            customer : np.ceil(
+            customer : int(np.ceil(
                 int(self.parameters['penalties'])  * 0.25 *
                 sum(
                     self.catalogs[location][customer] *
@@ -103,7 +103,7 @@ class benchmark(ic.instance):
                     self.catalogs[location][customer]
                     for location in self.locations
                 )
-            )
+            ))
             for customer in self.customers
         }
 
@@ -140,7 +140,7 @@ class benchmark(ic.instance):
             self.limits[period] = {}
             for customer in self.customers:
                 limit = self.accumulated[self.start][period][customer]
-                self.limits[period][customer] = np.ceil(limit)
+                self.limits[period][customer] = int(np.ceil(limit))
 
         # Compute coefficients
         self.coefficients = {}

@@ -31,7 +31,7 @@ class formulation:
             '{}bound'.format(label): round(self.mip.objBound, cm.PRECISION),
             '{}nodes'.format(label): self.mip.nodeCount,
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
-            '{}mipgap'.format(label): self.mip.MIPGap, # optgap? not really
+            '{}mipgap'.format(label): round(self.mip.MIPGap, cm.PRECISION), # optgap?
             '{}optgap'.format(label): cm.compute_gap(self.mip.objBound, self.mip.objVal),
             '{}solution'.format(label): self.ins.pack_solution(solution)
         }

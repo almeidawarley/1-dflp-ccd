@@ -81,7 +81,7 @@ class coverage(ic.instance):
                     self.spawning[period][customer] = ((number_periods - period + 1)/ number_periods) * self.amplitudes[customer]
                 else:
                     exit('Wrong value for demand behaviour')
-                self.spawning[period][customer] = np.ceil(self.spawning[period][customer])
+                self.spawning[period][customer] = int(np.ceil(self.spawning[period][customer]))
 
         # Set proper time periods
         self.start, self.final = 0, len(self.periods) + 1
@@ -116,7 +116,7 @@ class coverage(ic.instance):
             self.limits[period] = {}
             for customer in self.customers:
                 limit = self.accumulated[self.start][period][customer]
-                self.limits[period][customer] = np.ceil(limit)
+                self.limits[period][customer] = int(np.ceil(limit))
 
         # Compute coefficients
         self.coefficients = {}
