@@ -8,9 +8,11 @@ for file in os.listdir('records'):
     if '.csv' in file:
 
         summary = pd.read_csv('records/{}'.format(file))
-        print(summary)
+        # print(summary)
 
         summaries = pd.concat([summaries, summary])
-        print(summaries)
+        # print(summaries)
+
+        print(file)
 
 summaries.to_csv('pushing.csv', index = False)
