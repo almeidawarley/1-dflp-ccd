@@ -3,7 +3,6 @@ import subproblem as sb
 import gurobipy as gp
 import common as cm
 import time as tm
-import cProfile, pstats
 
 class benders(fm.formulation):
 
