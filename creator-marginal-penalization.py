@@ -7,7 +7,7 @@ features = {
     'customers': [1, 2],
     'periods': [10],
     'facilities': [1, 2], # [1, 2, 3], # [4]
-    'penalties': [0], # [0, 1, 2, 3],
+    'penalties': [1, 2], # [0, 1, 2, 3],
     'preferences': ['small', 'large'], # ['small', 'large'],
     'rewards': ['identical', 'inversely'], # ['identical', 'inversely'],
     'demands': ['constant', 'seasonal'], # ['constant', 'seasonal'], # + ['increasing', 'decreasing'],
@@ -19,7 +19,7 @@ hours = sys.argv[2]
 
 parameters = {}
 
-commands = open('nopenalization_{}.sh'.format(script), 'w')
+commands = open('marginalpenalization_{}.sh'.format(script), 'w')
 
 counter = 0
 

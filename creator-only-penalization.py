@@ -19,7 +19,7 @@ hours = sys.argv[2]
 
 parameters = {}
 
-commands = open('commands_{}.sh'.format(script), 'w')
+commands = open('onlypenalization_{}.sh'.format(script), 'w')
 
 counter = 0
 
