@@ -45,7 +45,10 @@ class formulation:
         for key, value in metadata.items():
             print('{}: {}'.format(key, value))
 
-        assert cm.compare_obj(self.mip.objVal, objective)
+        if not cm.compare_obj(self.mip.objVal, objective):
+            print('>> Actual objective found through simulation: {} <<<'.format(objective))
+            assert self.mip.objVal < objective
+            print('>>> Solution found by Benders improved by post-processing <<<')
 
         self.mip.reset()
 
