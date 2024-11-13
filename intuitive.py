@@ -39,27 +39,38 @@ class intuitive(fm.formulation):
 
     def set_objective(self):
 
-        self.mip.setObjective(
-            sum(
-                self.ins.rewards[location] *
-                self.var['w'][period, location, customer]
-                for period in self.ins.periods
-                for customer in self.ins.customers
-                for location in self.ins.captured_locations[customer]
-            ) -
-            sum(
-                self.ins.penalties[customer] *
-                self.ins.spawning[period][customer] *
-                (
-                    1 - sum(
-                        self.var['x'][period, location, customer]
-                        for location in self.ins.captured_locations[customer]
-                    )
+        if 'cov' in self.ins.keyword:
+
+            self.mip.setObjective(
+                -1 * sum(
+                    self.var['b'][self.ins.final - 1, customer]
+                    for customer in self.ins.customers
                 )
-                for period in self.ins.periods
-                for customer in self.ins.customers
             )
-        )
+
+        else:
+
+            self.mip.setObjective(
+                sum(
+                    self.ins.rewards[location] *
+                    self.var['w'][period, location, customer]
+                    for period in self.ins.periods
+                    for customer in self.ins.customers
+                    for location in self.ins.captured_locations[customer]
+                ) -
+                sum(
+                    self.ins.penalties[customer] *
+                    self.ins.spawning[period][customer] *
+                    (
+                        1 - sum(
+                            self.var['x'][period, location, customer]
+                            for location in self.ins.captured_locations[customer]
+                        )
+                    )
+                    for period in self.ins.periods
+                    for customer in self.ins.customers
+                )
+            )
 
     def set_constraints(self):
 

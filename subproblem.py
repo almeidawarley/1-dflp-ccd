@@ -36,11 +36,6 @@ class analytical(subproblem):
 
         super().__init__(instance, customer)
 
-        # Create primal solution
-        self.primal_solution = {}
-        for period in self.ins.periods_with_start:
-            self.primal_solution[period] = self.ins.final
-
         # Create dual solution
         self.dual_solution = {}
         self.dual_solution['q'] = {}
