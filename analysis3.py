@@ -2,12 +2,13 @@ import pandas as pd
 import common as cm
 import matplotlib.pyplot as plt
 
-# Analysis instance set A
+# Analysis instance set C
 
-content = pd.read_csv('results/paper1/summaryA.csv')
+content = pd.read_csv('results/paper1/summaryC.csv')
 
 content['index'] = content['keyword']
 content = content.set_index('index')
+# content = content[content['customers'] == 1]
 
 formulation_approaches = ['cold_lrz', 'cold_net']
 benders_approaches = ['bbd', 'bbf', 'bbe', 'bbh']
@@ -23,6 +24,7 @@ content['bst_optimal'] = content.apply(lambda row: (row['bst_optgap'] <= cm.TOLE
 for method in benders_approaches:
     content['{}_proportion'.format(method)] = content.apply(lambda row: (row['{}_subtime_integer'.format(method)] + row['{}_subtime_fractional'.format(method)]) / row['{}_runtime'.format(method)], axis = 1)
     content['{}_nodes'.format(method)] = content.apply(lambda row: row['{}_nodes'.format(method)]  / 10**6, axis = 1)
+    # content['{}_nodes'.format(method)] = content.apply(lambda row: row['{}_nodes'.format(method)]  / 10**6, axis = 1)
     # content['{}_optgap'.format(method)] = content.apply(lambda row: cm.compute_gap(row['bst_bound'], row['{}_objective'.format(method)]), axis = 1)
 
 for approach in heuristic_approaches:
@@ -46,7 +48,7 @@ characteristics = {
     'locations': [50, 100],
     'customers': [1, 2],
     'facilities': [1, 2], # [1, 2, 3, 4],
-    'penalties': [0], # [0, 1, 2, 3],
+    'penalties': [1, 2],
     'preferences': ['small', 'large'],
     'rewards': ['identical', 'inversely'],
     'demands': ['constant', 'seasonal'], # 'demands': ['constant', 'seasonal', 'increasing', 'decreasing'],

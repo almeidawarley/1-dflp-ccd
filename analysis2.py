@@ -2,16 +2,17 @@ import pandas as pd
 import common as cm
 import matplotlib.pyplot as plt
 
-# Analysis instance set A
+# Analysis instance set B
 
-content = pd.read_csv('results/paper1/summaryA.csv')
+content = pd.read_csv('results/paper1/summaryB.csv')
 
 content['index'] = content['keyword']
 content = content.set_index('index')
+# content = content[content['customers'] == 1]
 
-formulation_approaches = ['cold_lrz', 'cold_net']
+formulation_approaches = ['cold_net']
 benders_approaches = ['bbd', 'bbf', 'bbe', 'bbh']
-heuristic_approaches = ['eml', 'rnd', 'frw', 'bcw']
+heuristic_approaches = ['rnd', 'frw', 'bcw']
 exact_approaches = formulation_approaches + benders_approaches
 
 content['bst_objective'] = content.apply(lambda row: max(row['{}_objective'.format(approach)] for approach in exact_approaches), axis = 1)
@@ -23,6 +24,7 @@ content['bst_optimal'] = content.apply(lambda row: (row['bst_optgap'] <= cm.TOLE
 for method in benders_approaches:
     content['{}_proportion'.format(method)] = content.apply(lambda row: (row['{}_subtime_integer'.format(method)] + row['{}_subtime_fractional'.format(method)]) / row['{}_runtime'.format(method)], axis = 1)
     content['{}_nodes'.format(method)] = content.apply(lambda row: row['{}_nodes'.format(method)]  / 10**6, axis = 1)
+    # content['{}_nodes'.format(method)] = content.apply(lambda row: row['{}_nodes'.format(method)]  / 10**6, axis = 1)
     # content['{}_optgap'.format(method)] = content.apply(lambda row: cm.compute_gap(row['bst_bound'], row['{}_objective'.format(method)]), axis = 1)
 
 for approach in heuristic_approaches:
@@ -97,95 +99,6 @@ labels = {
     }
 }
 
-def table1(descriptor = 'paper'):
-
-    filter = (content['periods'] == 10) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
-
-    content[filter].boxplot(['cold_lrz_runtime', 'cold_net_runtime'])
-    plt.savefig('results/paper1/box_table1_runtime.png')
-    plt.figure().clear()
-
-    content[filter].boxplot(['lrz_intgap', 'net_intgap'])
-    plt.savefig('results/paper1/box_table1_intgap.png')
-    plt.figure().clear()
-
-    for characteristic, values in characteristics.items():
-
-        for value in values:
-
-            if descriptor == 'paper':
-                columns = ['lrz_intgap', 'cold_lrz_runtime', 'net_intgap', 'cold_net_runtime']
-                filter = (content[characteristic] == value) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
-            else:
-                exit('Wrong descriptor for table 1')
-
-            averages = {}
-            deviations = {}
-            maximums = {}
-
-            for column in columns:
-                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-
-            # count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
-            count = len(content[filter].index)
-            total = len(content[(content[characteristic] == value)].index)
-
-            # print('{}&${:.2f}$&{}{}{}'.
-            print('{}&${} \, ({})$&{}{}{}'.
-            format(labels[characteristic][value], count, total, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
-
-        print('\\midrule')
-
-    _ = input('table1 {}'.format(descriptor))
-
-    print('**************************************************************************************************')
-
-def table2(descriptor = 'paper'):
-
-    filter = (content['periods'] == 10) & ((content['cold_lrz_optimal'] == False) | (content['cold_net_optimal'] == False))
-
-    content[filter].boxplot(['cold_lrz_optgap', 'cold_net_optgap'])
-    plt.savefig('results/paper1/box_table2_optgap.png')
-    plt.figure().clear()
-
-    for characteristic, values in characteristics.items():
-
-        for value in values:
-
-            if descriptor == 'paper':
-                columns = ['cold_lrz_optgap', 'cold_net_optgap']
-                filter = (content[characteristic] == value) & ((content['cold_lrz_optimal'] == False) | (content['cold_net_optimal'] == False))
-            else:
-                exit('Wrong descriptor for table 2')
-
-            averages = {}
-            deviations = {}
-            maximums = {}
-            feasibles = {}
-            optimals = {}
-
-            for column in columns:
-                averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
-                optimals[column] = content[filter & (content[column] <= cm.TOLERANCE)][column].count()
-
-            # count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
-            count = len(content[filter].index)
-            total = len(content[(content[characteristic] == value)].index)
-
-            # print('{}&${:.2f}$&{}{}{}'.
-            print('{}&${} \, ({})$&{}{}{}'.
-            format(labels[characteristic][value], count, total, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
-
-        print('\\midrule')
-
-    _ = input('table2 {}'.format(descriptor))
-
-    print('**************************************************************************************************')
-
 def table3(descriptor = 'paper'):
 
     for characteristic, values in characteristics.items():
@@ -195,7 +108,7 @@ def table3(descriptor = 'paper'):
             filter = (content[characteristic] == value) & (content['bst_optimal'] == True)
 
             if descriptor == 'paper':
-                columns = ['eml_optgap', 'rnd_optgap', 'frw_optgap', 'bcw_optgap']
+                columns = ['rnd_optgap', 'frw_optgap', 'bcw_optgap']
             else:
                 exit('Wrong descriptor for table 3')
 
@@ -357,7 +270,7 @@ def table6(descriptor = 'paper'):
 
 def graph1(descriptor = 'paper'):
 
-    methods = ['rnd', 'frw', 'bcw', 'eml']
+    methods = ['rnd', 'frw', 'bcw']
 
     colors = {
         'rnd' : 'gray',
@@ -439,7 +352,7 @@ def graph1(descriptor = 'paper'):
 
 def graph2(descriptor = 'paper'):
 
-    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbf', 'bbe', 'bbh']
+    methods = ['cold_net', 'bbd', 'bbf', 'bbe', 'bbh']
 
     colors = {
         'cold_lrz' : 'red',
@@ -527,7 +440,7 @@ def graph2(descriptor = 'paper'):
 
 def graph3(descriptor = 'paper'):
 
-    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbf', 'bbe', 'bbh']
+    methods = ['cold_net', 'bbd', 'bbf', 'bbe', 'bbh']
 
     colors = {
         'cold_lrz' : 'red',
@@ -554,7 +467,7 @@ def graph3(descriptor = 'paper'):
     with open ('graphs/runtimes.tex', 'w') as output:
 
         length_x, lower_x, upper_x, step_x = 10, 1, 21, 2
-        length_y, lower_y, upper_y, step_y = 10, 30, 100, 7
+        length_y, lower_y, upper_y, step_y = 10, 0, 100, 10
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
@@ -616,8 +529,6 @@ def graph3(descriptor = 'paper'):
 graph1('paper')
 graph2('paper')
 graph3('paper')
-table1('paper')
-table2('paper')
 table3('paper')
 table4('paper')
 table5('paper')
