@@ -38,6 +38,7 @@ for approach in formulation_approaches:
 for approach in exact_approaches:
     content['{}_ratio_objective'.format(approach)] = content.apply(lambda row: round(row['bst_objective'] / (row['{}_objective'.format(approach)] + cm.TOLERANCE), cm.PRECISION), axis = 1)
     content['{}_ratio_runtime'.format(approach)] = content.apply(lambda row: round(row['{}_runtime'.format(approach)] / (row['bst_runtime'] + cm.TOLERANCE), cm.PRECISION), axis = 1)
+    content['{}_bstgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['bst_objective'], row['{}_objective'.format(approach)]), axis = 1)
 
 content.to_csv('debugging.csv')
 
@@ -465,7 +466,7 @@ def graph2(descriptor = 'paper'):
 
     with open ('graphs/objectives.tex', 'w') as output:
 
-        length_x, lower_x, upper_x, step_x = 10, 1, 1.1, 0.01
+        length_x, lower_x, upper_x, step_x = 10, 0, 0.1, 0.01
         length_y, lower_y, upper_y, step_y = 10, 50, 100, 5
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
@@ -474,7 +475,7 @@ def graph2(descriptor = 'paper'):
         output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,10.5);\n'.format(length_y + 0.5))
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9.5,0.5) node[anchor=mid] {objective ratio};\n')
+        output.write('\draw (9.5,0.5) node[anchor=mid] {gap to best objective};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
         formatted_x = 0
@@ -491,14 +492,14 @@ def graph2(descriptor = 'paper'):
 
         for method in methods:
 
-            prev_x = 1
-            prev_y = int(100 * len(content[filter & (content['{}_ratio_objective'.format(method)] <= prev_x)]) / len(content[filter]))
+            prev_x = 0
+            prev_y = int(100 * len(content[filter & (content['{}_bstgap'.format(method)] <= prev_x)]) / len(content[filter]))
 
             x = lower_x
 
             while x <= upper_x:
 
-                y = int(100 * len(content[filter & (content['{}_ratio_objective'.format(method)] <= x)]) / len(content[filter]))
+                y = int(100 * len(content[filter & (content['{}_bstgap'.format(method)] <= x)]) / len(content[filter]))
 
                 formatted_prev_x = length_x * (prev_x - lower_x) / (upper_x - lower_x)
                 formatted_prev_y = length_y * (prev_y - lower_y) / (upper_y - lower_y)
