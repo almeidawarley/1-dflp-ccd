@@ -15,9 +15,10 @@ def is_equal_to(value1, value2, tolerance = TOLERANCE):
 def compute_gap(major, minor):
     # Compute relative gap between two values
     if major < minor:
-        major, minor = minor, major
-        print('>>> Flipping objective values for gap computation (major = {}, minor = {}) <<<'.format(major, minor))
-    return compute_gap1(major, minor)
+        print('>>> Should objectives be flipped for gap computation? Major = {}, Minor = {} <<<'.format(major, minor))
+        return 0.
+    else:
+        return compute_gap1(major, minor)
 
 def compute_gap1(major, minor):
     # Compute relative gap between two values (major as reference)
