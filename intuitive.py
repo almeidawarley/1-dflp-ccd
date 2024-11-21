@@ -262,6 +262,8 @@ class intuitive(fm.formulation):
 
 class nonlinear(intuitive):
 
+    # Not updated to have preference rankings
+
     def __init__(self, instance):
 
         super().__init__(instance, 'DSFLP-C-NLR')
