@@ -32,7 +32,7 @@ class benchmark(ic.instance):
         # Store number of facilities
         self.facilities = {period : int(self.parameters['facilities']) for period in self.periods}
 
-        # Create random preferences
+        # Create consideration size
         if self.parameters['preferences'] == 'small':
             percentage = 0.10
         elif self.parameters['preferences'] == 'large':
@@ -40,16 +40,21 @@ class benchmark(ic.instance):
         else:
             exit('Wrong value for preferences parameter')
         consideration_size = int(np.ceil(percentage * number_locations))
-        consideration_sets = {}
+
+        # Create rankings
+        self.rankings = {}
         for customer in self.customers:
-            consideration_sets[customer] = np.random.choice(self.locations, consideration_size)
+            # Assign numbers from 1 to I to each location, based on size of choice set
+            ranking = [number_locations - i if i < consideration_size else 0 for i in range(number_locations)]
+            np.random.shuffle(ranking)
+            self.rankings[customer] = dict(zip(self.locations, list(ranking)))
 
         # Create catalogs
         self.catalogs = {}
         for location in self.locations:
             self.catalogs[location] = {}
             for customer in self.customers:
-                self.catalogs[location][customer] = 1 if location in consideration_sets[customer] else 0
+                self.catalogs[location][customer] = 1 if self.rankings[customer][location] > 0 else 0
 
         # Create rewards
         self.rewards = {}
@@ -133,6 +138,18 @@ class benchmark(ic.instance):
         self.captured_customers = {}
         for location in self.locations:
             self.captured_customers[location] = [customer for customer in self.customers if self.catalogs[location][customer] == 1]
+
+        self.less_preferred = {}
+        for customer in self.customers:
+            self.less_preferred[customer] = {}
+            for location in self.captured_locations[customer]:
+                self.less_preferred[customer][location] = [other for other in self.captured_locations[customer] if self.rankings[customer][location] > self.rankings[customer][other]]
+
+        self.more_preferred = {}
+        for customer in self.customers:
+            self.more_preferred[customer] = {}
+            for location in self.captured_locations[customer]:
+                self.more_preferred[customer][location] = [other for other in self.captured_locations[customer] if self.rankings[customer][other] > self.rankings[customer][location]]
 
         # Set proper limit values
         self.limits = {}

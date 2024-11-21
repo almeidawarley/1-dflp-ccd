@@ -15,6 +15,7 @@ class instance:
 
             - self.facilities: number of facilities
             - self.catalogs: preference rules
+            - self.rankings: preference rankings
             - self.coefficients: objective function
         '''
 
