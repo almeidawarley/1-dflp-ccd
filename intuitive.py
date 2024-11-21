@@ -82,6 +82,7 @@ class intuitive(fm.formulation):
         self.create_c6()
         self.create_c7()
         self.create_c8()
+        self.create_c9()
 
     def create_vrx(self):
         # Create x^{t}_{ij} variables
@@ -240,6 +241,23 @@ class intuitive(fm.formulation):
                 for location in self.ins.captured_locations[customer]
             ),
             name = 'c8'
+        )
+
+    def create_c9(self):
+        # Create constraint 9
+
+        self.mip.addConstrs(
+            (
+                self.var['y'][period2, location] +
+                sum(
+                    self.var['x'][period2, other, customer]
+                    for other in self.ins.less_preferred[customer][location]
+                ) <= 1
+                for period2 in self.ins.periods
+                for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
+            ),
+            name = 'c9'
         )
 
 class nonlinear(intuitive):

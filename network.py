@@ -44,6 +44,7 @@ class network(fm.formulation):
         self.create_c3()
         self.create_c4()
         self.create_c5()
+        self.create_c6()
 
     def create_vrx(self):
         # Create x^{kt}_{ij} variables
@@ -137,4 +138,23 @@ class network(fm.formulation):
                 for location in self.ins.captured_locations[customer]
             ),
             name = 'c5'
+        )
+
+    def create_c6(self):
+        # Create constraint 6
+
+        self.mip.addConstrs(
+            (
+                self.var['y'][period2, location] +
+                sum(
+                    self.var['x'][period1, period2, other, customer]
+                    for period1 in self.ins.periods_with_start
+                    for other in self.ins.less_preferred[customer][location]
+                    if period1 < period2
+                ) <= 1
+                for period2 in self.ins.periods
+                for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
+            ),
+            name = 'c6'
         )
