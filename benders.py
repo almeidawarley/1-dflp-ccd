@@ -1,5 +1,7 @@
 import formulation as fm
-import subproblem as sb
+import analytical as an
+import external as ex
+import duality as du
 import gurobipy as gp
 import common as cm
 import time as tm
@@ -16,13 +18,13 @@ class benders(fm.formulation):
         self.fractional = fractional
 
         for customer in self.ins.customers:
-            self.fractional_subproblems[customer] = sb.duality(self.ins, customer)
+            self.fractional_subproblems[customer] = du.duality(self.ins, customer)
             if separation == 'analytical':
-                self.integer_subproblems[customer] = sb.analytical(self.ins, customer)
+                self.integer_subproblems[customer] = an.analytical(self.ins, customer)
             elif separation == 'external':
-                self.integer_subproblems[customer] = sb.external(self.ins, customer)
+                self.integer_subproblems[customer] = ex.external(self.ins, customer)
             elif separation == 'duality':
-                self.integer_subproblems[customer] = sb.duality(self.ins, customer)
+                self.integer_subproblems[customer] = du.duality(self.ins, customer)
             else:
                 exit('Invalid method for solving suproblems')
 
