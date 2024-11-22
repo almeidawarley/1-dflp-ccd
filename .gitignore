@@ -28,6 +28,7 @@ instances/exploratory/*.json
 instances/synthetic/*.json
 instances/benchmark/*.json
 instances/progressive/*.json
+instances/marginal/*.json
 instances/coverage/*.json
 instances/satisfiability/*.cnf
 instances/slovakia/*

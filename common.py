@@ -1,6 +1,7 @@
 import debugging as db
 import benchmark as bm
 import coverage as cv
+import marginal as mg
 import progressive as pr
 
 TIMELIMIT = 2 * 60 * 60
@@ -48,8 +49,10 @@ def load_instance(keyword):
         instance = db.debugging(keyword)
     elif 'bmk' in keyword:
         instance = bm.benchmark(keyword)
-    elif 'cov' in keyword:
+    elif 'cvr' in keyword:
         instance = cv.coverage(keyword)
+    elif 'mrg' in keyword:
+        instance = mg.marginal(keyword)
     elif 'prg' in keyword:
         instance = pr.progressive(keyword)
     else:

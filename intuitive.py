@@ -39,7 +39,7 @@ class intuitive(fm.formulation):
 
     def set_objective(self):
 
-        if 'cov' in self.ins.keyword:
+        if 'cvr' in self.ins.keyword:
 
             self.mip.setObjective(
                 -1 * sum(
@@ -48,7 +48,7 @@ class intuitive(fm.formulation):
                 )
             )
 
-        else:
+        elif 'mrg' in self.ins.keyword:
 
             self.mip.setObjective(
                 sum(
@@ -71,6 +71,22 @@ class intuitive(fm.formulation):
                     for customer in self.ins.customers
                 )
             )
+
+        elif 'bmk' in self.ins.keyword:
+
+            self.mip.setObjective(
+                sum(
+                    self.ins.rewards[location] *
+                    self.var['w'][period, location, customer]
+                    for period in self.ins.periods
+                    for customer in self.ins.customers
+                    for location in self.ins.captured_locations[customer]
+                )
+            )
+
+        else:
+
+            exit('Wrong value for the intuitive objective')
 
     def set_constraints(self):
 

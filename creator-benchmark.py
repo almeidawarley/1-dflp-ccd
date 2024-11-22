@@ -4,10 +4,9 @@ import sys
 features = {
     'seed': [i for i in range(1, 6)],
     'locations': [100, 200],
-    'customers': [1, 2],
+    'customers': [1, 5],
     'periods': [5, 10],
     'facilities': [1, 5],
-    'penalties': [0],
     'rewards': ['identical', 'inversely']
 }
 
