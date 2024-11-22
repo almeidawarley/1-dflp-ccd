@@ -67,23 +67,6 @@ class benchmark(ic.instance):
             for customer in self.customers:
                 self.spawning[period][customer] = 10
 
-        # Create penalties
-        self.penalties = {
-            customer : int(np.ceil(
-                int(self.parameters['penalties'])  * 0.25 *
-                sum(
-                    self.catalogs[location][customer] *
-                    self.rewards[location]
-                    for location in self.locations
-                ) /
-                sum(
-                    self.catalogs[location][customer]
-                    for location in self.locations
-                )
-            ))
-            for customer in self.customers
-        }
-
         # Set proper time periods
         self.start, self.final = 0, len(self.periods) + 1
         self.periods_with_start = [self.start] + [period for period in self.periods]
@@ -145,4 +128,3 @@ class benchmark(ic.instance):
                                 self.coefficients[period1][period2][location][customer] = self.rewards[location] * self.accumulated[period1][period2][customer]
                             else:
                                 self.coefficients[period1][period2][location][customer] = 0.
-                            self.coefficients[period1][period2][location][customer] -= self.penalties[customer] * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > period1 and period3 < period2)
