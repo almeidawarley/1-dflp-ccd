@@ -1,5 +1,6 @@
 import gurobipy as gp
 import common as cm
+# import heuristic as hr
 
 class formulation:
 
@@ -22,6 +23,16 @@ class formulation:
         for period in self.ins.periods:
             for location in self.ins.locations:
                 self.var['y'][period, location].start = 0
+
+        '''
+        # Provide a smart warm start solution
+        heuristic = hr.backward(self.ins)
+        heuristic.run()
+        warm_start = heuristic.solution
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].start = (1 if location in warm_start[period] else 0)
+        '''
 
         # Call Gurobi to optimize the model
         self.mip.optimize()

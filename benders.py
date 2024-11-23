@@ -5,6 +5,7 @@ import duality as du
 import gurobipy as gp
 import common as cm
 import time as tm
+# import heuristic as hr
 
 class benders(fm.formulation):
 
@@ -36,6 +37,40 @@ class benders(fm.formulation):
 
         # Activate lazy constraints
         self.mip.setParam('LazyConstraints', 1)
+
+        # Provide a simple warm start solution
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].start = 0
+
+        '''
+        # Provide a smart warm start solution
+        heuristic = hr.backward(self.ins)
+        heuristic.run()
+        warm_start = heuristic.solution
+        print('Warm objective: {}'.format(heuristic.objective))
+        values = {}
+
+        for customer in self.ins.customers:
+
+            self.integer_subproblems[customer].update(warm_start, {})
+            value, inequality = self.integer_subproblems[customer].cut()
+            values[customer] = value
+
+            rhs = inequality['b']
+            for period in self.ins.periods:
+                for location in self.ins.captured_locations[customer]:
+                    rhs += inequality['y'][period][location] * self.var['y'][period, location]
+
+            # Add the optimality cut to the model
+            self.mip.addConstr(self.var['v'][customer] <= rhs)
+
+        for customer in self.ins.customers:
+            self.var['v'][customer].start = values[customer]
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].start = (1 if location in warm_start[period] else 0)
+        '''
 
         # Initiate global variables
         information = {}
