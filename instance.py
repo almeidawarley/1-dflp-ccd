@@ -70,7 +70,7 @@ class instance:
                 customer,
                 len(self.captured_locations[customer]),
                 self.captured_locations[customer][:50]))
-            print('\t\t{}'.format([self.spawning[period][customer] for period in self.periods]))
+            print('\t\t{}'.format([self.rankings[customer][location] for location in self.captured_locations[customer]]))
 
         # Print location information
         print('Locations: {}'.format(self.locations))
@@ -94,15 +94,15 @@ class instance:
         # Parse regular periods for rewards
         for period, locations in solution.items():
             for customer in self.customers:
-                captured = False
-                reward = - 1 * gp.GRB.INFINITY
+                preference_ranking = 0
                 for location in locations:
                     if location in self.captured_locations[customer]:
-                        captured = True
-                        reward = max(reward, self.coefficients[latest[customer]][period][location][customer])
-                if captured:
+                        if self.rankings[customer][location] > preference_ranking:
+                            preference_ranking = self.rankings[customer][location]
+                            preference_location = location
+                if preference_ranking != 0:
+                    objective += self.coefficients[latest[customer]][period][preference_location][customer]
                     latest[customer] = period
-                    objective += reward
 
         # Parse final period for penalties
         for customer in self.customers:
