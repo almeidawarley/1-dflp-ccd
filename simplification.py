@@ -90,32 +90,51 @@ class simplification():
 
     def set_objective(self):
 
-        self.mip.setObjective(
-            sum(
-                self.ins.spawning[self.period][customer] *
-                self.ins.rewards[location] *
-                self.var['x'][location, customer]
-                for customer in self.ins.customers
-                for location in self.ins.captured_locations[customer]
-            ) -
-            sum(
-                self.ins.penalties[customer] *
-                self.ins.spawning[self.period][customer] *
-                (
-                    1 - sum(
-                        self.var['x'][location, customer]
-                        for location in self.ins.captured_locations[customer]
-                    )
+        if 'bmk' in self.ins.keyword:
+
+            self.mip.setObjective(
+                sum(
+                    self.ins.spawning[self.period][customer] *
+                    self.ins.rewards[location] *
+                    self.var['x'][location, customer]
+                    for customer in self.ins.customers
+                    for location in self.ins.captured_locations[customer]
                 )
-                for customer in self.ins.customers
             )
-        )
+
+        elif 'mrg' in self.ins.keyword:
+
+            self.mip.setObjective(
+                sum(
+                    self.ins.spawning[self.period][customer] *
+                    self.ins.rewards[location] *
+                    self.var['x'][location, customer]
+                    for customer in self.ins.customers
+                    for location in self.ins.captured_locations[customer]
+                ) -
+                sum(
+                    self.ins.penalties[customer] *
+                    self.ins.spawning[self.period][customer] *
+                    (
+                        1 - sum(
+                            self.var['x'][location, customer]
+                            for location in self.ins.captured_locations[customer]
+                        )
+                    )
+                    for customer in self.ins.customers
+                )
+            )
+
+        else:
+
+            exit('Wrong value for the intuitive objective')
 
     def set_constraints(self):
 
         self.create_c1()
         self.create_c2()
         self.create_c5()
+        self.create_c6()
 
     def create_c2(self):
         # Create constraint 2
@@ -143,4 +162,20 @@ class simplification():
                 for location in self.ins.captured_locations[customer]
             ),
             name = 'c5'
+        )
+
+    def create_c6(self):
+        # Create constraint 6
+
+        self.mip.addConstrs(
+            (
+                self.var['y'][location] +
+                sum(
+                    self.var['x'][other, customer]
+                    for other in self.ins.less_preferred[customer][location]
+                ) <= 1
+                for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
+            ),
+            name = 'c6'
         )
