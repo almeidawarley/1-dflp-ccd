@@ -15,4 +15,4 @@ for file in os.listdir('records'):
 
         print(file)
 
-summaries.to_csv('pushing.csv', index = False)
+summaries.to_csv('aggregator.csv', index = False)
