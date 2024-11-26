@@ -96,7 +96,7 @@ class intuitive(fm.formulation):
         self.create_c4()
         self.create_c5()
         self.create_c6()
-        self.create_c7()
+        # self.create_c7()
         self.create_c8()
         self.create_c9()
 
