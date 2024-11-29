@@ -46,9 +46,9 @@ for seed in features['seed']:
                                             parameters['demands'] = demands
                                             parameters['characters'] = characters
 
-                                            keyword = '{}_{}'.format('bmk', '-'.join([str(value) for value in parameters.values()]))
+                                            keyword = '{}_{}'.format('mrg', '-'.join([str(value) for value in parameters.values()]))
 
-                                            with open('{}/{}.json'.format('instances/benchmark', keyword), 'w') as output:
+                                            with open('{}/{}.json'.format('instances/marginal', keyword), 'w') as output:
                                                 js.dump(parameters, output)
 
                                             # _ = cm.load_instance(keyword, 'validation')
