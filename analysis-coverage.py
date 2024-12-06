@@ -2,16 +2,17 @@ import pandas as pd
 import common as cm
 import matplotlib.pyplot as plt
 
-# Analysis instance set A
-
-content = pd.read_csv('results/paper1/summaryA.csv')
+# Analysis instance set B
+content = pd.read_csv('results/paper1/cvr_summary.csv')
+# content = content[content['customers'] == 1]
 
 content['index'] = content['keyword']
 content = content.set_index('index')
 
+# Single facility
 formulation_approaches = ['cold_lrz', 'cold_net']
-benders_approaches = ['bbd', 'bbf', 'bbe', 'bbh']
-heuristic_approaches = ['eml', 'rnd', 'frw', 'bcw']
+benders_approaches = ['bbd', 'bbe'] # , 'bbe', 'bbh']
+heuristic_approaches = [] # ['eml', 'rnd', 'frw', 'bcw']
 exact_approaches = formulation_approaches + benders_approaches
 
 content['bst_objective'] = content.apply(lambda row: max(row['{}_objective'.format(approach)] for approach in exact_approaches), axis = 1)
@@ -36,6 +37,7 @@ for approach in formulation_approaches:
     content['{}_intgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['rlx_{}_bound'.format(approach)], row['bst_objective']), axis = 1)
 
 for approach in exact_approaches:
+    content['{}_optgap'.format(approach)] = content.apply(lambda row: 1 if row['{}_optgap'.format(approach)] > 1 else row['{}_optgap'.format(approach)], axis = 1)
     content['{}_ratio_objective'.format(approach)] = content.apply(lambda row: round(row['bst_objective'] / (row['{}_objective'.format(approach)] + cm.TOLERANCE), cm.PRECISION), axis = 1)
     content['{}_ratio_runtime'.format(approach)] = content.apply(lambda row: round(row['{}_runtime'.format(approach)] / (row['bst_runtime'] + cm.TOLERANCE), cm.PRECISION), axis = 1)
     content['{}_bstgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['bst_objective'], row['{}_objective'.format(approach)]), axis = 1)
@@ -43,54 +45,43 @@ for approach in exact_approaches:
 content.to_csv('debugging.csv')
 
 characteristics = {
-    'periods': [10],
-    'locations': [50, 100],
-    'customers': [1, 2],
-    'facilities': [1, 2], # [1, 2, 3, 4],
-    'penalties': [0], # [0, 1, 2, 3],
+    'branch': ['paper1'],
+    'locations': [100, 200],
+    'customers': [1, 5],
+    'periods': [5, 10],
+    'facilities': [1], # [1, 2, 3, 4],
     'preferences': ['small', 'large'],
-    'rewards': ['identical', 'inversely'],
-    'demands': ['constant', 'seasonal'], # 'demands': ['constant', 'seasonal', 'increasing', 'decreasing'],
-    'characters': ['homogeneous', 'heterogeneous'] # ['homogeneous', 'heterogeneous']
+    'demands': ['constant', 'seasonal'],
+    'characters': ['homogeneous','heterogeneous']
 }
 
 labels = {
-    'periods': {
-        10: 'Complete benchmark',
+    'branch': {
+        'paper1': 'Instance set B',
     },
     'locations': {
-        50: '50 locations',
         100: '100 locations',
+        200: '200 locations',
     },
     'customers': {
         1: 'x1 customers',
-        2: 'x2 customers',
+        5: 'x5 customers',
+    },
+    'periods': {
+        5: '5 periods',
+        10: '10 periods',
     },
     'facilities': {
         1: '1 facility',
-        2: '2 facilities',
-        3: '3 facilities',
-        4: '4 facilities',
-    },
-    'penalties': {
-        0: 'No penalties',
-        1: '25\\% penalties',
-        2: '50\\% penalties',
-        3: '75\\% penalties',
+        5: '5 facilities',
     },
     'preferences': {
         'small': 'Small choice sets',
         'large': 'Large choice sets'
     },
-    'rewards':{
-        'identical': 'Identical rewards',
-        'inversely': 'Different rewards'
-    },
     'demands': {
         'constant': 'Constant demand',
-        'seasonal': 'Seasonal demand',
-        'increasing': 'Increasing demand',
-        'decreasing': 'Decreasing demand',
+        'seasonal': 'Seasonal demand'
     },
     'characters': {
         'homogeneous': 'Identical amplitudes',
@@ -98,9 +89,17 @@ labels = {
     }
 }
 
+layer1 = {
+    'locations': [100, 200]
+}
+
+layer2 = {
+    'customers': [1, 5]
+}
+
 def table1(descriptor = 'paper'):
 
-    filter = (content['periods'] == 10) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
+    filter = (content['branch'] == 'paper1') & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
 
     content[filter].boxplot(['cold_lrz_runtime', 'cold_net_runtime'])
     plt.savefig('results/paper1/box_table1_runtime.png')
@@ -143,9 +142,48 @@ def table1(descriptor = 'paper'):
 
     print('**************************************************************************************************')
 
+def stack1(descriptor = 'paper'):
+
+    for label1, values1 in layer1.items():
+
+        for value1 in values1:
+
+                for label2, values2 in layer2.items():
+
+                    for value2 in values2:
+
+                        if descriptor == 'paper':
+                            columns = ['lrz_intgap', 'cold_lrz_runtime', 'net_intgap', 'cold_net_runtime']
+                            filter = (content[label1] == value1) & (content[label2] == value2) & (content['cold_lrz_optimal'] == True) & (content['cold_net_optimal'] == True)
+                        else:
+                            exit('Wrong descriptor for table 1')
+
+                        averages = {}
+                        deviations = {}
+                        maximums = {}
+
+                        for column in columns:
+                            averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                            deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                            # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+
+                        # count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+                        count = len(content[filter].index)
+                        total = len(content[(content[label1] == value1) | (content[label2] == value2)].index)
+
+                        # print('{}&${:.2f}$&{}{}{}'.
+                        print('{}&{}&${} \, ({})$&{}{}{}'.
+                        format(labels[label1][value1], labels[label2][value2], count, total, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+                    print('\\midrule')
+
+    _ = input('table1 {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
 def table2(descriptor = 'paper'):
 
-    filter = (content['periods'] == 10) & ((content['cold_lrz_optimal'] == False) | (content['cold_net_optimal'] == False))
+    filter = (content['branch'] == 'paper1') & ((content['cold_lrz_optimal'] == False) | (content['cold_net_optimal'] == False))
 
     content[filter].boxplot(['cold_lrz_optgap', 'cold_net_optgap'])
     plt.savefig('results/paper1/box_table2_optgap.png')
@@ -182,6 +220,48 @@ def table2(descriptor = 'paper'):
             format(labels[characteristic][value], count, total, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
+
+    _ = input('table2 {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
+def stack2(descriptor = 'paper'):
+
+    for label1, values1 in layer1.items():
+
+        for value1 in values1:
+
+                for label2, values2 in layer2.items():
+
+                    for value2 in values2:
+
+                        if descriptor == 'paper':
+                            columns = ['cold_lrz_optgap', 'cold_net_optgap']
+                            filter = (content[label1] == value1) & (content[label2] == value2) & ((content['cold_lrz_optimal'] == False) | (content['cold_net_optimal'] == False))
+                        else:
+                            exit('Wrong descriptor for table 2')
+
+                        averages = {}
+                        deviations = {}
+                        maximums = {}
+                        feasibles = {}
+                        optimals = {}
+
+                        for column in columns:
+                            averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                            deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                            # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                            optimals[column] = content[filter & (content[column] <= cm.TOLERANCE)][column].count()
+
+                        # count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+                        count = len(content[filter].index)
+                        total = len(content[(content[label1] == value1) & (content[label2] == value2)].index)
+
+                        # print('{}&${:.2f}$&{}{}{}'.
+                        print('{}&{}&${} \, ({})$&{}{}{}'.
+                        format(labels[label1][value1], labels[label2][value2], count, total, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+                    print('\\midrule')
 
     _ = input('table2 {}'.format(descriptor))
 
@@ -224,9 +304,9 @@ def table3(descriptor = 'paper'):
 
 def table4(descriptor = 'paper'):
 
-    filter = (content['periods'] == 10) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bbf_optimal'] == True) & (content['bbe_optimal'] == True) & (content['bbh_optimal'] == True)
+    filter = (content['branch'] == 'paper1') & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bbe_optimal'] == True) # & (content['bbf_optimal'] == True) & (content['bbh_optimal'] == True)
 
-    content[filter].boxplot(['cold_net_runtime', 'bbd_runtime', 'bbf_runtime', 'bbe_runtime', 'bbh_runtime'])
+    content[filter].boxplot(['cold_net_runtime', 'bbd_runtime', 'bbe_runtime']) #, 'bbf_runtime', 'bbh_runtime'])
     plt.savefig('results/paper1/box_table4_runtime.png')
     plt.figure().clear()
 
@@ -235,8 +315,8 @@ def table4(descriptor = 'paper'):
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['cold_net_runtime', 'bbd_runtime', 'bbf_runtime', 'bbe_runtime', 'bbh_runtime']
-                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bbf_optimal'] == True) & (content['bbe_optimal'] == True) & (content['bbh_optimal'] == True)
+                columns = ['cold_net_runtime', 'bbd_runtime', 'bbe_runtime'] #, 'bbf_runtime', 'bbh_runtime']
+                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bbe_optimal'] == True) # & (content['bbf_optimal'] == True) & (content['bbh_optimal'] == True)
             else:
                 exit('Wrong descriptor for table 4')
 
@@ -263,11 +343,50 @@ def table4(descriptor = 'paper'):
 
     print('**************************************************************************************************')
 
+def stack4(descriptor = 'paper'):
+
+    for label1, values1 in layer1.items():
+
+        for value1 in values1:
+
+                for label2, values2 in layer2.items():
+
+                    for value2 in values2:
+
+                        if descriptor == 'paper':
+                            columns = ['cold_net_runtime', 'bbd_runtime', 'bbf_runtime'] #, 'bbe_runtime', 'bbh_runtime']
+                            filter = (content[label1] == value1) & (content[label2] == value2) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bbf_optimal'] == True) # & (content['bbe_optimal'] == True) & (content['bbh_optimal'] == True)
+                        else:
+                            exit('Wrong descriptor for table 4')
+
+                        averages = {}
+                        deviations = {}
+                        maximums = {}
+
+                        for column in columns:
+                            averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                            deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                            # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+
+                        # count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+                        count = len(content[filter].index)
+                        total = len(content[(content[label1] == value1) & (content[label2] == value2)].index)
+
+                        # print('{}&${:.2f}$&{}{}{}'.
+                        print('{}&{}&${} \, ({})$&{}{}{}'.
+                        format(labels[label1][value1], labels[label2][value2], count, total, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+                    print('\\midrule')
+
+    _ = input('table4 {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
 def table5(descriptor = 'paper'):
 
-    filter = (content['periods'] == 10) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bbf_optimal'] == False) | (content['bbe_optimal'] == False) & (content['bbh_optimal'] == False))
+    filter = (content['branch'] == 'paper1') & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bbe_optimal'] == False)) # | (content['bbf_optimal'] == False) & (content['bbh_optimal'] == False))
 
-    content[filter].boxplot(['cold_net_optgap', 'bbd_optgap', 'bbf_optgap', 'bbe_optgap', 'bbh_optgap'])
+    content[filter].boxplot(['cold_net_optgap', 'bbd_optgap', 'bbe_optgap']) #, 'bbf_optgap', 'bbh_optgap'])
     plt.savefig('results/paper1/box_table5_optgap.png')
     plt.figure().clear()
 
@@ -276,8 +395,8 @@ def table5(descriptor = 'paper'):
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['cold_net_optgap', 'bbd_optgap', 'bbf_optgap', 'bbe_optgap', 'bbh_optgap']
-                filter = (content[characteristic] == value) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bbf_optimal'] == False) | (content['bbe_optimal'] == False) | (content['bbh_optimal'] == False))
+                columns = ['cold_net_optgap', 'bbd_optgap', 'bbe_optgap'] #, 'bbf_optgap', 'bbh_optgap']
+                filter = (content[characteristic] == value) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bbe_optimal'] == False)) # | (content['bbf_optimal'] == False) | (content['bbh_optimal'] == False))
             else:
                 exit('Wrong descriptor for table 5')
 
@@ -307,15 +426,57 @@ def table5(descriptor = 'paper'):
 
     print('**************************************************************************************************')
 
+def stack5(descriptor = 'paper'):
+
+    for label1, values1 in layer1.items():
+
+        for value1 in values1:
+
+                for label2, values2 in layer2.items():
+
+                    for value2 in values2:
+
+                        if descriptor == 'paper':
+                            columns = ['cold_net_optgap', 'bbd_optgap', 'bbf_optgap'] #, 'bbe_optgap', 'bbh_optgap']
+                            filter = (content[label1] == value1) & (content[label2] == value2) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bbf_optimal'] == False)) # | (content['bbe_optimal'] == False) | (content['bbh_optimal'] == False))
+                        else:
+                            exit('Wrong descriptor for table 5')
+
+                        averages = {}
+                        deviations = {}
+                        maximums = {}
+                        feasibles = {}
+                        optimals = {}
+
+                        for column in columns:
+                            averages[column] = round(content[filter][column].mean() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                            deviations[column] = round(content[filter][column].std() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                            # maximums[column] = round(content[filter][column].max() * (100 if 'runtime' not in column else 1) * (1/60 if 'runtime' in column else 1), 2)
+                            optimals[column] = content[filter & (content[column] <= cm.TOLERANCE)][column].count()
+
+                        # count = 100 * len(content[filter].index) / len(content[(content[characteristic] == value)].index)
+                        count = len(content[filter].index)
+                        total = len(content[(content[label1] == value1) & (content[label2] == value2)].index)
+
+                        # print('{}&${:.2f}$&{}{}{}'.
+                        print('{}&{}&${} \, ({})$&{}{}{}'.
+                        format(labels[label1][value1], labels[label2][value2], count, total, '&'.join(['${}$&${:.2f}\pm{:.2f}$'.format(optimals[column], averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+
+                    print('\\midrule')
+
+    _ = input('table5 {}'.format(descriptor))
+
+    print('**************************************************************************************************')
+
 def table6(descriptor = 'paper'):
 
-    filter = (content['periods'] == 10) & (content['bbd_optimal'] == True) & (content['bbf_optimal'] == True) & (content['bbe_optimal'] == True) & (content['bbh_optimal'] == True)
+    filter = (content['branch'] == 'paper1') & (content['bbd_optimal'] == True) & (content['bbe_optimal'] == True) # & (content['bbf_optimal'] == True) & (content['bbh_optimal'] == True)
 
-    content[filter].boxplot(['bbd_nodes', 'bbf_nodes', 'bbe_nodes', 'bbh_nodes'])
+    content[filter].boxplot(['bbd_nodes', 'bbe_nodes']) #, 'bbf_nodes', 'bbh_nodes'])
     plt.savefig('results/paper1/box_table6_nodes.png')
     plt.figure().clear()
 
-    content[filter].boxplot(['bbd_proportion', 'bbf_proportion', 'bbe_proportion', 'bbh_proportion'])
+    content[filter].boxplot(['bbd_proportion', 'bbe_proportion']) #, 'bbf_proportion', 'bbh_proportion'])
     plt.savefig('results/paper1/box_table6_proportion.png')
     plt.figure().clear()
 
@@ -324,9 +485,9 @@ def table6(descriptor = 'paper'):
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['bbd_nodes', 'bbd_proportion', 'bbf_nodes', 'bbf_proportion', 'bbe_nodes', 'bbe_proportion', 'bbh_nodes', 'bbh_proportion']
+                columns = ['bbd_nodes', 'bbd_proportion', 'bbe_nodes', 'bbe_proportion'] # , 'bbf_nodes', 'bbf_proportion', 'bbh_nodes', 'bbh_proportion']
                 # columns = ['bbd_cuts_integer', 'bbd_proportion', 'bbe_cuts_integer', 'bbe_proportion']
-                filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bbf_optimal'] == True) & (content['bbe_optimal'] == True) & (content['bbh_optimal'] == True)
+                filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bbe_optimal'] == True) # & (content['bbf_optimal'] == True) & (content['bbh_optimal'] == True)
                 # filter = (content[characteristic] == value) & (content['bbd_optimal'] == True) & (content['bbe_optimal'] == True)
             else:
                 exit('Wrong descriptor for table 6')
@@ -374,7 +535,7 @@ def graph1(descriptor = 'paper'):
         'eml': 'dashed'
     }
 
-    filter = (content['periods'] == 10) # & (content['bst_optgap'] > cm.TOLERANCE)
+    filter = (content['branch'] == 'paper1') # & (content['bst_optgap'] > cm.TOLERANCE)
 
     with open ('graphs/heuristics.tex', 'w') as output:
 
@@ -440,7 +601,7 @@ def graph1(descriptor = 'paper'):
 
 def graph2(descriptor = 'paper'):
 
-    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbf', 'bbe', 'bbh']
+    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbe'] #, 'bbf', 'bbh']
 
     colors = {
         'cold_lrz' : 'red',
@@ -462,17 +623,17 @@ def graph2(descriptor = 'paper'):
         'bbh': 'dashdotted',
     }
 
-    filter = (content['periods'] == 10) # & (content['bst_optgap'] > cm.TOLERANCE)
+    filter = (content['branch'] == 'paper1') # & (content['bst_optgap'] > cm.TOLERANCE)
 
     with open ('graphs/objectives.tex', 'w') as output:
 
-        length_x, lower_x, upper_x, step_x = 10, 0, 0.1, 0.01
+        length_x, lower_x, upper_x, step_x = 10, 0, 0.02, 0.002
         length_y, lower_y, upper_y, step_y = 10, 50, 100, 5
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
         output.write('\draw[line width=0.5mm,thick,->] (0,0) -- ({},0);\n'.format(length_x + 0.5))
-        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,10.5);\n'.format(length_y + 0.5))
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,{});\n'.format(length_y + 0.5))
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
         output.write('\draw (9.5,0.5) node[anchor=mid] {gap to best objective};\n')
@@ -481,7 +642,7 @@ def graph2(descriptor = 'paper'):
         formatted_x = 0
         while formatted_x <= length_x:
             x = (formatted_x / length_x) * (upper_x - lower_x) + lower_x
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.2f}{};\n'.format(formatted_x, '{$', x,'$}'))
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.3f}{};\n'.format(formatted_x, '{$', x,'$}'))
             formatted_x += 1
 
         formatted_y = 0
@@ -528,7 +689,7 @@ def graph2(descriptor = 'paper'):
 
 def graph3(descriptor = 'paper'):
 
-    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbf', 'bbe', 'bbh']
+    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbe'] #, 'bbf', 'bbh']
 
     colors = {
         'cold_lrz' : 'red',
@@ -550,12 +711,12 @@ def graph3(descriptor = 'paper'):
         'bbh': 'dashdotted',
     }
 
-    filter = (content['periods'] == 10) # & (content['bst_optgap'] > cm.TOLERANCE)
+    filter = (content['branch'] == 'paper1') # & (content['bst_optgap'] > cm.TOLERANCE)
 
     with open ('graphs/runtimes.tex', 'w') as output:
 
-        length_x, lower_x, upper_x, step_x = 10, 1, 21, 2
-        length_y, lower_y, upper_y, step_y = 10, 30, 100, 7
+        length_x, lower_x, upper_x, step_x = 10, 1, 5, 0.4
+        length_y, lower_y, upper_y, step_y = 10, 20, 100, 8
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
@@ -614,12 +775,17 @@ def graph3(descriptor = 'paper'):
 
         print('Exported graph to graphs/runtimes.tex')
 
-graph1('paper')
+# graph1('paper')
 graph2('paper')
 graph3('paper')
 table1('paper')
 table2('paper')
-table3('paper')
+# table3('paper')
 table4('paper')
 table5('paper')
 table6('paper')
+
+# stack1('paper')
+# stack2('paper')
+# stack4('paper')
+# stack5('paper')
