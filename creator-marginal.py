@@ -8,14 +8,14 @@ features = {
     'customers': [1, 5],
     'periods': [5, 10],
     'facilities': [1],
-    'penalties': [1, 2],
+    'penalties': [1],
     'rewards': ['identical', 'inversely'],
     'preferences': ['small', 'large'],
     'demands': ['constant', 'seasonal'],
     'characters': ['homogeneous','heterogeneous']
 }
 
-# Single facility case
+# Multiple facility case
 features = {
     'seed': [i for i in range(1, 5)],
     'locations': [100, 200],
