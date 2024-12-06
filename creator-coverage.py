@@ -7,11 +7,24 @@ features = {
     'locations': [100, 200],
     'customers': [1, 5],
     'periods': [5, 10],
-    'facilities': [1], # [3, 5],
+    'facilities': [1],
     # 'rewards': ['identical', 'inversely'],
     'preferences': ['small', 'large'],
     'demands': ['constant', 'seasonal'],
     'characters': ['homogeneous','heterogeneous']
+}
+
+# Multiple facility case
+features = {
+    'seed': [i for i in range(1, 5)],
+    'locations': [100, 200],
+    'customers': [1, 5],
+    'periods': [5, 10],
+    'facilities': [3, 5],
+    # 'rewards': ['identical', 'inversely'],
+    'preferences': ['small', 'large'],
+    'demands': ['constant'],
+    'characters': ['homogeneous']
 }
 
 script = sys.argv[1]
