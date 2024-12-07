@@ -53,6 +53,7 @@ class forward(heuristic):
             # Reset upper bound of variables y^{t}_{i} to 1
             for location in self.ins.locations:
                 model.var['y'][period, location].ub = 1
+            model.mip.setParam('TimeLimit', cm.TIMELIMIT / len(self.ins.periods))
             model.mip.setParam('OutputFlag', 0)
             model.mip.optimize()
             # Retrieve set of locations for some period
@@ -91,6 +92,7 @@ class backward(heuristic):
             # Reset upper bound of variables y^{t}_{i} to 1
             for location in self.ins.locations:
                 model.var['y'][period, location].ub = 1
+            model.mip.setParam('TimeLimit', cm.TIMELIMIT / len(self.ins.periods))
             model.mip.setParam('OutputFlag', 0)
             model.mip.optimize()
             # Retrieve set of locations for some period
@@ -119,6 +121,7 @@ class emulation(heuristic):
 
         for period in self.ins.periods:
             model = sp.simplification(self.ins, period)
+            model.mip.setParam('TimeLimit', cm.TIMELIMIT / len(self.ins.periods))
             self.solution[period] = model.run()
             print('Period {}: {}'.format(period, self.solution[period]))
 
