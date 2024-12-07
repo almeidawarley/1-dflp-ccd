@@ -90,7 +90,19 @@ class simplification():
 
     def set_objective(self):
 
-        if 'bmk' in self.ins.keyword:
+        if 'cvr' in self.ins.keyword:
+
+            self.mip.setObjective(
+                sum(
+                    - 1 * self.ins.spawning[self.period][customer] *
+                    (
+                        1 - sum(self.var['x'][location, customer] for location in self.ins.captured_locations[customer])
+                    )
+                    for customer in self.ins.customers
+                )
+            )
+
+        elif 'bmk' in self.ins.keyword:
 
             self.mip.setObjective(
                 sum(
