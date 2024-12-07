@@ -14,6 +14,7 @@ features = {
     'characters': ['homogeneous','heterogeneous']
 }
 
+'''
 # Multiple facility case
 features = {
     'seed': [i for i in range(1, 5)],
@@ -26,6 +27,7 @@ features = {
     'demands': ['constant'],
     'characters': ['homogeneous']
 }
+'''
 
 script = sys.argv[1]
 hours = sys.argv[2]
