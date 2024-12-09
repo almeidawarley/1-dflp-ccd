@@ -27,7 +27,7 @@ for method in benders_approaches:
     # content['{}_optgap'.format(method)] = content.apply(lambda row: cm.compute_gap(row['bst_bound'], row['{}_objective'.format(method)]), axis = 1)
 
 for approach in heuristic_approaches:
-    content['{}_optgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['bst_objective'], row['{}_objective'.format(approach)]), axis = 1)
+    content['{}_optgap'.format(approach)] = content.apply(lambda row: cm.compute_gap1(row['bst_objective'], row['{}_objective'.format(approach)]), axis = 1)
 
 for approach in exact_approaches:
     content['{}_optimal'.format(approach)] = content.apply(lambda row: (row['{}_optgap'.format(approach)] <= cm.TOLERANCE), axis = 1)
@@ -513,7 +513,7 @@ def table6(descriptor = 'paper'):
 
             # print('{}&${:.2f}$&{}{}{}'.
             print('{}&${} \, ({})$&{}{}{}'.
-            format(labels[characteristic][value], count, total, '&'.join(['${:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+            format(labels[characteristic][value], count, total, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
 
@@ -524,7 +524,7 @@ def table6(descriptor = 'paper'):
 
 def graph1(descriptor = 'paper'):
 
-    methods = ['rnd', 'frw', 'bcw', 'eml']
+    methods = ['eml', 'rnd', 'frw', 'bcw']
 
     colors = {
         'rnd' : 'gray',
@@ -538,6 +538,13 @@ def graph1(descriptor = 'paper'):
         'frw' : 'dashdotted',
         'bcw' : 'solid',
         'eml': 'dashed'
+    }
+
+    legend = {
+        'rnd' : 'RND',
+        'frw' : 'FGH',
+        'bcw' : 'BGH',
+        'eml': 'DBH'
     }
 
     filter = (content['branch'] == 'paper1') # & (content['bst_optgap'] > cm.TOLERANCE)
@@ -559,7 +566,7 @@ def graph1(descriptor = 'paper'):
         formatted_x = 0
         while formatted_x <= length_x:
             x = (formatted_x / length_x) * (upper_x - lower_x) + lower_x
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.2f}{};\n'.format(formatted_x, '{$', x,'$}'))
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.1f}{};\n'.format(formatted_x, '{$', x,'$}'))
             formatted_x += 1
 
         formatted_y = 0
@@ -575,7 +582,9 @@ def graph1(descriptor = 'paper'):
 
             x = lower_x
 
-            while x <= upper_x:
+            while abs(x - upper_x) > 10**(-3):
+
+                x += step_x
 
                 y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x)]) / len(content[filter]))
 
@@ -588,7 +597,6 @@ def graph1(descriptor = 'paper'):
 
                 prev_x = x
                 prev_y = y
-                x += step_x
 
         output.write('\n')
 
@@ -597,7 +605,7 @@ def graph1(descriptor = 'paper'):
 
         for method in methods:
             output.write('\draw[line width=0.5mm, {}, {}] (8.5, {:.2f})--(9.0, {:.2f});\n'.format(colors[method], styles[method], current_y, current_y))
-            output.write('\draw[line width=0.5mm, {}] (9.0, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], current_y, '{', method.replace('cold_', ''), '}'))
+            output.write('\draw[line width=0.5mm, {}] (9.0, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], current_y, '{', legend[method], '}'))
             current_y += next_y
 
         output.write('\end{tikzpicture}\n')
@@ -606,7 +614,7 @@ def graph1(descriptor = 'paper'):
 
 def graph2(descriptor = 'paper'):
 
-    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbe'] #, 'bbf', 'bbh']
+    methods = ['cold_net', 'cold_lrz', 'bbd', 'bbe'] #, 'bbf', 'bbh']
 
     colors = {
         'cold_lrz' : 'red',
@@ -624,8 +632,18 @@ def graph2(descriptor = 'paper'):
         'bbd': 'dashdotted',
         'bbf' : 'dashed',
         'bba' : 'dotted',
-        'bbe' : 'dotted',
+        'bbe' : 'solid',
         'bbh': 'dashdotted',
+    }
+
+    legend = {
+        'cold_lrz' : 'SIF',
+        'cold_net' : 'DIF',
+        'bbd': 'SBD',
+        #'bbf' : '',
+        #'bba' : '',
+        'bbe' : 'ABD',
+        #'bbh': '',
     }
 
     filter = (content['branch'] == 'paper1') # & (content['bst_optgap'] > cm.TOLERANCE)
@@ -641,13 +659,13 @@ def graph2(descriptor = 'paper'):
         output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,{});\n'.format(length_y + 0.5))
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9.5,0.5) node[anchor=mid] {gap to best objective};\n')
+        output.write('\draw (9.5,0.5) node[anchor=mid] {gap to best objective ($10^{-2}$)};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
         formatted_x = 0
         while formatted_x <= length_x:
             x = (formatted_x / length_x) * (upper_x - lower_x) + lower_x
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.3f}{};\n'.format(formatted_x, '{$', x,'$}'))
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.1f}{};\n'.format(formatted_x, '{$', x * 10**2,'$}'))
             formatted_x += 1
 
         formatted_y = 0
@@ -663,7 +681,9 @@ def graph2(descriptor = 'paper'):
 
             x = lower_x
 
-            while x <= upper_x:
+            while abs(x - upper_x) > 10**(-3):
+
+                x += step_x
 
                 y = int(100 * len(content[filter & (content['{}_bstgap'.format(method)] <= x)]) / len(content[filter]))
 
@@ -676,7 +696,6 @@ def graph2(descriptor = 'paper'):
 
                 prev_x = x
                 prev_y = y
-                x += step_x
 
         output.write('\n')
 
@@ -685,7 +704,7 @@ def graph2(descriptor = 'paper'):
 
         for method in methods:
             output.write('\draw[line width=0.5mm, {}, {}] (8.5, {:.2f})--(9.0, {:.2f});\n'.format(colors[method], styles[method], current_y, current_y))
-            output.write('\draw[line width=0.5mm, {}] (9.0, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], current_y, '{', method.replace('cold_', ''), '}'))
+            output.write('\draw[line width=0.5mm, {}] (9.0, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], current_y, '{', legend[method], '}'))
             current_y += next_y
 
         output.write('\end{tikzpicture}\n')
@@ -694,7 +713,7 @@ def graph2(descriptor = 'paper'):
 
 def graph3(descriptor = 'paper'):
 
-    methods = ['cold_lrz', 'cold_net', 'bbd', 'bbe'] #, 'bbf', 'bbh']
+    methods = ['cold_net', 'cold_lrz', 'bbd', 'bbe'] #, 'bbf', 'bbh']
 
     colors = {
         'cold_lrz' : 'red',
@@ -712,8 +731,18 @@ def graph3(descriptor = 'paper'):
         'bbd': 'dashdotted',
         'bbf' : 'dashed',
         'bba' : 'dotted',
-        'bbe' : 'dotted',
+        'bbe' : 'solid',
         'bbh': 'dashdotted',
+    }
+
+    legend = {
+        'cold_lrz' : 'SIF',
+        'cold_net' : 'DIF',
+        'bbd': 'SBD',
+        #'bbf' : '',
+        #'bba' : '',
+        'bbe' : 'ABD',
+        #'bbh': '',
     }
 
     filter = (content['branch'] == 'paper1') # & (content['bst_optgap'] > cm.TOLERANCE)
@@ -735,7 +764,7 @@ def graph3(descriptor = 'paper'):
         formatted_x = 0
         while formatted_x <= length_x:
             x = (formatted_x / length_x) * (upper_x - lower_x) + lower_x
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.2f}{};\n'.format(formatted_x, '{$', x,'$}'))
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.1f}{};\n'.format(formatted_x, '{$', x,'$}'))
             formatted_x += 1
 
         formatted_y = 0
@@ -751,7 +780,9 @@ def graph3(descriptor = 'paper'):
 
             x = lower_x
 
-            while x <= upper_x:
+            while abs(x - upper_x) > 10**(-3):
+
+                x += step_x
 
                 y = int(100 * len(content[filter & (content['{}_ratio_runtime'.format(method)] <= x)]) / len(content[filter]))
 
@@ -764,16 +795,15 @@ def graph3(descriptor = 'paper'):
 
                 prev_x = x
                 prev_y = y
-                x += step_x
 
         output.write('\n')
 
-        current_y = 3.0
+        current_y = 6.0
         next_y = 0.5
 
         for method in methods:
             output.write('\draw[line width=0.5mm, {}, {}] (8.5, {:.2f})--(9.0, {:.2f});\n'.format(colors[method], styles[method], current_y, current_y))
-            output.write('\draw[line width=0.5mm, {}] (9.0, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], current_y, '{', method.replace('cold_', ''), '}'))
+            output.write('\draw[line width=0.5mm, {}] (9.0, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], current_y, '{', legend[method], '}'))
             current_y += next_y
 
         output.write('\end{tikzpicture}\n')
