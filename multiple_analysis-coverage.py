@@ -2,8 +2,8 @@ import pandas as pd
 import common as cm
 import matplotlib.pyplot as plt
 
-# Analysis instance set C
-content = pd.read_csv('results/paper1/mrg_summary.csv')
+# Analysis instance set B
+content = pd.read_csv('results/paper1/multiple_cvr_summary.csv')
 # content = content[content['customers'] == 1]
 
 content['index'] = content['keyword']
@@ -49,17 +49,16 @@ characteristics = {
     'locations': [100, 200],
     'customers': [1, 5],
     'periods': [5, 10],
-    'facilities': [1], # [1, 2, 3, 4],
-    'penalties': [1, 2],
-    'rewards': ['identical', 'inversely'],
+    'facilities': [3, 5],
+    #'rewards': ['identical'],
     'preferences': ['small', 'large'],
-    'demands': ['constant', 'seasonal'],
-    'characters': ['homogeneous','heterogeneous']
+    #'demands': ['constant'],
+    #'characters': ['homogeneous']
 }
 
 labels = {
     'branch': {
-        'paper1': 'Instance set C',
+        'paper1': 'Instance set B',
     },
     'locations': {
         100: '100 locations',
@@ -74,12 +73,8 @@ labels = {
         10: '10 periods',
     },
     'facilities': {
-        1: '1 facility',
+        3: '3 facility',
         5: '5 facilities',
-    },
-    'penalties':{
-        1: '25\% penalties',
-        2: '50\% penalties'
     },
     'rewards':{
         'identical': 'Identical rewards',
@@ -314,9 +309,9 @@ def table3(descriptor = 'paper'):
 
 def table4(descriptor = 'paper'):
 
-    filter = (content['branch'] == 'paper1') & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bbe_optimal'] == True) # & (content['bbf_optimal'] == True) & (content['bbh_optimal'] == True)
+    filter = (content['branch'] == 'paper1') & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) # & (content['bbe_optimal'] == True) # & (content['bbf_optimal'] == True) & (content['bbh_optimal'] == True)
 
-    content[filter].boxplot(['cold_net_runtime', 'bbd_runtime', 'bbe_runtime']) #, 'bbf_runtime', 'bbh_runtime'])
+    content[filter].boxplot(['cold_net_runtime', 'bbd_runtime']) #, 'bbe_runtime']) #, 'bbf_runtime', 'bbh_runtime'])
     plt.savefig('results/paper1/box_table4_runtime.png')
     plt.figure().clear()
 
@@ -325,8 +320,8 @@ def table4(descriptor = 'paper'):
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['cold_net_runtime', 'bbd_runtime', 'bbe_runtime'] #, 'bbf_runtime', 'bbh_runtime']
-                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) & (content['bbe_optimal'] == True) # & (content['bbf_optimal'] == True) & (content['bbh_optimal'] == True)
+                columns = ['cold_net_runtime', 'bbd_runtime'] #, 'bbe_runtime'] #, 'bbf_runtime', 'bbh_runtime']
+                filter = (content[characteristic] == value) & (content['cold_net_optimal'] == True) & (content['bbd_optimal'] == True) # & (content['bbe_optimal'] == True) # & (content['bbf_optimal'] == True) & (content['bbh_optimal'] == True)
             else:
                 exit('Wrong descriptor for table 4')
 
@@ -394,9 +389,9 @@ def stack4(descriptor = 'paper'):
 
 def table5(descriptor = 'paper'):
 
-    filter = (content['branch'] == 'paper1') & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bbe_optimal'] == False)) # | (content['bbf_optimal'] == False) & (content['bbh_optimal'] == False))
+    filter = (content['branch'] == 'paper1') & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False)) # | (content['bbe_optimal'] == False)) # | (content['bbf_optimal'] == False) & (content['bbh_optimal'] == False))
 
-    content[filter].boxplot(['cold_net_optgap', 'bbd_optgap', 'bbe_optgap']) #, 'bbf_optgap', 'bbh_optgap'])
+    content[filter].boxplot(['cold_net_optgap', 'bbd_optgap']) #, 'bbe_optgap']) #, 'bbf_optgap', 'bbh_optgap'])
     plt.savefig('results/paper1/box_table5_optgap.png')
     plt.figure().clear()
 
@@ -405,8 +400,8 @@ def table5(descriptor = 'paper'):
         for value in values:
 
             if descriptor == 'paper':
-                columns = ['cold_net_optgap', 'bbd_optgap', 'bbe_optgap'] #, 'bbf_optgap', 'bbh_optgap']
-                filter = (content[characteristic] == value) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False) | (content['bbe_optimal'] == False)) # | (content['bbf_optimal'] == False) | (content['bbh_optimal'] == False))
+                columns = ['cold_net_optgap', 'bbd_optgap'] #, 'bbe_optgap'] #, 'bbf_optgap', 'bbh_optgap']
+                filter = (content[characteristic] == value) & ((content['cold_net_optimal'] == False) | (content['bbd_optimal'] == False)) # | (content['bbe_optimal'] == False)) # | (content['bbf_optimal'] == False) | (content['bbh_optimal'] == False))
             else:
                 exit('Wrong descriptor for table 5')
 
@@ -518,7 +513,7 @@ def table6(descriptor = 'paper'):
 
             # print('{}&${:.2f}$&{}{}{}'.
             print('{}&${} \, ({})$&{}{}{}'.
-            format(labels[characteristic][value], count, total, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+            format(labels[characteristic][value], count, total, '&'.join(['${:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
 
@@ -529,7 +524,7 @@ def table6(descriptor = 'paper'):
 
 def graph1(descriptor = 'paper'):
 
-    methods = ['eml', 'rnd', 'frw', 'bcw']
+    methods = ['rnd', 'frw', 'bcw', 'eml']
 
     colors = {
         'rnd' : 'gray',
@@ -571,7 +566,7 @@ def graph1(descriptor = 'paper'):
         formatted_x = 0
         while formatted_x <= length_x:
             x = (formatted_x / length_x) * (upper_x - lower_x) + lower_x
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.1f}{};\n'.format(formatted_x, '{$', x,'$}'))
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.2f}{};\n'.format(formatted_x, '{$', x,'$}'))
             formatted_x += 1
 
         formatted_y = 0
@@ -587,9 +582,7 @@ def graph1(descriptor = 'paper'):
 
             x = lower_x
 
-            while abs(x - upper_x) > 10**(-3):
-
-                x += step_x
+            while x <= upper_x:
 
                 y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x)]) / len(content[filter]))
 
@@ -602,6 +595,7 @@ def graph1(descriptor = 'paper'):
 
                 prev_x = x
                 prev_y = y
+                x += step_x
 
         output.write('\n')
 
@@ -619,7 +613,7 @@ def graph1(descriptor = 'paper'):
 
 def graph2(descriptor = 'paper'):
 
-    methods = ['cold_net', 'cold_lrz', 'bbd', 'bbe'] #, 'bbf', 'bbh']
+    methods = ['cold_net', 'cold_lrz', 'bbd'] #, 'bbe'] #, 'bbf', 'bbh']
 
     colors = {
         'cold_lrz' : 'red',
@@ -655,8 +649,8 @@ def graph2(descriptor = 'paper'):
 
     with open ('graphs/objectives.tex', 'w') as output:
 
-        length_x, lower_x, upper_x, step_x = 10, 0, 0.5, 0.05
-        length_y, lower_y, upper_y, step_y = 10, 60, 100, 6
+        length_x, lower_x, upper_x, step_x = 10, 0, 0.02, 0.002
+        length_y, lower_y, upper_y, step_y = 10, 0, 100, 10
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
@@ -664,13 +658,13 @@ def graph2(descriptor = 'paper'):
         output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,{});\n'.format(length_y + 0.5))
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9.5,0.5) node[anchor=mid] {gap to best objective ($10^{-1}$)};\n')
+        output.write('\draw (9.5,0.5) node[anchor=mid] {gap to best objective ($10^{-2}$)};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
         formatted_x = 0
         while formatted_x <= length_x:
             x = (formatted_x / length_x) * (upper_x - lower_x) + lower_x
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.1f}{};\n'.format(formatted_x, '{$', x * 10**1,'$}'))
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.1f}{};\n'.format(formatted_x, '{$', x * 10**2,'$}'))
             formatted_x += 1
 
         formatted_y = 0
@@ -704,7 +698,7 @@ def graph2(descriptor = 'paper'):
 
         output.write('\n')
 
-        current_y = 3.0
+        current_y = 5.0
         next_y = 0.5
 
         for method in methods:
@@ -718,7 +712,7 @@ def graph2(descriptor = 'paper'):
 
 def graph3(descriptor = 'paper'):
 
-    methods = ['cold_net', 'cold_lrz', 'bbd', 'bbe'] #, 'bbf', 'bbh']
+    methods = ['cold_net', 'cold_lrz', 'bbd'] #, 'bbe'] #, 'bbf', 'bbh']
 
     colors = {
         'cold_lrz' : 'red',
@@ -755,7 +749,7 @@ def graph3(descriptor = 'paper'):
     with open ('graphs/runtimes.tex', 'w') as output:
 
         length_x, lower_x, upper_x, step_x = 10, 1, 5, 0.4
-        length_y, lower_y, upper_y, step_y = 10, 10, 100, 9
+        length_y, lower_y, upper_y, step_y = 10, 40, 100, 4
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
@@ -803,7 +797,7 @@ def graph3(descriptor = 'paper'):
 
         output.write('\n')
 
-        current_y = 2.0
+        current_y = 3.0
         next_y = 0.5
 
         for method in methods:

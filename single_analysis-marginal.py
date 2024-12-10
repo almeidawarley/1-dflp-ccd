@@ -2,8 +2,8 @@ import pandas as pd
 import common as cm
 import matplotlib.pyplot as plt
 
-# Analysis instance set A
-content = pd.read_csv('results/paper1/bmk_summary.csv')
+# Analysis instance set C
+content = pd.read_csv('results/paper1/fixed_mrg_summary.csv')
 # content = content[content['customers'] == 1]
 
 content['index'] = content['keyword']
@@ -50,6 +50,7 @@ characteristics = {
     'customers': [1, 5],
     'periods': [5, 10],
     'facilities': [1], # [1, 2, 3, 4],
+    'penalties': [1, 2],
     'rewards': ['identical', 'inversely'],
     'preferences': ['small', 'large'],
     'demands': ['constant', 'seasonal'],
@@ -58,7 +59,7 @@ characteristics = {
 
 labels = {
     'branch': {
-        'paper1': 'Instance set A',
+        'paper1': 'Instance set C',
     },
     'locations': {
         100: '100 locations',
@@ -75,6 +76,10 @@ labels = {
     'facilities': {
         1: '1 facility',
         5: '5 facilities',
+    },
+    'penalties':{
+        1: '25\% penalties',
+        2: '50\% penalties'
     },
     'rewards':{
         'identical': 'Identical rewards',
@@ -650,8 +655,8 @@ def graph2(descriptor = 'paper'):
 
     with open ('graphs/objectives.tex', 'w') as output:
 
-        length_x, lower_x, upper_x, step_x = 10, 0, 0.02, 0.002
-        length_y, lower_y, upper_y, step_y = 10, 70, 100, 3
+        length_x, lower_x, upper_x, step_x = 10, 0, 0.5, 0.05
+        length_y, lower_y, upper_y, step_y = 10, 60, 100, 6
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
@@ -659,13 +664,13 @@ def graph2(descriptor = 'paper'):
         output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,{});\n'.format(length_y + 0.5))
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9.5,0.5) node[anchor=mid] {gap to best objective ($10^{-2}$)};\n')
+        output.write('\draw (9.5,0.5) node[anchor=mid] {gap to best objective ($10^{-1}$)};\n')
         output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
 
         formatted_x = 0
         while formatted_x <= length_x:
             x = (formatted_x / length_x) * (upper_x - lower_x) + lower_x
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.1f}{};\n'.format(formatted_x, '{$', x * 10**2,'$}'))
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.1f}{};\n'.format(formatted_x, '{$', x * 10**1,'$}'))
             formatted_x += 1
 
         formatted_y = 0
@@ -798,7 +803,7 @@ def graph3(descriptor = 'paper'):
 
         output.write('\n')
 
-        current_y = 6.0
+        current_y = 2.0
         next_y = 0.5
 
         for method in methods:

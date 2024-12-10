@@ -2,8 +2,8 @@ import pandas as pd
 import common as cm
 import matplotlib.pyplot as plt
 
-# Analysis instance set B
-content = pd.read_csv('results/paper1/cvr_summary.csv')
+# Analysis instance set A
+content = pd.read_csv('results/paper1/fixed_bmk_summary.csv')
 # content = content[content['customers'] == 1]
 
 content['index'] = content['keyword']
@@ -12,7 +12,7 @@ content = content.set_index('index')
 # Single facility
 formulation_approaches = ['cold_lrz', 'cold_net']
 benders_approaches = ['bbd', 'bbe'] # , 'bbe', 'bbh']
-heuristic_approaches = [] # ['eml', 'rnd', 'frw', 'bcw']
+heuristic_approaches = ['eml', 'rnd', 'frw', 'bcw']
 exact_approaches = formulation_approaches + benders_approaches
 
 content['bst_objective'] = content.apply(lambda row: max(row['{}_objective'.format(approach)] for approach in exact_approaches), axis = 1)
@@ -50,6 +50,7 @@ characteristics = {
     'customers': [1, 5],
     'periods': [5, 10],
     'facilities': [1], # [1, 2, 3, 4],
+    'rewards': ['identical', 'inversely'],
     'preferences': ['small', 'large'],
     'demands': ['constant', 'seasonal'],
     'characters': ['homogeneous','heterogeneous']
@@ -57,7 +58,7 @@ characteristics = {
 
 labels = {
     'branch': {
-        'paper1': 'Instance set B',
+        'paper1': 'Instance set A',
     },
     'locations': {
         100: '100 locations',
@@ -74,6 +75,10 @@ labels = {
     'facilities': {
         1: '1 facility',
         5: '5 facilities',
+    },
+    'rewards':{
+        'identical': 'Identical rewards',
+        'inversely': 'Different rewards'
     },
     'preferences': {
         'small': 'Small choice sets',
@@ -508,7 +513,7 @@ def table6(descriptor = 'paper'):
 
             # print('{}&${:.2f}$&{}{}{}'.
             print('{}&${} \, ({})$&{}{}{}'.
-            format(labels[characteristic][value], count, total, '&'.join(['${:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
+            format(labels[characteristic][value], count, total, '&'.join(['${:.2f}\pm{:.2f}$'.format(averages[column], deviations[column]) for column in columns]), '\\', '\\'))
 
         print('\\midrule')
 
@@ -519,7 +524,7 @@ def table6(descriptor = 'paper'):
 
 def graph1(descriptor = 'paper'):
 
-    methods = ['rnd', 'frw', 'bcw', 'eml']
+    methods = ['eml', 'rnd', 'frw', 'bcw']
 
     colors = {
         'rnd' : 'gray',
@@ -561,7 +566,7 @@ def graph1(descriptor = 'paper'):
         formatted_x = 0
         while formatted_x <= length_x:
             x = (formatted_x / length_x) * (upper_x - lower_x) + lower_x
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.2f}{};\n'.format(formatted_x, '{$', x,'$}'))
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.1f}{};\n'.format(formatted_x, '{$', x,'$}'))
             formatted_x += 1
 
         formatted_y = 0
@@ -577,7 +582,9 @@ def graph1(descriptor = 'paper'):
 
             x = lower_x
 
-            while x <= upper_x:
+            while abs(x - upper_x) > 10**(-3):
+
+                x += step_x
 
                 y = int(100 * len(content[filter & (content['{}_optgap'.format(method)] <= x)]) / len(content[filter]))
 
@@ -590,7 +597,6 @@ def graph1(descriptor = 'paper'):
 
                 prev_x = x
                 prev_y = y
-                x += step_x
 
         output.write('\n')
 
@@ -645,7 +651,7 @@ def graph2(descriptor = 'paper'):
     with open ('graphs/objectives.tex', 'w') as output:
 
         length_x, lower_x, upper_x, step_x = 10, 0, 0.02, 0.002
-        length_y, lower_y, upper_y, step_y = 10, 50, 100, 5
+        length_y, lower_y, upper_y, step_y = 10, 70, 100, 3
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
@@ -693,7 +699,7 @@ def graph2(descriptor = 'paper'):
 
         output.write('\n')
 
-        current_y = 5.0
+        current_y = 3.0
         next_y = 0.5
 
         for method in methods:
@@ -744,7 +750,7 @@ def graph3(descriptor = 'paper'):
     with open ('graphs/runtimes.tex', 'w') as output:
 
         length_x, lower_x, upper_x, step_x = 10, 1, 5, 0.4
-        length_y, lower_y, upper_y, step_y = 10, 20, 100, 8
+        length_y, lower_y, upper_y, step_y = 10, 10, 100, 9
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
@@ -792,7 +798,7 @@ def graph3(descriptor = 'paper'):
 
         output.write('\n')
 
-        current_y = 3.0
+        current_y = 6.0
         next_y = 0.5
 
         for method in methods:
@@ -804,15 +810,15 @@ def graph3(descriptor = 'paper'):
 
         print('Exported graph to graphs/runtimes.tex')
 
-# graph1('paper')
+graph1('paper')
 graph2('paper')
 graph3('paper')
 table1('paper')
 table2('paper')
-# table3('paper')
 table4('paper')
 table5('paper')
 table6('paper')
+table3('paper')
 
 # stack1('paper')
 # stack2('paper')
