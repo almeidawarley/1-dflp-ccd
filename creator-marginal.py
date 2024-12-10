@@ -2,7 +2,7 @@ import json as js
 import sys
 
 # Single facility case
-features = {
+s_features = {
     'seed': [i for i in range(1, 5)],
     'locations': [100, 200],
     'customers': [1, 5],
@@ -15,9 +15,8 @@ features = {
     'characters': ['homogeneous','heterogeneous']
 }
 
-'''
 # Multiple facility case
-features = {
+m_features = {
     'seed': [i for i in range(1, 5)],
     'locations': [100, 200],
     'customers': [1, 5],
@@ -29,14 +28,21 @@ features = {
     'demands': ['constant'],
     'characters': ['homogeneous']
 }
-'''
 
 script = sys.argv[1]
 hours = sys.argv[2]
+type = sys.argv[3]
+
+if type == 'single':
+    features = s_features
+elif type == 'multiple':
+    features = m_features
+else:
+    exit('Invalid type')
 
 parameters = {}
 
-commands = open('marginal_{}.sh'.format(script), 'w')
+commands = open('{}_marginal_{}.sh'.format(type, script), 'w')
 
 counter = 0
 
