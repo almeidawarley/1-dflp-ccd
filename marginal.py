@@ -34,6 +34,15 @@ class marginal(ic.instance):
         # Store number of facilities
         self.facilities = {period : int(self.parameters['facilities']) for period in self.periods}
 
+        # Create sizes
+        if self.parameters['preferences'] == 'small':
+            percentage = 0.05
+        elif self.parameters['preferences'] == 'large':
+            percentage = 0.10
+        else:
+            exit('Wrong value for preferences parameter')
+        size = int(np.ceil(percentage * number_locations))
+
         # Create rankings
         self.rankings = {}
         ranking_size = int(np.ceil(0.1 * number_locations))
@@ -62,12 +71,32 @@ class marginal(ic.instance):
                 exit('Wrong value for rewards parameter')
             self.rewards[location] = int(np.ceil(coefficient * len(self.locations)))
 
+        # Create amplitude
+        self.amplitudes = {}
+        for customer in self.customers:
+            if self.parameters['characters'] == 'heterogeneous':
+                self.amplitudes[customer] = np.random.choice([5,6,7,8,9,10,11,12,13,14,15])
+            elif self.parameters['characters'] == 'homogeneous':
+                self.amplitudes[customer] = 10
+            else:
+                exit('Wrong value for characters parameter')
+
         # Create spawning
         self.spawning = {}
         for period in self.periods:
             self.spawning[period] = {}
             for customer in self.customers:
-                self.spawning[period][customer] = 10
+                if self.parameters['demands'] == 'constant':
+                    self.spawning[period][customer] = self.amplitudes[customer]
+                elif self.parameters['demands'] == 'seasonal':
+                    self.spawning[period][customer] = (self.amplitudes[customer] / 2) * np.cos(period) + (self.amplitudes[customer] / 2)
+                elif self.parameters['demands'] == 'increasing':
+                    self.spawning[period][customer] = (period / number_periods) * self.amplitudes[customer]
+                elif self.parameters['demands'] == 'decreasing':
+                    self.spawning[period][customer] = ((number_periods - period + 1)/ number_periods) * self.amplitudes[customer]
+                else:
+                    exit('Wrong value for demands parameter')
+                self.spawning[period][customer] = int(np.ceil(self.spawning[period][customer]))
 
         # Create penalties
         self.penalties = {
