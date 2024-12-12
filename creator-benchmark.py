@@ -19,7 +19,7 @@ hours = sys.argv[2]
 
 parameters = {}
 
-commands = open('{}_benchmark_{}.sh'.format(type, script), 'w')
+commands = open('benchmark_{}.sh'.format(script), 'w')
 
 counter = 0
 
