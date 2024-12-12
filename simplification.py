@@ -111,6 +111,17 @@ class simplification():
                     self.var['x'][location, customer]
                     for customer in self.ins.customers
                     for location in self.ins.captured_locations[customer]
+                ) -
+                sum(
+                    self.ins.penalties[customer] *
+                    self.ins.spawning[self.period][customer] *
+                    (
+                        1 - sum(
+                            self.var['x'][location, customer]
+                            for location in self.ins.captured_locations[customer]
+                        )
+                    )
+                    for customer in self.ins.customers
                 )
             )
 

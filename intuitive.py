@@ -81,6 +81,18 @@ class intuitive(fm.formulation):
                     for period in self.ins.periods
                     for customer in self.ins.customers
                     for location in self.ins.captured_locations[customer]
+                ) -
+                sum(
+                    self.ins.penalties[customer] *
+                    self.ins.spawning[period][customer] *
+                    (
+                        1 - sum(
+                            self.var['x'][period, location, customer]
+                            for location in self.ins.captured_locations[customer]
+                        )
+                    )
+                    for period in self.ins.periods
+                    for customer in self.ins.customers
                 )
             )
 
