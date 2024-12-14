@@ -14,6 +14,19 @@ features = {
     'penalties': [0]
 }
 
+features = {
+    'seed': [2],
+    'locations': [100],
+    'customers': [1, 2],
+    'periods': [10],
+    'facilities': [1, 5],
+    'rewards': ['identical'],
+    'preferences': ['small'],
+    'demands': ['constant'],
+    'characters': ['homogeneous'],
+    'penalties': [10, 20, 30, 40, 50, 60, 70, 80, 90]
+}
+
 script = sys.argv[1]
 hours = sys.argv[2]
 

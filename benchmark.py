@@ -176,3 +176,4 @@ class benchmark(ic.instance):
                                 self.coefficients[period1][period2][location][customer] = self.rewards[location] * self.accumulated[period1][period2][customer]
                             else:
                                 self.coefficients[period1][period2][location][customer] = 0.
+                            self.coefficients[period1][period2][location][customer] -= self.penalties[customer] * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > period1 and period3 < period2)
