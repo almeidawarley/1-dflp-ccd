@@ -4,7 +4,7 @@ import sys
 features = {
     'seed': [i for i in range(1, 3)],
     'locations': [100, 200],
-    'customers': [1, 5],
+    'customers': [2], #[1, 5],
     'periods': [5, 10],
     'facilities': [1, 5],
     'rewards': ['identical', 'inversely'],
@@ -14,6 +14,7 @@ features = {
     'penalties': [0]
 }
 
+'''
 features = {
     'seed': [2],
     'locations': [100],
@@ -24,8 +25,9 @@ features = {
     'preferences': ['small'],
     'demands': ['constant'],
     'characters': ['homogeneous'],
-    'penalties': [10, 20, 30, 40, 50, 60, 70, 80, 90]
+    'penalties': [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
 }
+'''
 
 script = sys.argv[1]
 hours = sys.argv[2]
