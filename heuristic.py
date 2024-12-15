@@ -49,13 +49,16 @@ class forward(heuristic):
             for location in self.ins.locations:
                 model.var['y'][period, location].ub = 0
 
+        time_left = cm.TIMELIMIT
         for period in self.ins.periods:
             # Reset upper bound of variables y^{t}_{i} to 1
             for location in self.ins.locations:
                 model.var['y'][period, location].ub = 1
-            model.mip.setParam('TimeLimit', cm.TIMELIMIT / len(self.ins.periods))
+            model.mip.setParam('TimeLimit', time_left)
             model.mip.setParam('OutputFlag', 0)
             model.mip.optimize()
+            time_left -= model.mip.runtime
+            time_left = max(60, time_left)
             # Retrieve set of locations for some period
             locations = []
             for location in self.ins.locations:
@@ -88,13 +91,16 @@ class backward(heuristic):
             for location in self.ins.locations:
                 model.var['y'][period, location].ub = 0
 
+        time_left = cm.TIMELIMIT
         for period in reversed(self.ins.periods):
             # Reset upper bound of variables y^{t}_{i} to 1
             for location in self.ins.locations:
                 model.var['y'][period, location].ub = 1
-            model.mip.setParam('TimeLimit', cm.TIMELIMIT / len(self.ins.periods))
+            model.mip.setParam('TimeLimit', time_left)
             model.mip.setParam('OutputFlag', 0)
             model.mip.optimize()
+            time_left -= model.mip.runtime
+            time_left = max(60, time_left)
             # Retrieve set of locations for some period
             locations = []
             for location in self.ins.locations:
@@ -119,10 +125,13 @@ class emulation(heuristic):
 
         print('Running EML heuristic')
 
+        time_left = cm.TIMELIMIT
         for period in self.ins.periods:
             model = sp.simplification(self.ins, period)
-            model.mip.setParam('TimeLimit', cm.TIMELIMIT / len(self.ins.periods))
+            model.mip.setParam('TimeLimit', time_left)
             self.solution[period] = model.run()
+            time_left -= model.mip.runtime
+            time_left = max(60, time_left)
             print('Period {}: {}'.format(period, self.solution[period]))
 
         self.objective = self.ins.evaluate_solution(self.solution)
