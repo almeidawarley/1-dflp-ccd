@@ -58,7 +58,7 @@ class forward(heuristic):
             model.mip.setParam('OutputFlag', 0)
             model.mip.optimize()
             time_left -= model.mip.runtime
-            time_left = max(60, time_left)
+            time_left = max(5, time_left)
             # Retrieve set of locations for some period
             locations = []
             for location in self.ins.locations:
@@ -100,7 +100,7 @@ class backward(heuristic):
             model.mip.setParam('OutputFlag', 0)
             model.mip.optimize()
             time_left -= model.mip.runtime
-            time_left = max(60, time_left)
+            time_left = max(5, time_left)
             # Retrieve set of locations for some period
             locations = []
             for location in self.ins.locations:
@@ -131,7 +131,7 @@ class emulation(heuristic):
             model.mip.setParam('TimeLimit', time_left)
             self.solution[period] = model.run()
             time_left -= model.mip.runtime
-            time_left = max(60, time_left)
+            time_left = max(5, time_left)
             print('Period {}: {}'.format(period, self.solution[period]))
 
         self.objective = self.ins.evaluate_solution(self.solution)
