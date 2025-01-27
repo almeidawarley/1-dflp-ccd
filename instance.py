@@ -113,6 +113,50 @@ class instance:
 
         return objective
 
+    def evaluate_solution2(self, solution):
+
+        # Evaluate objective value of a solution
+        objective = 0.
+        reward = 0.
+        penalty = 0.
+
+        try:
+            self.penalties
+        except:
+            self.penalties = {customer: 0. for customer in self.customers}
+
+        latest = {customer: self.start for customer in self.customers}
+
+        # Parse regular periods for rewards
+        for period, locations in solution.items():
+            for customer in self.customers:
+                preference_ranking = 0
+                for location in locations:
+                    if location in self.captured_locations[customer]:
+                        if self.rankings[customer][location] > preference_ranking:
+                            preference_ranking = self.rankings[customer][location]
+                            preference_location = location
+                if preference_ranking != 0:
+                    objective += self.coefficients[latest[customer]][period][preference_location][customer]
+                    reward += self.rewards[location] * self.accumulated[latest[customer]][period][customer]
+                    penalty += self.penalties[customer] * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > latest[customer] and period3 < period)
+                    latest[customer] = period
+
+        # Parse final period for penalties
+        for customer in self.customers:
+            extra = - 1 * gp.GRB.INFINITY
+            for location in self.captured_locations[customer]:
+                extra = max(extra, self.coefficients[latest[customer]][self.final][location][customer])
+            objective += extra
+            penalty += self.penalties[customer] * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > latest[customer] and period3 < self.final)
+
+        # print('Objective: {}'.format(objective))
+        # print('Reward: {}'.format(reward))
+        # print('Penalty: {}'.format(penalty))
+        assert objective == reward - penalty
+
+        return reward, penalty
+
     def evaluate_customer(self, solution, customer, from_period = 0):
 
         # Evaluate objective value of a solution
