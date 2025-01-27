@@ -85,7 +85,11 @@ class benchmark(ic.instance):
         for period in self.periods:
             self.spawning[period] = {}
             for customer in self.customers:
-                if self.parameters['demands'] == 'constant':
+                if self.parameters['demands'] == 'random':
+                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                    self.spawning[period][customer] = np.random.randint(0, self.amplitudes[customer])
+                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                elif self.parameters['demands'] == 'constant':
                     self.spawning[period][customer] = self.amplitudes[customer]
                 elif self.parameters['demands'] == 'seasonal':
                     self.spawning[period][customer] = (self.amplitudes[customer] / 2) * np.cos(period) + (self.amplitudes[customer] / 2)
@@ -164,16 +168,29 @@ class benchmark(ic.instance):
 
         # Compute coefficients
         self.coefficients = {}
+        self.coefficients_reward = {}
+        self.coefficients_penalty = {}
         for period1 in self.periods_with_start:
             self.coefficients[period1] = {}
+            self.coefficients_reward[period1] = {}
+            self.coefficients_penalty[period1] = {}
             for period2 in self.periods_with_final:
                 if period1 < period2:
                     self.coefficients[period1][period2] = {}
+                    self.coefficients_reward[period1][period2] = {}
+                    self.coefficients_penalty[period1][period2] = {}
                     for location in self.locations:
                         self.coefficients[period1][period2][location] = {}
+                        self.coefficients_reward[period1][period2][location] = {}
+                        self.coefficients_penalty[period1][period2][location] = {}
                         for customer in self.captured_customers[location]:
                             if period2 != self.final:
                                 self.coefficients[period1][period2][location][customer] = self.rewards[location] * self.accumulated[period1][period2][customer]
+                                self.coefficients_reward[period1][period2][location][customer] = self.rewards[location] * self.accumulated[period1][period2][customer]
                             else:
                                 self.coefficients[period1][period2][location][customer] = 0.
+                                self.coefficients_reward[period1][period2][location][customer] = 0.
                             self.coefficients[period1][period2][location][customer] -= self.penalties[customer] * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > period1 and period3 < period2)
+                            # self.coefficients[period1][period2][location][customer] -= self.penalties[customer] * sum(self.spawning[period4][customer] for period3 in self.periods if period3 > period1 and period3 < period2 for period4 in self.periods if period4 > period1 and period4 <= period3)
+                            self.coefficients_penalty[period1][period2][location][customer] = self.penalties[customer] * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > period1 and period3 < period2)
+                            # self.coefficients_penalty[period1][period2][location][customer] = self.penalties[customer] * sum(self.spawning[period4][customer] for period3 in self.periods if period3 > period1 and period3 < period2 for period4 in self.periods if period4 > period1 and period4 <= period3)

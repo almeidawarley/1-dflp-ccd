@@ -71,6 +71,7 @@ class instance:
                 len(self.captured_locations[customer]),
                 self.captured_locations[customer][:50]))
             print('\t\t{}'.format([self.rankings[customer][location] for location in self.captured_locations[customer]]))
+            print('\t\t{}'.format([self.spawning[period][customer] for period in self.periods]))
 
         # Print location information
         print('Locations: {}'.format(self.locations))
@@ -138,7 +139,7 @@ class instance:
                             preference_location = location
                 if preference_ranking != 0:
                     objective += self.coefficients[latest[customer]][period][preference_location][customer]
-                    reward += self.coefficients_rewards[latest[customer]][period][preference_location][customer]
+                    reward += self.coefficients_reward[latest[customer]][period][preference_location][customer]
                     penalty += self.coefficients_penalty[latest[customer]][period][preference_location][customer]
                     latest[customer] = period
 
@@ -151,7 +152,7 @@ class instance:
                     preference_objective = self.coefficients[latest[customer]][self.final][location][customer]
                     preference_location = location
             objective += preference_objective
-            reward += self.coefficients_rewards[latest[customer]][self.final][preference_location][customer]
+            reward += self.coefficients_reward[latest[customer]][self.final][preference_location][customer]
             penalty += self.coefficients_penalty[latest[customer]][self.final][preference_location][customer]
 
         # print('Objective: {}'.format(objective))
