@@ -138,17 +138,21 @@ class instance:
                             preference_location = location
                 if preference_ranking != 0:
                     objective += self.coefficients[latest[customer]][period][preference_location][customer]
-                    reward += self.rewards[location] * self.accumulated[latest[customer]][period][customer]
-                    penalty += self.penalties[customer] * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > latest[customer] and period3 < period)
+                    reward += self.coefficients_rewards[latest[customer]][period][preference_location][customer]
+                    penalty += self.coefficients_penalty[latest[customer]][period][preference_location][customer]
                     latest[customer] = period
 
         # Parse final period for penalties
         for customer in self.customers:
-            extra = - 1 * gp.GRB.INFINITY
+            preference_objective = - 1 * gp.GRB.INFINITY
+            preference_location = 0
             for location in self.captured_locations[customer]:
-                extra = max(extra, self.coefficients[latest[customer]][self.final][location][customer])
-            objective += extra
-            penalty += self.penalties[customer] * sum(self.spawning[period3][customer] for period3 in self.periods if period3 > latest[customer] and period3 < self.final)
+                if self.coefficients[latest[customer]][self.final][location][customer] > preference_objective:
+                    preference_objective = self.coefficients[latest[customer]][self.final][location][customer]
+                    preference_location = location
+            objective += preference_objective
+            reward += self.coefficients_rewards[latest[customer]][self.final][preference_location][customer]
+            penalty += self.coefficients_penalty[latest[customer]][self.final][preference_location][customer]
 
         # print('Objective: {}'.format(objective))
         # print('Reward: {}'.format(reward))
