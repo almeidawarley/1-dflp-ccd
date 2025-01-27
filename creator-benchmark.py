@@ -4,17 +4,34 @@ import sys
 features = {
     'seed': [i for i in range(1, 3)],
     'locations': [100, 200],
-    'customers': [2], #[1, 5],
+    'customers': [1, 5],
     'periods': [5, 10],
     'facilities': [1, 5],
     'rewards': ['identical', 'inversely'],
     'preferences': ['small', 'large'],
-    'demands': ['constant', 'seasonal'],
-    'characters': ['homogeneous','heterogeneous'],
+    'demands': ['random'],
+    'characters': ['homogeneous'],
     'penalties': [0]
 }
 
 '''
+# Penalty graphs
+features = {
+    'seed': [2],
+    'locations': [100],
+    'customers': [1],
+    'periods': [10],
+    'facilities': [1, 5],
+    'rewards': ['inversely'],
+    'preferences': ['small'],
+    'demands': ['random'],
+    'characters': ['homogeneous'],
+    'penalties': [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+}
+'''
+
+'''
+# Facility graphs
 features = {
     'seed': [2],
     'locations': [100],
@@ -25,7 +42,7 @@ features = {
     'preferences': ['small'],
     'demands': ['constant'],
     'characters': ['homogeneous'],
-    'penalties': [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+    'penalties': [0]
 }
 '''
 
