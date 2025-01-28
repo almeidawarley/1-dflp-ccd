@@ -86,9 +86,9 @@ class benchmark(ic.instance):
             self.spawning[period] = {}
             for customer in self.customers:
                 if self.parameters['demands'] == 'random':
-                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                    self.spawning[period][customer] = np.random.randint(0, self.amplitudes[customer])
-                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                    self.spawning[period][customer] = np.random.randint(0, 10 * self.amplitudes[customer])
+                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                 elif self.parameters['demands'] == 'constant':
                     self.spawning[period][customer] = self.amplitudes[customer]
                 elif self.parameters['demands'] == 'seasonal':
