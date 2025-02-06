@@ -102,6 +102,7 @@ class instance:
                             preference_ranking = self.rankings[customer][location]
                             preference_location = location
                 if preference_ranking != 0:
+                    # print('Customer {} caught at period {}'.format(customer, period))
                     objective += self.coefficients[latest[customer]][period][preference_location][customer]
                     latest[customer] = period
 
@@ -138,6 +139,7 @@ class instance:
                             preference_ranking = self.rankings[customer][location]
                             preference_location = location
                 if preference_ranking != 0:
+                    # print('Customer {} caught at period {}'.format(customer, period))
                     objective += self.coefficients[latest[customer]][period][preference_location][customer]
                     reward += self.coefficients_reward[latest[customer]][period][preference_location][customer]
                     penalty += self.coefficients_penalty[latest[customer]][period][preference_location][customer]

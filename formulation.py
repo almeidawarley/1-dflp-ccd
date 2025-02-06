@@ -41,6 +41,8 @@ class formulation:
         solution = self.ins.format_solution(self.var['y'])
         objective = self.ins.evaluate_solution(solution)
 
+        reward, penalty = self.ins.evaluate_solution2(solution)
+
         metadata = {
             '{}status'.format(label): self.mip.status,
             '{}objective'.format(label): round(self.mip.objVal, cm.PRECISION),
@@ -49,7 +51,9 @@ class formulation:
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
             '{}mipgap'.format(label): round(self.mip.MIPGap, cm.PRECISION), # optgap?
             '{}optgap'.format(label): cm.compute_gap(self.mip.objBound, self.mip.objVal),
-            '{}solution'.format(label): self.ins.pack_solution(solution)
+            '{}solution'.format(label): self.ins.pack_solution(solution),
+            '{}reward'.format(label): reward,
+            '{}penalty'.format(label): penalty,
         }
 
         cm.mark_section('Reporting summary for {}'.format(self.ins.keyword))
