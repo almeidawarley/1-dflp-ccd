@@ -172,6 +172,8 @@ class benders(fm.formulation):
         solution = self.ins.format_solution(self.var['y'])
         objective = self.ins.evaluate_solution(solution)
 
+        reward, penalty = self.ins.evaluate_solution2(solution)
+
         metadata = {
             '{}cuts_fractional'.format(label): information['cuts_fractional'],
             '{}subtime_fractional'.format(label): round(information['subtime_fractional'], cm.PRECISION),
@@ -184,7 +186,9 @@ class benders(fm.formulation):
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
             #'{}mipgap'.format(label): self.mip.MIPGap, # optgap? not really
             '{}optgap'.format(label): cm.compute_gap(self.mip.objBound, self.mip.objVal),
-            '{}solution'.format(label): self.ins.pack_solution(solution)
+            '{}solution'.format(label): self.ins.pack_solution(solution),
+            '{}reward'.format(label): reward,
+            '{}penalty'.format(label): penalty,
         }
 
         cm.mark_section('Reporting summary for {} '.format(self.ins.keyword))
