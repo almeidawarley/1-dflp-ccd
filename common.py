@@ -4,7 +4,7 @@ import coverage as cv
 import marginal as mg
 import progressive as pr
 
-TIMELIMIT = 2 * 60 * 60
+TIMELIMIT = 1 * 60 * 60
 TOLERANCE = 10 ** (-4)
 PRECISION = 4 # 10 ** (-4)
 INFINITY = 10 ** 8

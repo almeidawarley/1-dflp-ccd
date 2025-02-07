@@ -2,10 +2,10 @@ import json as js
 import sys
 
 features = {
-    'seed': [i for i in range(1, 3)],
+    'seed': [i for i in range(1, 2)],
     'locations': [50, 100, 150],
     'customers': [1, 3, 5],
-    'periods': [5, 7, 10],
+    'periods': [5, 7, 9],
     'facilities': [1, 3, 5],
     'rewards': ['identical', 'inversely'],
     'preferences': ['small', 'large'],
@@ -95,10 +95,10 @@ for seed in features['seed']:
                                             output.write('#SBATCH --mail-user=<almeida.warley@outlook.com>\n')
                                             output.write('#SBATCH --mail-type=FAIL\n')
 
-                                            output.write('cd /home/walm/projects/def-mxm/walm/1-dflp-ra/\n')
+                                            output.write('cd ~/shortcut/\n')
                                             output.write('python run-{}.py {}\n'.format(script, keyword))
 
-                                        commands.write('dos2unix ../scripts/{}_{}.sh\n'.format(script, keyword))
+                                        # commands.write('dos2unix ../scripts/{}_{}.sh\n'.format(script, keyword))
                                         commands.write('sbatch ../scripts/{}_{}.sh\n'.format(script, keyword))
 
                                         print(keyword)
