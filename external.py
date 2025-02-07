@@ -46,8 +46,9 @@ class external(sb.subproblem):
             1
         )
 
+        # Warning: changed to the single facility case structure!
         dual_objective = (
-            self.dual_q[self.ins.start] -
+            self.dual_q[self.ins.start] +
             sum(
                 self.dual_p[(int(period) - 1) * len(self.ins.locations) + int(location) - 1]
                 for period in self.ins.periods
@@ -80,7 +81,8 @@ class external(sb.subproblem):
         for period in self.ins.periods:
             for location in self.ins.captured_locations[self.customer]:
                 self.inequality['y'][period][location] = (
-                    self.dual_o[(int(period) - 1) * len(self.ins.locations) + int(location) - 1] -
+                    # self.dual_o[(int(period) - 1) * len(self.ins.locations) + int(location) - 1] -
+                    # Warning: changed to the single facility case structure!
                     self.dual_p[(int(period) - 1) * len(self.ins.locations) + int(location) - 1]
                 )
         self.inequality['b'] = self.dual_q[self.ins.start]
