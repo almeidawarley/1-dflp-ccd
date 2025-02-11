@@ -9,7 +9,7 @@ features = {
     'facilities': [1, 3, 5],
     'rewards': ['identical', 'inversely'],
     'preferences': ['small', 'large'],
-    'demands': ['random', 'sparse'],
+    'demands': ['fixed', 'sparse'],
     'penalties': [0]
 }
 

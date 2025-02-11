@@ -79,6 +79,8 @@ class benchmark(ic.instance):
                     self.spawning[period][customer] = np.random.randint(0, 2)
                 elif self.parameters['demands'] == 'random':
                     self.spawning[period][customer] = np.random.randint(1, 11)
+                elif self.parameters['demands'] == 'fixed':
+                    self.spawning[period][customer] = 1
                 else:
                     exit('Wrong value for demands parameter')
 
