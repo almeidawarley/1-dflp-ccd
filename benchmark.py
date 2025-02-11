@@ -70,40 +70,17 @@ class benchmark(ic.instance):
                 exit('Wrong value for rewards parameter')
             self.rewards[location] = int(np.ceil(coefficient * len(self.locations)))
 
-        # Create amplitude
-        self.amplitudes = {}
-        for customer in self.customers:
-            if self.parameters['characters'] == 'heterogeneous':
-                self.amplitudes[customer] = np.random.choice([5,6,7,8,9,10,11,12,13,14,15])
-            elif self.parameters['characters'] == 'homogeneous':
-                self.amplitudes[customer] = 10
-            else:
-                exit('Wrong value for characters parameter')
-
         # Create spawning
         self.spawning = {}
         for period in self.periods:
             self.spawning[period] = {}
             for customer in self.customers:
                 if self.parameters['demands'] == 'sparse':
-                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                     self.spawning[period][customer] = np.random.randint(0, 2)
-                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                 elif self.parameters['demands'] == 'random':
-                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                    self.spawning[period][customer] = np.random.randint(0, 10 * self.amplitudes[customer])
-                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                elif self.parameters['demands'] == 'constant':
-                    self.spawning[period][customer] = self.amplitudes[customer]
-                elif self.parameters['demands'] == 'seasonal':
-                    self.spawning[period][customer] = (self.amplitudes[customer] / 2) * np.cos(period) + (self.amplitudes[customer] / 2)
-                elif self.parameters['demands'] == 'increasing':
-                    self.spawning[period][customer] = (period / number_periods) * self.amplitudes[customer]
-                elif self.parameters['demands'] == 'decreasing':
-                    self.spawning[period][customer] = ((number_periods - period + 1)/ number_periods) * self.amplitudes[customer]
+                    self.spawning[period][customer] = np.random.randint(1, 11)
                 else:
                     exit('Wrong value for demands parameter')
-                self.spawning[period][customer] = int(np.ceil(self.spawning[period][customer]))
 
         '''
         # Create penalties
@@ -131,7 +108,7 @@ class benchmark(ic.instance):
         }
 
         if int(self.parameters['penalties']) > 0:
-            for customer in ['6','27','32','37','38','43','60','67','73','77','87','91','95','97','100','106','112','113','121','124','125','132','140','141']:
+            for customer in []:
                 self.penalties[customer] = int(self.parameters['penalties'])
 
         # Set proper time periods

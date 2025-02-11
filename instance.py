@@ -106,6 +106,12 @@ class instance:
                     objective += self.coefficients[latest[customer]][period][preference_location][customer]
                     latest[customer] = period
 
+        '''
+        for customer in self.customers:
+            if latest[customer] == self.start:
+                print('Customer {} not caught'.format(customer))
+        '''
+
         # Parse final period for penalties
         for customer in self.customers:
             reward = - 1 * gp.GRB.INFINITY
