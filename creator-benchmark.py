@@ -14,35 +14,19 @@ features = {
     'penalties': [0]
 }
 
-'''
 # Penalty graphs
 features = {
-    'seed': [2],
-    'locations': [100],
-    'customers': [1],
-    'periods': [5],
-    'facilities': [1, 5],
+    'seed': [1],
+    'locations': [50],
+    'customers': [3],
+    'periods': [9],
+    'facilities': [1],
     'rewards': ['identical'],
     'preferences': ['large'],
-    'demands': ['constant'],
+    'demands': ['random'],
     'characters': ['homogeneous'],
-    'penalties': [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+    'penalties': [int(i) for i in range(5, 51, 5)]
 }
-
-# Facility graphs
-features = {
-    'seed': [2],
-    'locations': [100],
-    'customers': [1, 2],
-    'periods': [10],
-    'facilities': [1, 5],
-    'rewards': ['identical'],
-    'preferences': ['small'],
-    'demands': ['constant'],
-    'characters': ['homogeneous'],
-    'penalties': [0]
-}
-'''
 
 script = sys.argv[1]
 hours = sys.argv[2]

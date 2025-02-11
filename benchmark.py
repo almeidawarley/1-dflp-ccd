@@ -101,6 +101,7 @@ class benchmark(ic.instance):
                     exit('Wrong value for demands parameter')
                 self.spawning[period][customer] = int(np.ceil(self.spawning[period][customer]))
 
+        '''
         # Create penalties
         self.penalties = {
             customer : int(np.ceil(
@@ -117,6 +118,17 @@ class benchmark(ic.instance):
             ))
             for customer in self.customers
         }
+        '''
+
+        # Create penalties
+        self.penalties = {
+            customer : 0
+            for customer in self.customers
+        }
+
+        if int(self.parameters['penalties']) > 0:
+            for customer in ['385','562','333','438','365','335','490','300','540','646','475','342','506','434','365','375','428','382','543','351','353','446','609','487']:
+                self.penalties[customer] = int(self.parameters['penalties'])
 
         # Set proper time periods
         self.start, self.final = 0, len(self.periods) + 1
