@@ -85,7 +85,11 @@ class benchmark(ic.instance):
         for period in self.periods:
             self.spawning[period] = {}
             for customer in self.customers:
-                if self.parameters['demands'] == 'random':
+                if self.parameters['demands'] == 'sparse':
+                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                    self.spawning[period][customer] = np.random.randint(0, 2)
+                    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                elif self.parameters['demands'] == 'random':
                     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                     self.spawning[period][customer] = np.random.randint(0, 10 * self.amplitudes[customer])
                     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -127,7 +131,7 @@ class benchmark(ic.instance):
         }
 
         if int(self.parameters['penalties']) > 0:
-            for customer in ['385','562','333','438','365','335','490','300','540','646','475','342','506','434','365','375','428','382','543','351','353','446','609','487']:
+            for customer in ['6','27','32','37','38','43','60','67','73','77','87','91','95','97','100','106','112','113','121','124','125','132','140','141']:
                 self.penalties[customer] = int(self.parameters['penalties'])
 
         # Set proper time periods
