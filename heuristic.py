@@ -62,7 +62,7 @@ class forward(heuristic):
             # Retrieve set of locations for some period
             locations = []
             for location in self.ins.locations:
-                if model.var['y'][period, location].x > 0.:
+                if cm.is_equal_to(model.var['y'][period, location].x, 1.):
                     locations.append(location)
                 model.var['y'][period, location].lb = model.var['y'][period, location].x
                 model.var['y'][period, location].ub = model.var['y'][period, location].x
@@ -104,7 +104,7 @@ class backward(heuristic):
             # Retrieve set of locations for some period
             locations = []
             for location in self.ins.locations:
-                if model.var['y'][period, location].x > 0.:
+                if cm.is_equal_to(model.var['y'][period, location].x, 1.):
                     locations.append(location)
                 model.var['y'][period, location].lb = model.var['y'][period, location].x
                 model.var['y'][period, location].ub = model.var['y'][period, location].x
