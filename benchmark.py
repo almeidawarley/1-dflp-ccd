@@ -105,13 +105,9 @@ class benchmark(ic.instance):
 
         # Create penalties
         self.penalties = {
-            customer : 0
+            customer : int(self.parameters['penalties'])
             for customer in self.customers
         }
-
-        if int(self.parameters['penalties']) > 0:
-            for customer in []:
-                self.penalties[customer] = int(self.parameters['penalties'])
 
         # Set proper time periods
         self.start, self.final = 0, len(self.periods) + 1

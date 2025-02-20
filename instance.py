@@ -106,12 +106,6 @@ class instance:
                     objective += self.coefficients[latest[customer]][period][preference_location][customer]
                     latest[customer] = period
 
-        '''
-        for customer in self.customers:
-            if latest[customer] == self.start:
-                print('Customer {} not caught'.format(customer))
-        '''
-
         # Parse final period for penalties
         for customer in self.customers:
             reward = - 1 * gp.GRB.INFINITY
@@ -198,6 +192,27 @@ class instance:
         objective += reward
 
         return objective
+
+    def evaluate_customer2(self, solution, customer, from_period = 0):
+
+        # Evaluate number of captures in a solution
+        captures = 0
+
+        # For some customer, and from a certain period
+        latest = from_period
+
+        # Parse regular periods for rewards
+        for period, locations in solution.items():
+            if period > from_period:
+                captured = False
+                reward = - 1 * gp.GRB.INFINITY
+                for location in locations:
+                    if location in self.captured_locations[customer]:
+                        captured = True
+                if captured:
+                    captures += 1
+
+        return captures
 
     def copy_solution(self, solution):
 

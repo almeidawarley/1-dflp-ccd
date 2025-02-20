@@ -18,13 +18,13 @@ features = {
 features = {
     'seed': [1],
     'locations': [50],
-    'customers': [3],
-    'periods': [9],
-    'facilities': [1],
-    'rewards': ['identical'],
-    'preferences': ['large'],
-    'demands': ['random'],
-    'penalties': [int(i) for i in range(5, 51, 5)]
+    'customers': [1],
+    'periods': [5],
+    'facilities': [1,3,5],
+    'rewards': ['identical', 'inversely'],
+    'preferences': ['small', 'large'],
+    'demands': ['fixed', 'sparse'],
+    'penalties': [int(i) for i in range(0, 100, 10)]
 }
 '''
 
