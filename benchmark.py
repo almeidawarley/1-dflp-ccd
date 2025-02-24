@@ -77,8 +77,10 @@ class benchmark(ic.instance):
             for customer in self.customers:
                 if self.parameters['demands'] == 'sparse':
                     self.spawning[period][customer] = np.random.randint(0, 2)
-                elif self.parameters['demands'] == 'random':
-                    self.spawning[period][customer] = np.random.randint(1, 11)
+                elif self.parameters['demands'] == 'random1':
+                    self.spawning[period][customer] = np.random.randint(0, 11)
+                elif self.parameters['demands'] == 'random2':
+                    self.spawning[period][customer] = np.random.randint(0, 101)
                 elif self.parameters['demands'] == 'fixed':
                     self.spawning[period][customer] = 1
                 else:
