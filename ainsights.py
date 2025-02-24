@@ -247,7 +247,7 @@ def graph_numbercaptures():
 
 def graph_histogram(penalty):
 
-    with open ('graphs/histogram.tex', 'w') as output:
+    with open ('graphs/{}-{}_histogram.tex'.format(subset, penalty), 'w') as output:
 
         fac = {
             1: 'green',
@@ -303,11 +303,13 @@ def graph_histogram(penalty):
         output.write('\draw (18,-0.5) node[anchor=mid] {$4$};')
         output.write('\draw (22,-0.5) node[anchor=mid] {$5$};')
 
-        for period in [0,1,2,3,4,5]:
+        for f, facility in enumerate([1,3,5]):
 
-            for f, facility in enumerate([1,3,5]):
+            for p, period in enumerate([0,1,2,3,4,5]):
 
-                x = period * 4 + f + 1
+                # x = f * 6 + p + 1
+                x = p * 4 + f + 1
+
                 y = captures[period][facility]
 
                 print('Facility {}, captures{}, #{}'.format(facility, period, y))
@@ -321,7 +323,7 @@ def graph_histogram(penalty):
 
         output.write('\end{tikzpicture}\n')
 
-        print('Exported graph to graphs/histogram.tex')
+        print('Exported graph to graphs/{}-{}_histogram.tex'.format(subset, penalty))
 
 # graph_numbercaptures()
 
