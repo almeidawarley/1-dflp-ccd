@@ -6,6 +6,18 @@ class network(fm.formulation):
 
         super().__init__(instance, 'DSFLP-C-NET')
 
+    def relax(self):
+
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].vtype = 'C'
+
+    def tense(self):
+
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].vtype = 'B'
+
     def set_variables(self):
 
         self.create_vry()
@@ -15,11 +27,10 @@ class network(fm.formulation):
 
         self.mip.setObjective(
             sum(
-                self.ins.rewards[period2][location] *
-                self.ins.accumulated[period1][period2][customer] *
+                self.ins.coefficients[period1][period2][location][customer] *
                 self.var['x'][period1, period2, location, customer]
                 for period1 in self.ins.periods_with_start
-                for period2 in self.ins.periods
+                for period2 in self.ins.periods_with_final
                 for customer in self.ins.customers
                 for location in self.ins.captured_locations[customer]
                 if period1 < period2
@@ -32,20 +43,20 @@ class network(fm.formulation):
         self.create_c2()
         self.create_c3()
         self.create_c4()
-        # self.create_c5()
-        # self.create_si()
+        self.create_c5()
+        self.create_c6()
 
     def create_vrx(self):
         # Create x^{kt}_{ij} variables
 
-        lowers = [0. for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
-        uppers = [1. for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
-        coefs = [0. for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
-        types = ['C' for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_end for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
+        lowers = [0. for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_final for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
+        uppers = [1. for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_final for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
+        coefs = [0. for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_final for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
+        types = ['C' for period1 in self.ins.periods_with_start for period2 in self.ins.periods_with_final for customer in self.ins.customers for _ in self.ins.captured_locations[customer] if period1 < period2]
         names = [
             'x~{}_{}_{}_{}'.format(period1, period2, location, customer)
             for period1 in self.ins.periods_with_start
-            for period2 in self.ins.periods_with_end
+            for period2 in self.ins.periods_with_final
             for customer in self.ins.customers
             for location in self.ins.captured_locations[customer]
             if period1 < period2
@@ -53,7 +64,7 @@ class network(fm.formulation):
         tuples = [
             (period1, period2, location, customer)
             for period1 in self.ins.periods_with_start
-            for period2 in self.ins.periods_with_end
+            for period2 in self.ins.periods_with_final
             for customer in self.ins.customers
             for location in self.ins.captured_locations[customer]
             if period1 < period2
@@ -67,10 +78,11 @@ class network(fm.formulation):
         self.mip.addConstrs(
             (
                 sum(
-                    self.var['x'][period1, period2, location, customer]
+                    self.var['x'][period1, period2, other, customer]
                     for period1 in self.ins.periods_with_start
+                    for other in self.ins.captured_locations[customer]
                     if period1 < period2
-                ) == self.var['y'][period2, location]
+                ) >= self.var['y'][period2, location]
                 for period2 in self.ins.periods
                 for customer in self.ins.customers
                 for location in self.ins.captured_locations[customer]
@@ -90,7 +102,7 @@ class network(fm.formulation):
                 ) ==
                 sum(
                     self.var['x'].sum(period2, period1, '*', customer)
-                    for period1 in self.ins.periods_with_end
+                    for period1 in self.ins.periods_with_final
                     if period1 > period2
                 )
             for period2 in self.ins.periods
@@ -115,8 +127,34 @@ class network(fm.formulation):
 
         self.mip.addConstrs(
             (
-                self.var['x'].sum('*', self.ins.finish, '*', customer) == 1
+                sum(
+                    self.var['x'][period1, period2, location, customer]
+                    for period1 in self.ins.periods_with_start
+                    if period1 < period2
+                )
+                <= self.var['y'][period2, location]
+                for period2 in self.ins.periods
                 for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
             ),
             name = 'c5'
+        )
+
+    def create_c6(self):
+        # Create constraint 6
+
+        self.mip.addConstrs(
+            (
+                self.var['y'][period2, location] +
+                sum(
+                    self.var['x'][period1, period2, other, customer]
+                    for period1 in self.ins.periods_with_start
+                    for other in self.ins.less_preferred[customer][location]
+                    if period1 < period2
+                ) <= 1
+                for period2 in self.ins.periods
+                for customer in self.ins.customers
+                for location in self.ins.captured_locations[customer]
+            ),
+            name = 'c6'
         )

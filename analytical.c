@@ -1,59 +1,35 @@
 #ifndef ANALYTICAL_H
 #define ANALYTICAL_H
 
-#include<stdio.h>
+#include <stdio.h>
+#include <math.h>
 
-int procedure(int I, int J, int T, int *catalogs, float *rewards, int *accumulated, int customer, int *sequence, float * dual_q, float * dual_p, int debug){
+/*
+    Analytical procedure adapted for multiple facilities: commit 9ff14ce
+*/
 
-    if(debug == 1){
 
-        printf("Analytical procedure\n");
-        printf("Running it for customer %d\n", customer);
+int is_equal_to(float value1, float value2){
+    float tolerance = 0.0001;
+    return (fabs(value1 - value2) < tolerance);
+}
 
-        printf("Data summary dump: \n");
-
-        // Input sets: I, J, and T
-        printf("# locations: %d\n", I);
-        printf("# customers: %d\n", J);
-        printf("# periods: %d\n", T);
-
-        // Catalogs: a_{ij}
-        for(int j = 0; j < J; j++){
-            printf("Customer %d is willing to attend: ", j + 1);
-            for(int i = 0; i < I; i++){
-                if(catalogs[i * I + j] == 1){
-                    printf("%d, ", i + 1);
-                }
-            }
-            printf("\n");
-        }
-
-        // Rewards: r^{t}_{i}
-        for(int i = 0; i < I; i++){
-            printf("Location %d has a reward of %f\n", i + 1, rewards[i]);
-        }
-
-        // Accumulated demand: D^{lt}_{j}
-        for(int j = 0; j < J; j++){
-            printf("Accumulated demand for customer %d: ", j + 1);
-            for(int l = 0; l < T + 1; l++){
-                for(int t = 0; t < T; t++){
-                    if(l < t + 1){
-                        printf("%d [%d -> %d], ", accumulated[l * T * J + t * J + j], l, t + 1);
-                    }
-                }
-            }
-            printf("\n");
-        }
-
-        // Location sequence: y^{t}_{i}
-        for(int t = 0; t < T; t++){
-            printf("Provider installs location %d at time period %d\n", sequence[t], t + 1);
-        }
-    }
+void procedure(int customer, int I, int J, int T, int *catalogs, float *coefficients, float *master_y, float *primal_x, float *dual_q, float *dual_o, float *dual_p, int *patronization, int *futurecapture, int debug){
 
     // Adjust customer index
     customer = customer - 1;
+
+    // Build compatible sequence
+    int sequence[T];
+    for(int t = 0; t < T; t++){
+        sequence[t] = 0;
+        for(int i = 0; i < I; i++){
+            if(is_equal_to(master_y[t * I + i], 1.)){
+                sequence[t] = i + 1;
+                break;
+            }
+        }
+    }
 
     // Solve the primal problem
     int primal_solution[T + 1];
@@ -83,19 +59,13 @@ int procedure(int I, int J, int T, int *catalogs, float *rewards, int *accumulat
         for(int l = 0; l < T + 1; l++){
             for(int t = 0; t < T; t++){
                 if((primal_solution[l] == t) && (primal_solution[s] != t) && (l != s) && (s < t + 1)){
-                    // printf("1st: l = %d, s = %d, t = %d\n", l, s, t + 1);
                     location = sequence[t] - 1;
-                    // printf("rewards R: %f\n", rewards[t * I + location]);
-                    // printf("demands A: %d\n", accumulated[s * T * J + t * J + customer]);
-                    // printf("demands B: %d\n", accumulated[l * T * J + t * J + customer]);
-                    current = rewards[t * I + location] * accumulated[s * T * J + t * J + customer];
-                    current -= rewards[t * I + location] * accumulated[l * T * J + t * J + customer];
+                    current = coefficients[s * (T+1) * I * J + t * I * J + location * J + customer];
+                    current -= coefficients[l * (T+1) * I * J + t * I * J + location * J + customer];
                     current += dual_q[l];
-                    // printf("current: %f\n", current);
                     if(current > dual_q[s]){
                         dual_q[s] = current;
                     }
-                    // printf("dual_q[s]: %f\n", dual_q[s]);
                 }
             }
         }
@@ -107,10 +77,9 @@ int procedure(int I, int J, int T, int *catalogs, float *rewards, int *accumulat
         for(int l = 0; l < T + 1; l++){
             for(int t = 0; t < T; t++){
                 if((primal_solution[l] == t) && (primal_solution[s] == t) && (l != s) && (s < t + 1)){
-                    // printf("2nd: l = %d, s = %d, t = %d\n", l, s, t + 1);
                     location = sequence[t] - 1;
-                    current = rewards[t * I + location] * accumulated[s * T * J + t * J + customer];
-                    current -= rewards[t * I + location] * accumulated[l * T * J + t * J + customer];
+                    current = coefficients[s * (T+1) * I * J + t * I * J + location * J + customer];
+                    current -= coefficients[l * (T+1) * I * J + t * I * J + location * J + customer];
                     current += dual_q[l];
                     if(current > dual_q[s]){
                         dual_q[s] = current;
@@ -126,12 +95,12 @@ int procedure(int I, int J, int T, int *catalogs, float *rewards, int *accumulat
     for(int t = 0; t < T; t++){
         for(int i = 0; i < I; i++){
             if(catalogs[i * J + customer] == 1){
-                current = rewards[t * I + i] * accumulated[0 * T * J + t * J + customer];
+                current = coefficients[0 * (T+1) * I * J + t * I * J + i * J + customer];
                 current += (dual_q[t + 1] - dual_q[0]);
                 dual_p[t * I + i] = current;
                 for(int l = 1; l < T + 1; l++){
                     if(l < t + 1){
-                        current = rewards[t * I + i] * accumulated[l * T * J + t * J + customer];
+                        current = coefficients[l * (T+1) * I * J + t * I * J + i * J + customer];
                         current += (dual_q[t + 1] - dual_q[l]);
                         if(current > dual_p[t * I + i]){
                             dual_p[t * I + i] = current;
@@ -144,24 +113,6 @@ int procedure(int I, int J, int T, int *catalogs, float *rewards, int *accumulat
             }
         }
     }
-
-    /*
-    for(int l = 0; l < T + 1; l++){
-        printf("%f, ", dual_q[l]);
-    }
-    printf("\n");
-
-    for(int t = 0; t < T; t++){
-        for(int i = 0; i < I; i++){
-            if(catalogs[i * J + customer] == 1){
-                printf("%f, ", dual_p[t * I + i]);
-            }
-        }
-    }
-    printf("\n");
-    */
-
-    return dual_objective;
 }
 
 #endif

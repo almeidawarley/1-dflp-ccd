@@ -1,5 +1,6 @@
 import gurobipy as gp
 import common as cm
+# import heuristic as hr
 
 class formulation:
 
@@ -18,21 +19,51 @@ class formulation:
 
         label = label + '_' if len(label) > 0 else label
 
+        # Provide a simple warm start solution
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].start = 0
+
+        '''
+        # Provide a smart warm start solution
+        heuristic = hr.backward(self.ins)
+        heuristic.run()
+        warm_start = heuristic.solution
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                self.var['y'][period, location].start = (1 if location in warm_start[period] else 0)
+        '''
+
+        # Call Gurobi to optimize the model
         self.mip.optimize()
 
+        # Retrieve solution and simulate objective value
         solution = self.ins.format_solution(self.var['y'])
-
         objective = self.ins.evaluate_solution(solution)
 
-        assert cm.compare_obj(self.mip.objVal, objective)
+        reward, penalty = self.ins.evaluate_solution2(solution)
 
         metadata = {
             '{}status'.format(label): self.mip.status,
-            '{}objective'.format(label): self.mip.objVal,
+            '{}objective'.format(label): round(self.mip.objVal, cm.PRECISION),
+            '{}bound'.format(label): round(self.mip.objBound, cm.PRECISION),
+            '{}nodes'.format(label): self.mip.nodeCount,
             '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION),
-            '{}optgap'.format(label): self.mip.MIPGap,
-            '{}solution'.format(label): self.ins.pack_solution(solution)
+            '{}mipgap'.format(label): round(self.mip.MIPGap, cm.PRECISION), # optgap?
+            '{}optgap'.format(label): cm.compute_gap(self.mip.objBound, self.mip.objVal),
+            '{}solution'.format(label): self.ins.pack_solution(solution),
+            '{}reward'.format(label): reward,
+            '{}penalty'.format(label): penalty,
         }
+
+        cm.mark_section('Reporting summary for {}'.format(self.ins.keyword))
+        for key, value in metadata.items():
+            print('{}: {}'.format(key, value))
+
+        if not cm.compare_obj(self.mip.objVal, objective):
+            print('>> Actual objective found through simulation: {} <<<'.format(objective))
+            assert self.mip.objVal < objective
+            print('>>> Solution found by Benders improved by post-processing <<<')
 
         self.mip.reset()
 
@@ -42,26 +73,33 @@ class formulation:
 
         label = label + '_' if len(label) > 0 else label
 
-        for period in self.ins.periods:
-            for location in self.ins.locations:
-                self.var['y'][period, location].vtype = 'C'
+        # Relax integrality (binary) constraints
+        self.relax()
 
+        # Call Gurobi to optimize the model
         self.mip.optimize()
 
-        metadata = {
-            '{}status'.format(label): self.mip.status,
-            '{}objective'.format(label): self.mip.objVal,
-            '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION)
-        }
+        if self.mip.solcount > 0:
 
-        # self.mip.write('relaxed-{}.lp'.format(label))
-        # self.mip.write('relaxed-{}.sol'.format(label))
+            metadata = {
+                '{}status'.format(label): self.mip.status,
+                '{}objective'.format(label): self.mip.objVal,
+                '{}bound'.format(label): self.mip.objBound,
+                '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION)
+            }
+
+        else:
+
+            metadata = {
+                '{}status'.format(label): self.mip.status,
+                '{}objective'.format(label): round(-cm.INFINITY, cm.PRECISION),
+                '{}bound'.format(label): round(cm.INFINITY, cm.PRECISION),
+                '{}runtime'.format(label): round(self.mip.runtime, cm.PRECISION)
+            }
 
         self.mip.reset()
 
-        for period in self.ins.periods:
-            for location in self.ins.locations:
-                self.var['y'][period, location].vtype = 'B'
+        self.tense()
 
         return metadata
 
@@ -104,25 +142,8 @@ class formulation:
 
         self.mip.addConstrs(
             (
-                self.var['y'].sum(period, '*') <= 1
+                self.var['y'].sum(period, '*') <= self.ins.facilities[period]
                 for period in self.ins.periods
             ),
             name = 'c1'
-        )
-
-    def create_si(self):
-        # Create strong? inequality
-
-        self.mip.addConstrs(
-            (
-                sum(
-                    self.var['y'][local, location]
-                    for local in range(period, period + length)
-                    if local < self.ins.finish
-                ) <= length - 1
-                for period in self.ins.periods
-                for location in self.ins.locations
-                for length in range(2, 3)# len(self.ins.periods))
-            ),
-            name = 'si'
         )

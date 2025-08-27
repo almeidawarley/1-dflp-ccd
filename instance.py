@@ -1,14 +1,10 @@
-import json as js
-import numpy as np
-import pandas as pd
-import common as cm
 from ctypes import *
-# c_int, c_float, cdll, pointer
+import common as cm
+import gurobipy as gp
 
 class instance:
 
-    def __init__(self, keyword, project):
-        # Initiate instance class
+    def __init__(self, keyword):
 
         '''
             Mandatory attributes:
@@ -17,132 +13,216 @@ class instance:
             - self.customers: list of customers
             - self.periods: list of periods
 
+            - self.facilities: number of facilities
             - self.catalogs: preference rules
-            - self.rewards: location rewards
-            - self.spawning: spawning demand
-            - self.accumulated: accumulated demand
+            - self.rankings: preference rankings
+            - self.coefficients: objective function
         '''
 
-        # Store instance keyword
+        # Initiate standard attributes
         self.keyword = keyword
-
-        # Store project keyword
-        self.project = project
-
-        # Store parameters
         self.parameters = {}
-
-        # Set random seed
         self.parameters['seed'] = 0
 
-        # Apply generator
+        # Apply some generator
         self.create_instance()
 
-        # Set start/finish
-        self.start = 0
-        self.finish = len(self.periods) + 1
-        self.periods_with_start = [self.start] + [period for period in self.periods]
-        self.periods_with_end = [period for period in self.periods] + [self.finish]
-        self.periods_extended = [self.start] + [period for period in self.periods] + [self.finish]
-
-        # Set depot info
-        self.depot = '0'
-        self.locations_extended = [self.depot] + self.locations
-
-        # Compute accumulated demand
-        self.accumulated = {}
-        for period1 in self.periods_with_start:
-            self.accumulated[period1] = {}
-            for period2 in self.periods:
-                if period1 < period2:
-                    self.accumulated[period1][period2] = {}
-                    for customer in self.customers:
-                        # self.accumulated[period1][period2][customer] = sum(self.spawning[period][customer] for period in self.periods if period <= period2 - period1) 
-                        self.accumulated[period1][period2][customer] = sum(self.spawning[period][customer] for period in self.periods if period1 < period and period <= period2)
-
-        self.captured_locations = {}
-        for customer in self.customers:
-            self.captured_locations[customer] = [location for location in self.locations if self.catalogs[location][customer] == 1]
-
-        self.captured_customers = {}
-        self.captured_customers[self.depot] = []
-        for location in self.locations:
-            self.captured_customers[location] = [customer for customer in self.customers if self.catalogs[location][customer] == 1]
-
-        # Set proper big M values
-        self.limits = {}
-        for period in self.periods:
-            self.limits[period] = {}
-            for customer in self.customers:
-                limit = self.accumulated[self.start][period][customer]
-                self.limits[period][customer] = np.ceil(limit)
-
         # Prepare proper ctypes
-
         self.c_nb_locations = c_int(len(self.locations))
         self.c_nb_customers = c_int(len(self.customers))
         self.c_nb_periods = c_int(len(self.periods))
-
         self.c_dt_catalogs = (c_int * (len(self.locations) * len(self.customers)))()
-
         for location in self.locations:
             for customer in self.customers:
                 self.c_dt_catalogs[(int(location) - 1) * len(self.customers) + int(customer) - 1] = c_int(self.catalogs[location][customer])
-
-        self.c_dt_rewards = (c_float * (len(self.periods) * len(self.locations)))()
-
-        for period in self.periods:
-            for location in self.locations:
-                self.c_dt_rewards[(int(period) - 1) * len(self.locations) + int(location) - 1] = self.rewards[period][location]
-
-        self.c_dt_accumulated = (c_int * (len(self.periods_with_start) * len(self.periods) * len(self.customers)))()
-
+        self.c_dt_coefficients = (c_float * (len(self.periods_with_start) * len(self.periods_with_final) * len(self.locations) * len(self.customers)))()
         for period1 in self.periods_with_start:
-            for period2 in self.periods:
-                for customer in self.customers:
-                    self.c_dt_accumulated[int(period1) * len(self.periods) * len(self.customers) + (int(period2) - 1)* len(self.customers) + int(customer) - 1] = int(self.accumulated[period1][period2][customer]) if period1 < period2 else 0
+            for period2 in self.periods_with_final:
+                for location in self.locations:
+                    for customer in self.customers:
+                        self.c_dt_coefficients[(
+                            (int(period1) - 0) * len(self.periods_with_final) * len(self.locations) * len(self.customers) + 
+                            (int(period2) - 1) * len(self.locations) * len(self.customers) + 
+                            (int(location) - 1) * len(self.customers) + 
+                            (int(customer) - 1)
+                        )] = c_float(self.coefficients[period1][period2][location][customer] if period1 < period2 and customer in self.captured_customers[location] else -10 ** 8)
 
     def print_instance(self):
-        # Print stored instance
 
-        print('Keyword: <{}>'.format(self.keyword))
+        # Write coefficients to file
+        with open('coefficients/{}.csv'.format(self.keyword), 'w') as content:
+            for period1 in self.periods_with_start:
+                for period2 in self.periods_with_final:
+                    if period1 < period2:
+                        for location in self.locations:
+                            for customer in self.captured_customers[location]:
+                                content.write('{}, {}, {}, {}, {}\n'.format(period1, period2, location, customer, self.coefficients[period1][period2][location][customer]))
 
+        # Print instance summary
+        print('Keyword: {}'.format(self.keyword))
+        print('Facilities: {}'.format([number for number in self.facilities.values()]))
+
+        # Print customer information
         print('Customers: {}'.format(self.customers))
-        print('\t| j: #\t[L]')
+        print('\t| j: #\t[I]')
         for customer in self.customers:
             print('\t| {}: {}\t{}'.format(
                 customer,
                 len(self.captured_locations[customer]),
-                self.captured_locations[customer] if len(self.locations) <= 100 else '[...]'))
+                self.captured_locations[customer][:50]))
+            print('\t\t{}'.format([self.rankings[customer][location] for location in self.captured_locations[customer]]))
+            print('\t\t{}'.format([self.spawning[period][customer] for period in self.periods]))
 
+        # Print location information
         print('Locations: {}'.format(self.locations))
+        print('\t| i: #\t[J]')
         for location in self.locations:
-            print('\t| {} ({}) : {}'.format(
+            print('\t| {} ({}) : {}\t{}'.format(
                 location,
-                self.rewards[self.start + 1][location],
-                self.captured_customers[location] if len(self.customers) <= 100 else len(self.captured_customers[location])))
+                self.rewards[location],
+                len(self.captured_customers[location]),
+                self.captured_customers[location][:50]))
+
+        print('Coefficients at coefficients/{}.csv'.format(self.keyword))
 
     def evaluate_solution(self, solution):
 
+        # Evaluate objective value of a solution
         objective = 0.
 
         latest = {customer: self.start for customer in self.customers}
 
-        for period, location in solution.items():
-            if location != self.depot:
-                for customer in self.captured_customers[location]:
-                    objective += self.rewards[period][location] * self.accumulated[latest[customer]][period][customer]
+        # Parse regular periods for rewards
+        for period, locations in solution.items():
+            for customer in self.customers:
+                preference_ranking = 0
+                for location in locations:
+                    if location in self.captured_locations[customer]:
+                        if self.rankings[customer][location] > preference_ranking:
+                            preference_ranking = self.rankings[customer][location]
+                            preference_location = location
+                if preference_ranking != 0:
+                    # print('Customer {} caught at period {}'.format(customer, period))
+                    objective += self.coefficients[latest[customer]][period][preference_location][customer]
                     latest[customer] = period
+
+        # Parse final period for penalties
+        for customer in self.customers:
+            reward = - 1 * gp.GRB.INFINITY
+            for location in self.captured_locations[customer]:
+                reward = max(reward, self.coefficients[latest[customer]][self.final][location][customer])
+            objective += reward
 
         return objective
 
+    def evaluate_solution2(self, solution):
+
+        # Evaluate objective value of a solution
+        objective = 0.
+        reward = 0.
+        penalty = 0.
+
+        try:
+            self.penalties
+        except:
+            self.penalties = {customer: 0. for customer in self.customers}
+
+        latest = {customer: self.start for customer in self.customers}
+
+        # Parse regular periods for rewards
+        for period, locations in solution.items():
+            for customer in self.customers:
+                preference_ranking = 0
+                for location in locations:
+                    if location in self.captured_locations[customer]:
+                        if self.rankings[customer][location] > preference_ranking:
+                            preference_ranking = self.rankings[customer][location]
+                            preference_location = location
+                if preference_ranking != 0:
+                    # print('Customer {} caught at period {}'.format(customer, period))
+                    objective += self.coefficients[latest[customer]][period][preference_location][customer]
+                    reward += self.coefficients_reward[latest[customer]][period][preference_location][customer]
+                    penalty += self.coefficients_penalty[latest[customer]][period][preference_location][customer]
+                    latest[customer] = period
+
+        # Parse final period for penalties
+        for customer in self.customers:
+            preference_objective = - 1 * gp.GRB.INFINITY
+            preference_location = 0
+            for location in self.captured_locations[customer]:
+                if self.coefficients[latest[customer]][self.final][location][customer] > preference_objective:
+                    preference_objective = self.coefficients[latest[customer]][self.final][location][customer]
+                    preference_location = location
+            objective += preference_objective
+            reward += self.coefficients_reward[latest[customer]][self.final][preference_location][customer]
+            penalty += self.coefficients_penalty[latest[customer]][self.final][preference_location][customer]
+
+        # print('Objective: {}'.format(objective))
+        # print('Reward: {}'.format(reward))
+        # print('Penalty: {}'.format(penalty))
+        assert objective == reward - penalty
+
+        return reward, penalty
+
+    def evaluate_customer(self, solution, customer, from_period = 0):
+
+        # Evaluate objective value of a solution
+        objective = 0.
+
+        # For some customer, and from a certain period
+        latest = from_period
+
+        # Parse regular periods for rewards
+        for period, locations in solution.items():
+            if period > from_period:
+                captured = False
+                reward = - 1 * gp.GRB.INFINITY
+                for location in locations:
+                    if location in self.captured_locations[customer]:
+                        captured = True
+                        reward = max(reward, self.coefficients[latest][period][location][customer])
+                if captured:
+                    latest = period
+                    objective += reward
+
+        # Parse final period for penalties
+        reward = - 1 * gp.GRB.INFINITY
+        for location in self.captured_locations[customer]:
+            reward = max(reward, self.coefficients[latest][self.final][location][customer])
+        objective += reward
+
+        return objective
+
+    def evaluate_customer2(self, solution, customer, from_period = 0):
+
+        # Evaluate number of captures in a solution
+        captures = 0
+
+        # For some customer, and from a certain period
+        latest = from_period
+
+        # Parse regular periods for rewards
+        for period, locations in solution.items():
+            if period > from_period:
+                captured = False
+                reward = - 1 * gp.GRB.INFINITY
+                for location in locations:
+                    if location in self.captured_locations[customer]:
+                        captured = True
+                if captured:
+                    captures += 1
+
+        return captures
+
     def copy_solution(self, solution):
 
+        # Create a hard copy of the solution
         return {period : location for period, location in solution.items()}
 
     def empty_solution(self):
 
-        return {period: self.depot for period in self.periods}
+        # Create an empty solution
+        return {period: [] for period in self.periods}
 
     def insert_solution(self, solution, period, location):
 
@@ -157,27 +237,33 @@ class instance:
 
         return inserted
 
-    def format_solution(self, variable):
-        # Format model solution as dictionary
+    def format_solution(self, variables):
 
+        # Format model solution as dictionary
         solution = self.empty_solution()
 
         for period in self.periods:
+            solution[period] = []
             for location in self.locations:
-                value = variable[period, location].x
+                value = variables[period, location].x
                 if cm.is_equal_to(value, 1.):
-                    solution[period] = location
+                    solution[period].append(location)
 
         return solution
 
     def pack_solution(self, solution):
-        # Format dictionary solution as text
 
-        return '-'.join(solution.values())
+        # Format dictionary solution as text
+        formatted = list(solution.values())
+
+        for index, _ in enumerate(formatted):
+            formatted[index] = '~'.join(formatted[index])
+
+        return '-'.join(formatted)
 
     def unpack_solution(self, text):
-        # Format text solution as dictionary
 
+        # Format text solution as dictionary
         solution = self.empty_solution()
         text = text.strip().split('-')
 
@@ -186,11 +272,7 @@ class instance:
         index = 0
 
         for period in self.periods:
-            solution[period] = text[index]
+            solution[period] = text[index].split('~')
             index += 1
 
         return solution
-
-    def stable_solution(self, location):
-
-        return {period: location for period in self.periods}

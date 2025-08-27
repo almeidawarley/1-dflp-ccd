@@ -1,4 +1,5 @@
-import gurobipy as gp
+import simplification as sp
+import network as nt
 import common as cm
 import numpy as np
 import time as tm
@@ -28,39 +29,6 @@ class heuristic:
 
         return metadata
 
-class progressive(heuristic):
-
-    def __init__(self, instance):
-
-        super().__init__(instance, 'PRG')
-
-    def run(self):
-
-        for frontier in self.ins.periods:
-
-            local_objective = self.objective
-            local_solution = self.ins.copy_solution(self.solution)
-
-            for reference in reversed(self.ins.periods):
-
-                if int(reference) <= int(frontier):
-
-                    for location in self.ins.locations_extended:
-
-                        # Copy partial solution
-                        candidate = self.ins.copy_solution(self.solution)
-                        # Insert location
-                        candidate = self.ins.insert_solution(candidate, reference, location)
-                        objective = self.ins.evaluate_solution(candidate)
-
-                        if objective > local_objective:
-                            local_solution = self.ins.copy_solution(candidate)
-                            local_objective =  objective
-
-            if local_objective > self.objective:
-                self.objective = local_objective
-                self.solution = self.ins.copy_solution(local_solution)
-
 class forward(heuristic):
 
     def __init__(self, instance):
@@ -69,19 +37,39 @@ class forward(heuristic):
 
     def run(self):
 
-        for reference in self.ins.periods:
+        # Create standard network formulation
+        model = nt.network(self.ins)
 
-            for location in self.ins.locations_extended:
+        self.solution = self.ins.empty_solution()
 
-                # Copy partial solution
-                candidate = self.ins.copy_solution(self.solution)
-                # Insert location
-                candidate[reference] = location
-                objective = self.ins.evaluate_solution(candidate)
+        print('Running FRW heuristic')
 
-                if objective > self.objective:
-                    self.solution = self.ins.copy_solution(candidate)
-                    self.objective =  objective
+        # Set upper bound of variables y^{t}_{i} to 0
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                model.var['y'][period, location].ub = 0
+
+        time_left = cm.TIMELIMIT
+        for period in self.ins.periods:
+            # Reset upper bound of variables y^{t}_{i} to 1
+            for location in self.ins.locations:
+                model.var['y'][period, location].ub = 1
+            model.mip.setParam('TimeLimit', time_left)
+            model.mip.setParam('OutputFlag', 0)
+            model.mip.optimize()
+            time_left -= model.mip.runtime
+            time_left = max(5, time_left)
+            # Retrieve set of locations for some period
+            locations = []
+            for location in self.ins.locations:
+                if cm.is_equal_to(model.var['y'][period, location].x, 1.):
+                    locations.append(location)
+                model.var['y'][period, location].lb = model.var['y'][period, location].x
+                model.var['y'][period, location].ub = model.var['y'][period, location].x
+            self.solution[period] = locations
+            print('Period {}: {}'.format(period, self.solution[period]))
+
+        self.objective = self.ins.evaluate_solution(self.solution)
 
 class backward(heuristic):
 
@@ -91,19 +79,62 @@ class backward(heuristic):
 
     def run(self):
 
-        for reference in reversed(self.ins.periods):
+        # Create standard network formulation
+        model = nt.network(self.ins)
 
-            for location in self.ins.locations_extended:
+        self.solution = self.ins.empty_solution()
 
-                # Copy partial solution
-                candidate = self.ins.copy_solution(self.solution)
-                # Insert location
-                candidate[reference] = location
-                objective = self.ins.evaluate_solution(candidate)
+        print('Running BCW heuristic')
 
-                if objective > self.objective:
-                    self.solution = self.ins.copy_solution(candidate)
-                    self.objective =  objective
+        # Set upper bound of variables y^{t}_{i} to 0
+        for period in self.ins.periods:
+            for location in self.ins.locations:
+                model.var['y'][period, location].ub = 0
+
+        time_left = cm.TIMELIMIT
+        for period in reversed(self.ins.periods):
+            # Reset upper bound of variables y^{t}_{i} to 1
+            for location in self.ins.locations:
+                model.var['y'][period, location].ub = 1
+            model.mip.setParam('TimeLimit', time_left)
+            model.mip.setParam('OutputFlag', 0)
+            model.mip.optimize()
+            time_left -= model.mip.runtime
+            time_left = max(5, time_left)
+            # Retrieve set of locations for some period
+            locations = []
+            for location in self.ins.locations:
+                if cm.is_equal_to(model.var['y'][period, location].x, 1.):
+                    locations.append(location)
+                model.var['y'][period, location].lb = model.var['y'][period, location].x
+                model.var['y'][period, location].ub = model.var['y'][period, location].x
+            self.solution[period] = locations
+            print('Period {}: {}'.format(period, self.solution[period]))
+
+        self.objective = self.ins.evaluate_solution(self.solution)
+
+class emulation(heuristic):
+
+    def __init__(self, instance):
+
+        super().__init__(instance, 'EML')
+
+    def run(self):
+
+        self.solution = self.ins.empty_solution()
+
+        print('Running EML heuristic')
+
+        time_left = cm.TIMELIMIT
+        for period in self.ins.periods:
+            model = sp.simplification(self.ins, period)
+            model.mip.setParam('TimeLimit', time_left)
+            self.solution[period] = model.run()
+            time_left -= model.mip.runtime
+            time_left = max(5, time_left)
+            print('Period {}: {}'.format(period, self.solution[period]))
+
+        self.objective = self.ins.evaluate_solution(self.solution)
 
 class random(heuristic):
 
@@ -115,51 +146,11 @@ class random(heuristic):
 
         np.random.seed(self.ins.parameters['seed'])
 
-        # Create partial solution
-        self.solution = {}
+        # Create a random solution
+        print('Running RND heuristic')
+
+        self.solution = self.ins.empty_solution()
         for period in self.ins.periods:
-            self.solution[period] = np.random.choice(self.ins.locations_extended)
-        self.objective = self.ins.evaluate_solution(self.solution)
-
-class emulation(heuristic):
-
-    def __init__(self, instance):
-
-        super().__init__(instance, 'EML')
-
-    def run(self):
-
-        candidate = self.ins.empty_solution()
-
-        # Store previously calculated solutions
-        stored = {}
-
-        for period in self.ins.periods_with_start:
-            stored[period] = {}
-            for location in self.ins.locations_extended:
-                    stored[period][location] = 0.
-
-        for reference in self.ins.periods:
-
-            local_objective = 0.
-            local_location = self.ins.depot
-
-            for location in self.ins.locations_extended:
-
-                # Insert location
-                candidate[reference] = location
-                objective = self.ins.evaluate_solution(candidate)
-                # Offset objective accordingly
-                stored[reference][location] = objective
-                objective -= stored[reference - 1][location]
-                # Insert location
-                candidate[reference] = self.ins.depot
-
-                if objective > local_objective:
-                    local_objective = objective
-                    local_location = location
-
-            # Fix location
-            self.solution[reference] = local_location
-
+            self.solution[period] = list(np.random.choice(self.ins.locations, self.ins.facilities[period]))
+            print('Period {}: {}'.format(period, self.solution[period]))
         self.objective = self.ins.evaluate_solution(self.solution)
