@@ -32,7 +32,7 @@ for approach in exact_approaches:
 
 for approach in formulation_approaches:
     approach = approach.replace('cold_', '')
-    content['{}_intgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['rlx_{}_bound'.format(approach)], row['bst_objective'], row['keyword']), axis = 1)
+    content['{}_intgap'.format(approach)] = content.apply(lambda row: cm.compute_gap(row['rlx_{}_bound'.format(approach)], row['bst_objective']), axis = 1)
 
 for approach in exact_approaches:
     content['{}_objective'.format(approach)].fillna(0)
@@ -156,7 +156,7 @@ def graph_heuristics():
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
         output.write('\draw (9.5,0.5) node[anchor=mid] {opportunity gap (\%)};\n')
-        output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
+        output.write('\draw (0,11) node[anchor=mid] {\# instances};\n')
 
         formatted_x = 0
         while formatted_x <= length_x:
@@ -167,7 +167,7 @@ def graph_heuristics():
         formatted_y = 0
         while formatted_y <= length_y:
             y = (formatted_y / length_y) * (upper_y - lower_y) + lower_y
-            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', y,'$}'))
+            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', y * len(content[filter]) / 100,'$}'))
             formatted_y += 1
 
         for method in methods:
@@ -217,16 +217,16 @@ def graph_objectives():
     with open ('graphs/objectives.tex', 'w') as output:
 
         length_x, lower_x, upper_x, step_x = 10, 1, 1.5, 0.05
-        length_y, lower_y, upper_y, step_y = 10, 40, 100, 6
+        length_y, lower_y, upper_y, step_y = 5, 40, 100, 6
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
-        output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
+        output.write('\\begin{tikzpicture}[scale=.7, every node/.style={scale=.7}]\n')
         output.write('\draw[line width=0.5mm,thick,->] (0,0) -- ({},0);\n'.format(length_x + 0.5))
         output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,{});\n'.format(length_y + 0.5))
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9.5,0.5) node[anchor=mid] {objective ratio};\n')
-        output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
+        output.write('\draw ({},0.5) node[anchor=mid] {}objective ratio{};\n'.format(length_x - 0.5, '{', '}'))
+        output.write('\draw (0,{}) node[anchor=mid] {}\# instances{};\n'.format(length_y + 1, '{', '}'))
 
         formatted_x = 0
         while formatted_x <= length_x:
@@ -237,7 +237,7 @@ def graph_objectives():
         formatted_y = 0
         while formatted_y <= length_y:
             y = (formatted_y / length_y) * (upper_y - lower_y) + lower_y
-            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', y,'$}'))
+            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', y * len(content[filter]) / 100,'$}'))
             formatted_y += 1
 
         for method in methods:
@@ -265,7 +265,7 @@ def graph_objectives():
 
         output.write('\n')
 
-        current_y = 4.0
+        current_y = 1.0
         next_y = 0.5
 
         for method in methods:
@@ -287,16 +287,16 @@ def graph_runtimes():
     with open ('graphs/runtimes.tex', 'w') as output:
 
         length_x, lower_x, upper_x, step_x = 10, 1, 10, 0.09
-        length_y, lower_y, upper_y, step_y = 10, 40, 100, 6
+        length_y, lower_y, upper_y, step_y = 5, 40, 100, 6
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
-        output.write('\\begin{tikzpicture}[scale=.8, every node/.style={scale=.8}]\n')
+        output.write('\\begin{tikzpicture}[scale=.7, every node/.style={scale=.7}]\n')
         output.write('\draw[line width=0.5mm,thick,->] (0,0) -- ({},0);\n'.format(length_x + 0.5))
-        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,10.5);\n'.format(length_y + 0.5))
+        output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,{});\n'.format(length_y + 0.5))
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9.5,0.5) node[anchor=mid] {runtime ratio};\n')
-        output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
+        output.write('\draw ({},0.5) node[anchor=mid] {}runtime ratio{};\n'.format(length_x - 0.5, '{', '}'))
+        output.write('\draw (0,{}) node[anchor=mid] {}\# instances{};\n'.format(length_y + 1, '{', '}'))
 
         formatted_x = 0
         while formatted_x <= length_x:
@@ -307,7 +307,7 @@ def graph_runtimes():
         formatted_y = 0
         while formatted_y <= length_y:
             y = (formatted_y / length_y) * (upper_y - lower_y) + lower_y
-            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', y,'$}'))
+            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', y * len(content[filter]) / 100,'$}'))
             formatted_y += 1
 
         for method in methods:
@@ -335,7 +335,7 @@ def graph_runtimes():
 
         output.write('\n')
 
-        current_y = 3.0
+        current_y = 1.0
         next_y = 0.5
 
         for method in methods:
@@ -348,6 +348,8 @@ def graph_runtimes():
         print('Exported graph to graphs/runtimes.tex')
 
 def graph_runtime(method1, method2, descriptor = 1):
+
+    timelimit = 60
 
     methods = [method1, method2]
     if descriptor == 1:
@@ -372,7 +374,7 @@ def graph_runtime(method1, method2, descriptor = 1):
 
         length_x, lower_x, upper_x, step_x = 10, 0, 1.0, 0.01
         # length_x, lower_x, upper_x, step_x = 10, 0, 0.4, 0.04
-        length_y, lower_y, upper_y, step_y = 10, 0, 100, 10
+        length_y, lower_y, upper_y, step_y = 5, 0, 100, 10
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.7, every node/.style={scale=.7}]\n')
@@ -380,19 +382,19 @@ def graph_runtime(method1, method2, descriptor = 1):
         output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,{});\n'.format(length_y + 0.5))
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9.5,0.5) node[anchor=mid] {time limit (\%)};\n')
-        output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
+        output.write('\draw ({},0.5) node[anchor=mid] {}runtime (min){};\n'.format(length_x - 0.5, '{', '}'))
+        output.write('\draw (0,{}) node[anchor=mid] {}\# instances{};\n'.format(length_y + 1, '{', '}'))
 
         formatted_x = 0
         while formatted_x <= length_x:
             x = (formatted_x / length_x) * (upper_x - lower_x) + lower_x
-            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_x, '{$', x * 10**2,'$}'))
+            output.write('\draw ({},-0.5) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_x, '{$', round(x * timelimit),'$}'))
             formatted_x += 1
 
         formatted_y = 0
         while formatted_y <= length_y:
             y = (formatted_y / length_y) * (upper_y - lower_y) + lower_y
-            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', y,'$}'))
+            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', round(y * len(content[filter]) / 100),'$}'))
             formatted_y += 1
 
         for method in methods:
@@ -423,8 +425,8 @@ def graph_runtime(method1, method2, descriptor = 1):
         next_y = 0.5
 
         for method in methods:
-            output.write('\draw[line width=0.5mm, {}, {}] (8.5, {:.2f})--(9.0, {:.2f});\n'.format(colors[method], styles[method], current_y, current_y))
-            output.write('\draw[line width=0.5mm, {}] (9.0, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], current_y, '{', legend[method], '}'))
+            output.write('\draw[line width=0.5mm, {}, {}] ({}, {:.2f})--({}, {:.2f});\n'.format(colors[method], styles[method], length_x - 1.5, current_y, length_x - 1.0, current_y))
+            output.write('\draw[line width=0.5mm, {}] ({}, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], length_x - 1.0, current_y, '{', legend[method], '}'))
             current_y += next_y
 
         output.write('\end{tikzpicture}\n')
@@ -456,7 +458,7 @@ def graph_optgap(method1, method2, descriptor = 1):
 
         # length_x, lower_x, upper_x, step_x = 10, 0, 0.2, 0.002
         length_x, lower_x, upper_x, step_x = 10, 0, 1.0, 0.001
-        length_y, lower_y, upper_y, step_y = 10, 0, 100, 10
+        length_y, lower_y, upper_y, step_y = 5, 0, 100, 10
 
         # output.write('\\begin{figure}[!ht]\n\centering\n')
         output.write('\\begin{tikzpicture}[scale=.7, every node/.style={scale=.7}]\n')
@@ -464,8 +466,8 @@ def graph_optgap(method1, method2, descriptor = 1):
         output.write('\draw[line width=0.5mm,thick,->] (0,0) -- (0,{});\n'.format(length_y + 0.5))
 
         # output.write('\draw (-0.5,-0.5) node[anchor=mid] {$0$};\n')
-        output.write('\draw (9.5,0.5) node[anchor=mid] {optimality gap (\%)};\n')
-        output.write('\draw (0,11) node[anchor=mid] {instances (\%)};\n')
+        output.write('\draw ({},0.5) node[anchor=mid] {}optimality gap (\%){};\n'.format(length_x - 0.5, '{', '}'))
+        output.write('\draw (0,{}) node[anchor=mid] {}\# instances{};\n'.format(length_y + 1, '{', '}'))
 
         formatted_x = 0
         while formatted_x <= length_x:
@@ -476,7 +478,7 @@ def graph_optgap(method1, method2, descriptor = 1):
         formatted_y = 0
         while formatted_y <= length_y:
             y = (formatted_y / length_y) * (upper_y - lower_y) + lower_y
-            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', y,'$}'))
+            output.write('\draw (-0.5,{}) node[anchor=mid] {}{:.0f}{};\n'.format(formatted_y, '{$', round(y * len(content[filter]) / 100),'$}'))
             formatted_y += 1
 
         for method in methods:
@@ -508,8 +510,8 @@ def graph_optgap(method1, method2, descriptor = 1):
         next_y = 0.5
 
         for method in methods:
-            output.write('\draw[line width=0.5mm, {}, {}] (8.5, {:.2f})--(9.0, {:.2f});\n'.format(colors[method], styles[method], current_y, current_y))
-            output.write('\draw[line width=0.5mm, {}] (9.0, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], current_y, '{', legend[method], '}'))
+            output.write('\draw[line width=0.5mm, {}, {}] ({}, {:.2f})--({}, {:.2f});\n'.format(colors[method], styles[method], length_x - 1.5, current_y, length_x - 1.0, current_y))
+            output.write('\draw[line width=0.5mm, {}] ({}, {:.2f}) node[anchor=west] {}{}{};\n'.format(colors[method], length_x - 1.0, current_y, '{', legend[method], '}'))
             current_y += next_y
 
         output.write('\end{tikzpicture}\n')

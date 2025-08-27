@@ -1,5 +1,7 @@
 import math as mt
 
+shape = 'circle (2pt)'
+
 stored_f = {}
 accumulated_f = {}
 
@@ -19,6 +21,7 @@ def constant(t, a = 5):
 
     return a
 
+'''
 def f(t):
 
     # return bass(t)
@@ -26,54 +29,72 @@ def f(t):
     # return decreasing(t)
     # return increasing(t)
     return sine(t)
+'''
 
-color = 'orange'
-style = 'dotted'
-step = 1.0
-step = 0.1
+colors = ['teal', 'blue', 'red',  'orange']
+styles = ['dotted', 'dashdotted', 'dashed', 'solid', ]
+functions = [constant, increasing, decreasing, sine]
 
-print('> Spawning demand graph:')
+for (color, style, f) in zip(colors, styles, functions):
 
-stored_f[0] = f(0)
-scale = 2
-x = 1.0
-x = 0.1
+    # color = 'orange'
+    # style = 'dotted'
+    step = 1.0
+    step = 0.1
 
-while round(x) <= 10:
+    # print('> Spawning demand graph:')
 
-    x1 = round(max(x - step, 0), 2)
-    x2 = round(x, 2)
+    stored_f[0] = f(0)
+    scale = 2
+    x = 1.0
+    x = 0.1
 
-    f1 = stored_f[x1]
-    stored_f[x2] = f(x2)
-    f2 = stored_f[x2]
+    while round(x) < 10:
 
-    if x2 in [6.0]: # [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]:
-        print('\draw[{}, {}] ({},{})--({},{}) node[anchor=mid] {}x{};'.format(style, color, x1, round(f1 / scale, 2), x2, round(f2 / scale, 2), '{', '}'))
-    else:
-        print('\draw[{}, {}] ({},{})--({},{});'.format(style, color, x1, round(f1 / scale, 2), x2, round(f2 / scale, 2)))
+        x1 = round(max(x - step, 0), 2)
+        x2 = round(x, 2)
 
-    x += step
+        f1 = stored_f[x1]
+        stored_f[x2] = f(x2)
+        f2 = stored_f[x2]
 
+        with open('graphs/spawning.txt', 'a') as output:
+            # print('\draw[{}, {}] ({},{})--({},{});'.format(style, color, x1, round(f1 / scale, 2), x2, round(f2 / scale, 2)))
+            output.write('\draw[{}, {}] ({},{})--({},{});\n'.format(style, color, x1, round(f1 / scale, 2), x2, round(f2 / scale, 2)))
 
-print('> Accumulated demand graph:')
-accumulated_f[0] = 0
-scale = 10
-x = 1.0
-step = 1.0
+            if x2 in [0.,1.,2.,3.,4.,5.,6.,7.,8.,9.,10.]:
+                # print('\draw[{}] ({},{}) node[anchor=mid] {}{}{};'.format(color, x2, round(f2 / scale, 2), '{', shape, '}'))
+                output.write('\draw[{},fill={}] ({},{}) {};\n'.format(color, color, x2, round(f2 / scale, 2), shape))
 
-while round(x) <= 10:
+        x += step
 
-    x1 = round(max(x - step, 0), 2)
-    x2 = round(x, 2)
+    print('spawning: {}, {}, {}'.format(color, style, f))
 
-    f1 = accumulated_f[x1]
-    accumulated_f[x2] = f1 + f(x2)
-    f2 = accumulated_f[x2]
+    # print('> Accumulated demand graph:')
+    accumulated_f[0] = 0
+    scale = 10
+    x = 1.0
+    step = 1.0
 
-    if x2 in [6.0]: # [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]:
-        print('\draw[{}, {}] ({},{})--({},{}) node[anchor=mid] {}x{};'.format(style, color, x1, round(f1 / scale, 2), x2, round(f2 / scale, 2), '{', '}'))
-    else:
-        print('\draw[{}, {}] ({},{})--({},{});'.format(style, color, x1, round(f1 / scale, 2), x2, round(f2 / scale, 2)))
+    while round(x) < 10:
 
-    x += step
+        x1 = round(max(x - step, 0), 2)
+        x2 = round(x, 2)
+
+        f1 = accumulated_f[x1]
+        accumulated_f[x2] = f1 + f(x2)
+        f2 = accumulated_f[x2]
+
+        with open('graphs/accumulated.txt', 'a') as output:
+
+            # print('\draw[{}, {}] ({},{})--({},{});'.format(style, color, x1, round(f1 / scale, 2), x2, round(f2 / scale, 2)))
+            output.write('\draw[{}, {}] ({},{})--({},{});\n'.format(style, color, x1, round(f1 / scale, 2), x2, round(f2 / scale, 2)))
+
+            if x2 in [0.,1.,2.,3.,4.,5.,6.,7.,8.,9.,10.]:
+
+                # print('\draw[{}] ({},{}) node[anchor=mid] {}{}{};'.format(color, x2, round(f2 / scale, 2), '{', shape, '}'))
+                output.write('\draw[{},fill={}] ({},{}) {};\n'.format(color, color, x2, round(f2 / scale, 2), shape))
+
+        x += step
+
+    print('accumulated: {}, {}, {}'.format(color, style, f))
