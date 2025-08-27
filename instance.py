@@ -49,15 +49,6 @@ class instance:
 
     def print_instance(self):
 
-        # Write coefficients to file
-        with open('coefficients/{}.csv'.format(self.keyword), 'w') as content:
-            for period1 in self.periods_with_start:
-                for period2 in self.periods_with_final:
-                    if period1 < period2:
-                        for location in self.locations:
-                            for customer in self.captured_customers[location]:
-                                content.write('{}, {}, {}, {}, {}\n'.format(period1, period2, location, customer, self.coefficients[period1][period2][location][customer]))
-
         # Print instance summary
         print('Keyword: {}'.format(self.keyword))
         print('Facilities: {}'.format([number for number in self.facilities.values()]))
@@ -82,8 +73,6 @@ class instance:
                 self.rewards[location],
                 len(self.captured_customers[location]),
                 self.captured_customers[location][:50]))
-
-        print('Coefficients at coefficients/{}.csv'.format(self.keyword))
 
     def evaluate_solution(self, solution):
 
