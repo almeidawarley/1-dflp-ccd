@@ -6,10 +6,10 @@ features = {
     'locations': [50, 100, 150],
     'customers': [1, 3, 5],
     'periods': [5, 7, 9],
-    'facilities': [1], # , 3, 5],
+    'facilities': [1, 3, 5],
     'rewards': ['identical', 'inversely'],
     'preferences': ['small', 'large'],
-    'demands': ['random1', 'random2'], # ['fixed', 'sparse'],
+    'demands': ['fixed', 'sparse'],
     'penalties': [0]
 }
 
